@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-h5000m-fancontrol
-PKG_VERSION:=2.0.2
+PKG_VERSION:=2.1.0
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -9,6 +9,10 @@ PKG_LICENSE_FILES:=LICENSE
 LUCI_TITLE:=H5000M fan control
 LUCI_DEPENDS:=+luci-base +kmod-hwmon-pwmfan
 LUCI_PKGARCH:=all
+
+define Package/luci-app-h5000m-fancontrol/conffiles
+/etc/config/h5000m_fancontrol
+endef
 
 include $(TOPDIR)/feeds/luci/luci.mk
 

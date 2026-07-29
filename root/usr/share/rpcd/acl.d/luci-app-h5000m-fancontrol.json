@@ -3,7 +3,7 @@
 		"description": "Grant access to H5000M fan control",
 		"read": {
 			"file": {
-				"/usr/sbin/h5000m-fancontrol": [ "exec" ]
+				"/usr/sbin/h5000m-fancontrol-status": [ "exec" ]
 			},
 			"uci": [ "h5000m_fancontrol" ]
 		},

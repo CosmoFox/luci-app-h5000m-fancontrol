@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.1.0
+
+- 风扇控制器不再把完整 CPU thermal zone 切换到 `user_space`。
+- 自动恢复旧版本遗留的 thermal policy，并保留 CPU 降频和高温保护。
+- 状态读取与控制写入使用独立 RPC 权限。
+- 将 UCI 配置声明为升级保留文件。
+
 ## 2.0.2
 
 - 读取 MT5700M 管理器提供的带时间戳温度缓存。

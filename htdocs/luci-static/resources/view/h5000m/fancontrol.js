@@ -11,7 +11,7 @@ return view.extend({
 	},
 
 	fetchStatus: function() {
-		return fs.exec('/usr/sbin/h5000m-fancontrol', [ 'status' ]).then(L.bind(function(res) {
+		return fs.exec('/usr/sbin/h5000m-fancontrol-status').then(L.bind(function(res) {
 			return this.parseStatus(res.stdout || '');
 		}, this)).catch(function() {
 			return {};

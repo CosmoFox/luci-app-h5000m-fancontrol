@@ -9,7 +9,7 @@
 > H5000M fan manager for OpenWrt with temperature-aware profiles, manual PWM control, hysteresis, delayed spin-down, start boost and sensor failsafe protection.
 
 版本采用标准的 `主版本.次版本.修订版本-r打包修订` 格式。GitHub Release 仅使用
-语义版本标签（当前为 `v2.0.2`），OpenWrt 安装包版本为 `2.0.2-r1`。
+语义版本标签（当前为 `v2.1.0`），OpenWrt 安装包版本为 `2.1.0-r1`。
 
 ![散热管理界面](docs/fan-control-ui.jpg)
 
@@ -80,7 +80,9 @@ git apply package/luci-app-h5000m-fancontrol/openwrt-patches/h5000m-userspace-fa
 
 ## 安全说明
 
-风扇控制属于设备安全功能。修改自定义曲线或手动 PWM 后应持续观察温度。即使启用了独占用户空间策略，也不应删除设备树中的 CPU 降频、hot 或 critical 保护。
+风扇控制属于设备安全功能。修改自定义曲线或手动 PWM 后应持续观察温度。控制器
+只管理风扇 PWM，从不把整个 CPU thermal zone 切换到 `user_space`；无论是否
+应用独占风扇补丁，都不应删除设备树中的 CPU 降频、hot 或 critical 保护。
 
 ## 许可证
 

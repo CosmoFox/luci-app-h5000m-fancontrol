@@ -104,29 +104,25 @@ find_thermal_zone() {
 }
 
 take_thermal_control() {
-	local zone policy saved_zone saved_policy tmp
+	local zone policy
 	zone="$(find_thermal_zone 2>/dev/null || true)"
-	[ -n "$zone" ] || return 1
+	[ -n "$zone" ] || {
+		CONTROL_ZONE=""
+		CONTROL_POLICY=""
+		return 0
+	}
+
+	# Recover once from releases that changed the complete CPU thermal zone to
+	# user_space. The H5000M controller owns PWM output only; the kernel must
+	# retain the thermal governor so CPU cooling and critical protection remain
+	# active.
+	if [ -f "$POLICY_FILE" ]; then
+		release_thermal_control
+	fi
 	policy="$(cat "$zone/policy" 2>/dev/null || true)"
 	[ -n "$policy" ] || return 1
-
-	if [ -f "$POLICY_FILE" ]; then
-		saved_zone="$(sed -n '1p' "$POLICY_FILE" 2>/dev/null || true)"
-		saved_policy="$(sed -n '2p' "$POLICY_FILE" 2>/dev/null || true)"
-	else
-		saved_zone=""; saved_policy=""
-	fi
-	if [ "$saved_zone" != "$zone" ] || [ -z "$saved_policy" ]; then
-		[ "$policy" != "user_space" ] || policy="step_wise"
-		tmp="${POLICY_FILE}.$$"
-		{ echo "$zone"; echo "$policy"; } > "$tmp" && mv "$tmp" "$POLICY_FILE" || return 1
-	fi
-
-	if [ "$(cat "$zone/policy" 2>/dev/null || true)" != "user_space" ]; then
-		echo user_space > "$zone/policy" 2>/dev/null || return 1
-	fi
 	CONTROL_ZONE="$zone"
-	CONTROL_POLICY="user_space"
+	CONTROL_POLICY="$policy"
 	return 0
 }
 
@@ -443,11 +439,11 @@ apply_once() {
 	fi
 
 	if ! take_thermal_control; then
-		logger -t "$TAG" "unable to acquire userspace thermal policy; kernel control retained"
+		logger -t "$TAG" "unable to inspect kernel thermal policy; cooling policy not changed"
 		release_thermal_control
 		return 1
 	fi
-	THERMAL_OWNER="userspace"
+	[ "$THERMAL_OWNER" = "unknown" ] && THERMAL_OWNER="userspace-pwm"
 
 	if [ "$MODE" = "manual" ]; then
 		REQUESTED_PWM="$MANUAL_PWM"
@@ -544,9 +540,7 @@ print_status() {
 	[ -n "$PWM_PATH" ] && set_thermal_floor
 	zone="$(find_thermal_zone 2>/dev/null || true)"
 	policy="$([ -n "$zone" ] && cat "$zone/policy" 2>/dev/null || true)"
-	if [ "$policy" = "user_space" ]; then
-		THERMAL_OWNER="userspace"
-	elif [ "$ENABLED" != "1" ] || [ "$MODE" = "kernel" ]; then
+	if [ "$ENABLED" != "1" ] || [ "$MODE" = "kernel" ]; then
 		THERMAL_OWNER="kernel"
 	fi
 	print_settings
