@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.2.0
+
+- Retuned the silent fan curve to `20:0,35:0,40:20,50:20,60:40,70:50,85:100,95:100`.
+- Added a schema v3 migration that replaces only the untouched default silent curve.
+- Added a Russian LuCI translation.
+- CI now validates all translation catalogs and runs the thermal policy safety regression test.
+
 ## 2.1.0
 
 - 风扇控制器不再把完整 CPU thermal zone 切换到 `user_space`。
