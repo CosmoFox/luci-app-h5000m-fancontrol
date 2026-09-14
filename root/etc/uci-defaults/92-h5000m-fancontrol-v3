@@ -1,0 +1,20 @@
+#!/bin/sh
+
+old_curve_silent='20:0,35:0,40:50,55:50,70:60,85:75,95:100'
+new_curve_silent='20:0,35:0,40:20,50:20,60:40,70:50,85:100,95:100'
+
+schema="$(uci -q get h5000m_fancontrol.settings.schema_version || echo 0)"
+case "$schema" in ''|*[!0-9]*) schema=0 ;; esac
+
+if [ "$schema" -lt 3 ]; then
+	current="$(uci -q get h5000m_fancontrol.settings.curve_silent || true)"
+	[ "$current" = "$old_curve_silent" ] && \
+		uci -q set h5000m_fancontrol.settings.curve_silent="$new_curve_silent"
+	[ -n "$current" ] || uci -q set h5000m_fancontrol.settings.curve_silent="$new_curve_silent"
+	uci -q set h5000m_fancontrol.settings.schema_version='3'
+	uci -q commit h5000m_fancontrol
+fi
+
+/etc/init.d/h5000m-fancontrol restart >/dev/null 2>&1 || true
+
+exit 0
