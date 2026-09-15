@@ -1,5 +1,7 @@
 # Changelog
 
+🇬🇧 **English** | [🇷🇺 Русский](CHANGELOG.ru.md) | [🇨🇳 简体中文](CHANGELOG.zh-CN.md)
+
 ## 2.3.0
 
 - The status output now reports the firmware fan map (`kernel_floor_levels`,
@@ -30,26 +32,33 @@
 
 ## 2.1.0
 
-- 风扇控制器不再把完整 CPU thermal zone 切换到 `user_space`。
-- 自动恢复旧版本遗留的 thermal policy，并保留 CPU 降频和高温保护。
-- 状态读取与控制写入使用独立 RPC 权限。
-- 将 UCI 配置声明为升级保留文件。
+- The fan controller no longer switches the entire CPU thermal zone to `user_space`.
+- Automatically restores the thermal policy left behind by older versions while
+  preserving CPU throttling and overheat protection.
+- Status reads and control writes now use separate RPC privileges.
+- Declared the UCI configuration file to be kept across upgrades.
 
 ## 2.0.2
 
-- 读取 MT5700M 管理器提供的带时间戳温度缓存。
-- 忽略超过 60 秒的陈旧模组温度，并兼容旧 QModem 缓存。
+- Read the timestamped temperature cache provided by the MT5700M manager.
+- Ignore stale module temperatures older than 60 s while staying compatible
+  with the legacy QModem cache.
 
 ## 2.0.1
 
-- 统一 GitHub Release 与 OpenWrt 软件包版本规则。
-- 汇总 2.0.0 后的构建兼容性与交付修订。
+- Unified the GitHub Release and OpenWrt package versioning rules.
+- Collected post-2.0.0 build compatibility and delivery revisions.
 
 ## 2.0.0
 
-- 重新设计面向最终用户的 LuCI 散热管理界面
-- 增加 CPU、以太网 PHY、Wi-Fi 和 5G 模块温度汇总
-- 增加静音、均衡、性能及自定义风扇曲线
-- 增加温度滞回、降速延迟和启动助推
-- 增加传感器故障保护及高温用户空间安全下限
-- 增加可选 H5000M 设备树补丁，避免内核与用户空间争用 PWM
+- Redesigned the end-user LuCI thermal management page.
+- Added temperature aggregation for the CPU, Ethernet PHY, Wi-Fi and the 5G module.
+- Added silent, balanced, performance and custom fan curves.
+- Added temperature hysteresis, delayed spin-down and start boost.
+- Added sensor failsafe and a high-temperature userspace safety floor.
+- Added an optional H5000M device-tree patch to stop the kernel and userspace
+  from competing over PWM.
+
+---
+
+*The English changelog is canonical; other languages are translations kept in sync manually.*
