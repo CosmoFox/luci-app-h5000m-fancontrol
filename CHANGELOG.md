@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.1
+
+- Fixed release packaging: the GitHub Actions build now compiles and ships the
+  `luci-i18n-h5000m-fancontrol-ru` translation package (`.lmo` catalogs are not
+  part of the main app package), and documents installing it for the Russian UI.
+
 ## 2.2.0
 
 - Retuned the silent fan curve to `20:0,35:0,40:20,50:20,60:40,70:50,85:100,95:100`.

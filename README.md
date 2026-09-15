@@ -9,7 +9,7 @@
 > H5000M fan manager for OpenWrt with temperature-aware profiles, manual PWM control, hysteresis, delayed spin-down, start boost and sensor failsafe protection.
 
 版本采用标准的 `主版本.次版本.修订版本-r打包修订` 格式。GitHub Release 仅使用
-语义版本标签（当前为 `v2.2.0`），OpenWrt 安装包版本为 `2.2.0-r1`。
+语义版本标签（当前为 `v2.2.1`），OpenWrt 安装包版本为 `2.2.1-r1`。
 
 ![散热管理界面](docs/fan-control-ui.jpg)
 
@@ -50,6 +50,10 @@ GitHub Releases 中的预编译 `.apk` 由 GitHub Actions 使用官方 OpenWrt
 SNAPSHOT `mediatek/filogic` SDK 构建，适用于同一 ABI 的近期 SNAPSHOT。Release
 同时提供构建公钥和 SHA256 校验文件。由于风扇安全策略依赖设备树，建议把本项目
 集成进固件并同时评估下方补丁，而不是只安装软件包。
+
+UI translations ship as separate packages: install the matching
+`luci-i18n-h5000m-fancontrol-ru` / `-zh-cn` package from the release assets
+alongside the main `.apk` to enable Russian or Simplified Chinese.
 
 ## 独占风扇策略控制
 
