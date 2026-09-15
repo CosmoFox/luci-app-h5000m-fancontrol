@@ -1,0 +1,13 @@
+#!/bin/sh
+
+schema="$(uci -q get h5000m_fancontrol.settings.schema_version || echo 0)"
+case "$schema" in ''|*[!0-9]*) schema=0 ;; esac
+
+if [ "$schema" -lt 4 ]; then
+	[ -n "$(uci -q get h5000m_fancontrol.settings.override_floor || true)" ] || \
+		uci -q set h5000m_fancontrol.settings.override_floor='0'
+	uci -q set h5000m_fancontrol.settings.schema_version='4'
+	uci -q commit h5000m_fancontrol
+fi
+
+exit 0

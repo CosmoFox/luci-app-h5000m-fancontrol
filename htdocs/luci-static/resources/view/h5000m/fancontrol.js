@@ -67,7 +67,8 @@ return view.extend({
 
 	reasonName: function(reason) {
 		var kernelFloor = (reason || '').indexOf('+kernel-floor') > -1;
-		var base = (reason || '').replace('+kernel-floor', '');
+		var floorOverride = (reason || '').indexOf('+floor-override') > -1;
+		var base = (reason || '').replace('+kernel-floor', '').replace('+floor-override', '');
 		var text;
 		if (base === 'auto-down-delay') text = _('Waiting before speed down');
 		else if (base === 'auto') text = _('Automatic curve');
@@ -76,6 +77,7 @@ return view.extend({
 		else if (base === 'sensor-failsafe') text = _('Sensor failsafe');
 		else if (base === 'curve-failsafe') text = _('Curve failsafe');
 		else text = base || '-';
+		if (floorOverride) return _('%s · ignoring firmware map').format(text);
 		return kernelFloor ? _('%s · kernel safety floor').format(text) : text;
 	},
 
@@ -214,6 +216,16 @@ return view.extend({
 		]);
 	},
 
+	parseFloorLevels: function(text) {
+		var out = [];
+		(text || '').split(',').forEach(function(pair) {
+			var parts = pair.split('='), temp = parseInt(parts[0], 10), pwm = parseInt(parts[1], 10);
+			if (!isNaN(temp) && !isNaN(pwm))
+				out.push(temp + ' °C → ' + Math.round(pwm * 100 / 255) + '%');
+		});
+		return out;
+	},
+
 	updateStatus: function(data) {
 		var pwm = this.toNum(data.pwm_value, NaN);
 		var age = this.toNum(data.state_age, NaN), interval = this.toNum(data.interval, 5), health = document.getElementById('h5fan-health');
@@ -228,8 +240,11 @@ return view.extend({
 				name === 'modem' && data.control_sensor === '5G modem';
 			if (node) node.classList.toggle('active', !!active);
 		});
+		var floorLevels = this.parseFloorLevels(data.kernel_floor_levels);
 		if (data.thermal_owner === 'userspace') {
 			this.setText('h5fan-safety-note', _('The fan manager has exclusive fan policy control. Kernel CPU throttling and hot/critical over-temperature protection remain active.'));
+		} else if (floorLevels.length) {
+			this.setText('h5fan-safety-note', _('Firmware fan map: %s. Install patched firmware for full curve control.').format(floorLevels.join(' · ')));
 		} else {
 			this.setText('h5fan-safety-note', _('Kernel thermal protection is always retained. Requested output may be raised automatically when the kernel requires more cooling.'));
 		}
@@ -329,6 +344,10 @@ return view.extend({
 
 		o = s.taboption('safety', form.Value, 'start_boost_ms', _('Startup boost duration'));
 		o.datatype = 'range(0,3000)'; o.default = '700'; o.rmempty = false; o.description = _('A short boost helps a stopped fan start reliably. Set 0 to disable.');
+
+		o = s.taboption('safety', form.Flag, 'override_floor', _('Ignore firmware fan map'));
+		o.default = '0'; o.rmempty = false;
+		o.description = _('Advanced. Lets automatic and manual output run below the levels the stock firmware enforces at 40, 85 and 115 °C. The kernel still raises the fan when those trip points are crossed; install patched firmware for full control.');
 
 	m.handleSaveApply = function(ev, mode) {
 		return form.Map.prototype.handleSaveApply.apply(this, [ ev, mode ]).then(function() {

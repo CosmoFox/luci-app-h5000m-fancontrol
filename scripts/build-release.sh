@@ -28,20 +28,31 @@ sed -i 's/^[[:space:]]*default m$/\tdefault n/' Config-build.in
 
 mkdir -p package/h5000m-custom
 rsync -a --exclude '.git/' --exclude '.github/' --exclude 'scripts/' --exclude 'dist/' --exclude 'dist-release/' "${repo_dir}/" package/h5000m-custom/luci-app-h5000m-fancontrol/
-cat > .config <<'EOF'
+
+langs=()
+while IFS= read -r d; do
+	langs+=("$(basename "${d}")")
+done < <(find "${repo_dir}/po" -mindepth 1 -maxdepth 1 -type d ! -name templates 2>/dev/null | sort)
+
+{
+	cat <<'EOF'
 CONFIG_TARGET_mediatek=y
 CONFIG_TARGET_mediatek_filogic=y
 # CONFIG_ALL is not set
 # CONFIG_ALL_KMODS is not set
 # CONFIG_ALL_NONSHARED is not set
 CONFIG_PACKAGE_luci-app-h5000m-fancontrol=m
-CONFIG_LUCI_LANG_ru=y
-CONFIG_LUCI_LANG_zh_Hans=y
 EOF
+	if [ "${#langs[@]}" -gt 0 ]; then
+		printf 'CONFIG_LUCI_LANG_%s=y\n' "${langs[@]}"
+	fi
+} > .config
 make defconfig
 make package/h5000m-custom/luci-app-h5000m-fancontrol/compile -j"$(nproc)" V=s
 
-find bin -type f \( -name 'luci-app-h5000m-fancontrol-*.apk' -o -name 'luci-app-h5000m-fancontrol_*.ipk' -o -name 'luci-i18n-h5000m-fancontrol-zh-cn-*.apk' -o -name 'luci-i18n-h5000m-fancontrol-zh-cn_*.ipk' -o -name 'luci-i18n-h5000m-fancontrol-ru-*.apk' -o -name 'luci-i18n-h5000m-fancontrol-ru_*.ipk' \) -exec cp -f {} "${output_dir}/" \;
-test "$(find "${output_dir}" -type f \( -name '*.apk' -o -name '*.ipk' \) | wc -l)" -ge 3
+find bin -type f \
+	\( -name 'luci-app-h5000m-fancontrol-*' -o -name 'luci-i18n-h5000m-fancontrol-*' \) \
+	\( -name '*.apk' -o -name '*.ipk' \) -exec cp -f {} "${output_dir}/" \;
+test "$(find "${output_dir}" -type f \( -name '*.apk' -o -name '*.ipk' \) | wc -l)" -ge $(( 1 + ${#langs[@]} ))
 cp public-key.pem "${output_dir}/openwrt-sdk-build.pem"
 (cd "${output_dir}" && find . -maxdepth 1 -type f \( -name '*.apk' -o -name '*.ipk' -o -name 'openwrt-sdk-build.pem' \) -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)

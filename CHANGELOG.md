@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.3.0
+
+- The status output now reports the firmware fan map (`kernel_floor_levels`,
+  e.g. `40=128,85=192,115=255`) and the LuCI page shows the exact
+  thresholds instead of only a generic "kernel safety floor" note.
+- Added an experimental `override_floor` option (schema v4, off by default)
+  that lets automatic and manual output run below the stock firmware fan
+  map; kernel trip enforcement and failsafe behaviour are preserved.
+- Documented the stock 40/85/115 °C fan map and the patch-based fix.
+- Translation packages are pinned to the application version instead of the
+  po-mtime/git revision that `luci.mk` derives in SDK builds.
+- `build-release.sh` now discovers the languages in `po/` automatically and
+  collects every built `luci-app-*` / `luci-i18n-h5000m-fancontrol-*`
+  package, so adding a translation needs no script changes.
+
 ## 2.2.1
 
 - Fixed release packaging: the GitHub Actions build now compiles and ships the

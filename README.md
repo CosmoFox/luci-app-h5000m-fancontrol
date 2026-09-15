@@ -9,7 +9,7 @@
 > H5000M fan manager for OpenWrt with temperature-aware profiles, manual PWM control, hysteresis, delayed spin-down, start boost and sensor failsafe protection.
 
 版本采用标准的 `主版本.次版本.修订版本-r打包修订` 格式。GitHub Release 仅使用
-语义版本标签（当前为 `v2.2.1`），OpenWrt 安装包版本为 `2.2.1-r1`。
+语义版本标签（当前为 `v2.3.0`），OpenWrt 安装包版本为 `2.3.0-r1`。
 
 ![散热管理界面](docs/fan-control-ui.jpg)
 
@@ -66,6 +66,20 @@ git apply package/luci-app-h5000m-fancontrol/openwrt-patches/h5000m-userspace-fa
 该补丁仅删除 H5000M 的三个风扇 cooling-map；CPU 降频、hot 和 critical 温控节点仍然保留。控制器还会在 CPU 达到高温阈值时强制提高风扇输出。
 
 不应用补丁时插件仍可运行，但内核 thermal governor 可能提高实际 PWM，因此界面中的请求输出和实际输出可能不同。
+
+## Stock firmware fan map (why the fan stays ≥ 50%)
+
+Without the device-tree patch the kernel still co-owns the fan. The stock
+H5000M cooling map holds PWM at 128 (≈50 %) from 40 °C, 192 (≈75 %) from
+85 °C and 255 from 115 °C, so every profile — including Quiet — is clamped
+by the "kernel safety floor". The LuCI page shows the real thresholds read
+from the device tree.
+
+Recommended: build firmware with `openwrt-patches/h5000m-userspace-fan-control.patch`.
+Experimental alternative: enable "Ignore firmware fan map" in the plugin
+settings to let the curve run below the firmware levels. The kernel rewrites
+its own level whenever a trip boundary is crossed, so expect a brief jump at
+40/85/115 °C; hot/critical CPU protection is unaffected.
 
 ## 配置与服务
 

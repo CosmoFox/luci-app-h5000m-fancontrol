@@ -339,3 +339,15 @@ msgstr "传感器故障保护"
 
 msgid "Curve failsafe"
 msgstr "曲线故障保护"
+
+msgid "Ignore firmware fan map"
+msgstr "忽略固件风扇映射"
+
+msgid "Advanced. Lets automatic and manual output run below the levels the stock firmware enforces at 40, 85 and 115 °C. The kernel still raises the fan when those trip points are crossed; install patched firmware for full control."
+msgstr "高级选项：允许自动和手动模式低于出厂固件在 40、85、115 °C 强制的风扇档位。越过这些温度阈值时内核仍会提高转速；如需完全掌控曲线，请刷入包含补丁的固件。"
+
+msgid "%s · ignoring firmware map"
+msgstr "%s · 已忽略固件映射"
+
+msgid "Firmware fan map: %s. Install patched firmware for full curve control."
+msgstr "固件风扇映射：%s。安装带补丁的固件可完全掌控曲线。"

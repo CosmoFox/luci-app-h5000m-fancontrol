@@ -204,3 +204,15 @@ msgstr "Если отключено, вентилятор следует тол�
 
 msgid "Wi-Fi radios"
 msgstr "Радиомодули Wi-Fi"
+
+msgid "Ignore firmware fan map"
+msgstr "Игнорировать карту вентилятора из прошивки"
+
+msgid "Advanced. Lets automatic and manual output run below the levels the stock firmware enforces at 40, 85 and 115 °C. The kernel still raises the fan when those trip points are crossed; install patched firmware for full control."
+msgstr "Для опытных: позволяет автоматическому и ручному режиму работать ниже уровней, которые штатная прошивка навязывает при 40, 85 и 115 °C. Ядро всё равно поднимет обороты при пересечении этих температурных порогов; для полного контроля установите прошивку с патчем."
+
+msgid "%s · ignoring firmware map"
+msgstr "%s · игнорирую карту прошивки"
+
+msgid "Firmware fan map: %s. Install patched firmware for full curve control."
+msgstr "Карта прошивки: %s. Установка прошивки с патчем даёт полный контроль над кривой."
