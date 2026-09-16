@@ -33,6 +33,13 @@ Versions follow the standard `major.minor.patch-rREVISION` format. GitHub Releas
 
 This project is designed for the H5000M device tree and sensor layout. Even if other devices can install the package, they are not supported.
 
+## Release channels
+
+- Stable: tag `vX.Y.Z` on `main` → regular GitHub Release.
+- Beta: tag `vX.Y.Z-beta.N` on `beta` → GitHub prerelease with `beta` in the name.
+
+CI checks the tag against `PKG_VERSION` in the Makefile and that the tagged commit is contained in the matching branch. Use `scripts/release.sh v2.4.0-beta.1` to cut a release from a clean, up-to-date branch. Full guide: [docs/RELEASING.md](docs/RELEASING.md).
+
 ## Integrating into OpenWrt sources
 
 Run from the OpenWrt source root:
@@ -123,6 +130,13 @@ Fan control is a device-safety function. Keep an eye on temperatures after chang
 - драйвер `pwm-fan` и узел управления `/sys/class/hwmon/*/pwm1`
 
 Проект рассчитан на device tree и расположение датчиков H5000M. На других устройствах использование не рекомендуется, даже если пакет устанавливается.
+
+## Каналы релизов
+
+- Стабильный: тег `vX.Y.Z` в `main` → обычный релиз GitHub.
+- Бета: тег `vX.Y.Z-beta.N` в ветке `beta` → пре-релиз GitHub с `beta` в названии.
+
+CI сверяет тег с `PKG_VERSION` в Makefile и проверяет, что помеченный коммит входит в соответствующую ветку. Выпуск — через `scripts/release.sh v2.4.0-beta.1` из чистого актуального дерева. Полное руководство: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## Интеграция в исходники OpenWrt
 
@@ -216,6 +230,13 @@ git apply package/luci-app-h5000m-fancontrol/openwrt-patches/h5000m-userspace-fa
 - `pwm-fan` 驱动及 `/sys/class/hwmon/*/pwm1` 控制节点
 
 本项目针对 H5000M 的设备树和传感器布局设计。其他设备即使能够安装，也不建议直接使用。
+
+## 发布渠道
+
+- 稳定版：在 `main` 上打 `vX.Y.Z` 标签 → 普通 GitHub Release。
+- 测试版：在 `beta` 分支上打 `vX.Y.Z-beta.N` 标签 → GitHub 预发布版本，名称中包含 `beta`。
+
+CI 会将标签与 Makefile 中的 `PKG_VERSION` 比对，并检查被标记的提交包含在对应分支中。发布请使用 `scripts/release.sh v2.4.0-beta.1`（要求工作区干净且分支已同步）。完整指南见 [docs/RELEASING.md](docs/RELEASING.md)。
 
 ## 集成到 OpenWrt 源码
 
