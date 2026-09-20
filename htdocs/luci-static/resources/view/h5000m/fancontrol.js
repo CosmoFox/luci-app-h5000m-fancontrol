@@ -102,7 +102,11 @@ return view.extend({
 			'.h5fan-card-hint{font-size:11px;color:var(--text-color-low,#888);margin-top:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
 			'.h5fan-card.temperatures{grid-column:span 4;padding-bottom:12px}.h5fan-temp-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.h5fan-temp-head .h5fan-card-title{margin:0}.h5fan-temp-source{font-size:11px;color:var(--fan-blue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
 			'.h5fan-temp-grid{display:grid;grid-template-columns:repeat(4,minmax(86px,1fr));gap:8px}',
-			'.h5fan-temp-item{min-width:0;padding:8px 10px;border-radius:8px;background:rgba(127,127,127,.055)}.h5fan-temp-label{font-size:11px;color:var(--text-color-medium,#777);white-space:nowrap}',
+			'.h5fan-temp-item{position:relative;min-width:0;padding:8px 10px;border-radius:8px;background:rgba(127,127,127,.055)}',
+			'.h5fan-temp-label{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:11px;color:var(--text-color-medium,#777)}',
+			'.h5fan-temp-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+			'.h5fan-temp-badge{display:none;flex:none;padding:1px 6px;border-radius:999px;font-size:9px;font-weight:600;background:rgba(85,168,255,.16);color:var(--fan-blue)}',
+			'.h5fan-temp-item.active .h5fan-temp-badge{display:inline-block}',
 			'.h5fan-temp-item.active{background:rgba(85,168,255,.11);box-shadow:inset 0 0 0 1px rgba(85,168,255,.32)}.h5fan-temp-item.active .h5fan-temp-label{color:var(--fan-blue)}',
 			'.h5fan-temp-value{margin-top:4px;font-size:17px;font-weight:650;color:var(--text-color-high,#222);white-space:nowrap}.h5fan-temp-hint{margin-top:3px;font-size:10px;color:var(--text-color-low,#888);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
 			'.h5fan-section{margin:0 0 16px;padding:16px;border:1px solid var(--border-color-medium,#d8d8d8);border-radius:12px;background:var(--background-color-high,#fff)}',
@@ -136,7 +140,10 @@ return view.extend({
 
 	temperatureItem: function(id, title) {
 		return E('div', { 'class': 'h5fan-temp-item', id: id }, [
-			E('div', { 'class': 'h5fan-temp-label' }, title),
+			E('div', { 'class': 'h5fan-temp-label' }, [
+				E('span', { 'class': 'h5fan-temp-name' }, title),
+				E('span', { 'class': 'h5fan-temp-badge' }, _('Priority'))
+			]),
 			E('div', { 'class': 'h5fan-temp-value', id: id + '-value' }, _('Loading…')),
 			E('div', { 'class': 'h5fan-temp-hint', id: id + '-hint' }, '')
 		]);
@@ -661,10 +668,14 @@ return view.extend({
 				if (hidden) hidden.value = value;
 			}
 			return E('div', { 'class': 'h5fan-slider' }, [
-				E('input', { id: rangeId, type: 'range', min: 0, max: 255, step: 1, value: value, oninput: function(ev) { sync(ev.target.value, ev.target); } }),
-				E('input', { id: numberId, type: 'number', min: 0, max: 255, step: 1, value: value, oninput: function(ev) { sync(ev.target.value, ev.target); } }),
+				E('input', { id: rangeId, type: 'range', min: 0, max: 255, step: 1, value: value, input: function(ev) { sync(ev.target.value, ev.target); } }),
+				E('input', { id: numberId, type: 'number', min: 0, max: 255, step: 1, value: value, input: function(ev) { sync(ev.target.value, ev.target); } }),
 				E('input', { id: id, name: id, type: 'hidden', value: value })
 			]);
+		};
+		option.formvalue = function(sectionId) {
+			var elem = document.getElementById(this.cbid(sectionId));
+			return elem ? elem.value : null;
 		};
 	},
 

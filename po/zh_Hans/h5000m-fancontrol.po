@@ -357,3 +357,6 @@ msgstr "风扇曲线"
 
 msgid "Hysteresis window"
 msgstr "迟滞窗口"
+
+msgid "Priority"
+msgstr "优先"

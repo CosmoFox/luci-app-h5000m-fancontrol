@@ -275,6 +275,20 @@ cooling_level_for_state() {
 	echo "$value"
 }
 
+# Report the kernel emergency floors as map steps when the firmware cooling
+# maps are unavailable (patched firmware) or unreadable (minimal busybox).
+synthesize_floor_steps() {
+	local steps="" threshold state value
+	while [ $# -ge 2 ]; do
+		threshold="$1"; state="$2"; shift 2
+		value="$(cooling_level_for_state "$state" 2>/dev/null || true)"
+		is_uint "$value" || continue
+		[ -n "$steps" ] && steps="$steps,"
+		steps="$steps${threshold}=$value"
+	done
+	[ -n "$steps" ] && THERMAL_MAP_STEPS="$steps"
+}
+
 set_thermal_floor() {
 	local dev dt fan_phandle map map_phandle map_state trip_ref trip threshold hyst trip_phandle value maps_examined map_found step_value
 	THERMAL_FLOOR=0
@@ -323,8 +337,10 @@ set_thermal_floor() {
 				done
 		done
 	fi
-	[ -n "$MAP_STEP_RAW" ] && \
-		THERMAL_MAP_STEPS="$(printf '%s\n' $MAP_STEP_RAW | sort -t= -k1,1n -u | paste -sd, -)"
+	if [ -n "$MAP_STEP_RAW" ]; then
+		THERMAL_MAP_STEPS="$(printf '%s\n' $MAP_STEP_RAW | sort -t= -k1,1n -u | tr '\n' ',')"
+		THERMAL_MAP_STEPS="${THERMAL_MAP_STEPS%,}"
+	fi
 	if [ "$maps_examined" -eq 1 ] && [ "$map_found" -eq 0 ]; then
 		THERMAL_OWNER="userspace"
 		# The old 40 C active map made useful low-speed control impossible. In
@@ -336,6 +352,7 @@ set_thermal_floor() {
 			value="$(cooling_level_for_state "$THERMAL_STATE" 2>/dev/null || true)"
 			if is_uint "$value"; then THERMAL_FLOOR="$value"; else THERMAL_FLOOR=255; fi
 		fi
+		synthesize_floor_steps 83 2 113 3
 		return 0
 	fi
 	[ "$map_found" -eq 1 ] && THERMAL_OWNER="shared"
@@ -349,7 +366,8 @@ set_thermal_floor() {
 	fi
 	[ "$THERMAL_STATE" -gt 0 ] || return 0
 	value="$(cooling_level_for_state "$THERMAL_STATE" 2>/dev/null || true)"
-	if is_uint "$value"; then THERMAL_FLOOR="$value"; else THERMAL_FLOOR=255; fi
+	is_uint "$value" && THERMAL_FLOOR="$value" || THERMAL_FLOOR=255
+	[ -n "$THERMAL_MAP_STEPS" ] || synthesize_floor_steps 38 1 83 2 113 3
 }
 
 acquire_lock() {

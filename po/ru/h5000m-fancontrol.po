@@ -148,6 +148,9 @@ msgstr "Причина политики"
 msgid "Prevents repeated speed changes around a curve point."
 msgstr "Предотвращает повторяющиеся изменения скорости возле точки кривой."
 
+msgid "Priority"
+msgstr "Приоритет"
+
 msgid "Quiet"
 msgstr "Тихий"
 
