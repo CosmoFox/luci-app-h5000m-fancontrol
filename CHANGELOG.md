@@ -2,6 +2,33 @@
 
 🇬🇧 **English** | [🇷🇺 Русский](CHANGELOG.ru.md) | [🇨🇳 简体中文](CHANGELOG.zh-CN.md)
 
+## 2.3.1
+
+- Redesigned the LuCI fan-curve page: the curve editor now has an interactive
+  canvas chart that plots the fan curve and the firmware floor map against
+  temperature, plus a marker for the current temperature with the requested
+  and applied PWM, the hysteresis band and a colour legend. The chart animates
+  smoothly, follows dark/light LuCI themes and becomes a stacked layout on
+  narrow screens.
+- The temperature card now tags the sensor that is currently driving the fan
+  speed with a "Priority" badge.
+- Fixed manual-control saves so the slider value is always picked up when the
+  form is submitted.
+- The daemon now reports the kernel emergency floors as floor-map steps even
+  when the firmware cooling maps are missing (patched device tree) or
+  unreadable (minimal busybox), and builds `kernel_floor_levels` without
+  trailing commas in edge cases.
+- Release automation: `scripts/release.sh` cuts stable (`vX.Y.Z` from `main`)
+  and beta (`vX.Y.Z-beta.N` from `beta`) tags; the release workflow checks the
+  tag against `PKG_VERSION`, publishes `-beta.N` tags as GitHub prereleases and
+  refuses tags whose commit is not on the matching branch. Full guide:
+  `docs/RELEASING.md`.
+- GitHub Actions release builds now cache the OpenWrt SDK archive (keyed on its
+  sha256), so the multi-hundred-MB SDK is no longer downloaded on every run.
+- Documentation (README and changelog) is maintained in English, Russian and
+  Simplified Chinese, and the Chinese UI translation is kept in sync with the
+  new strings.
+
 ## 2.3.0
 
 - The status output now reports the firmware fan map (`kernel_floor_levels`,
