@@ -31,6 +31,24 @@ return view.extend({
 		return data;
 	},
 
+	fetchVersion: function() {
+		return fs.exec(UPDATE_BIN, [ 'version' ]).then(L.bind(function(res) {
+			var d = {}; try { d = JSON.parse((res && res.stdout) || '{}'); } catch (e) {}
+			var node = document.getElementById('h5fan-build');
+			if (node) {
+				if (d.installed) {
+					node.style.display = '';
+					node.textContent = 'v' + d.installed;
+				} else {
+					node.style.display = 'none';
+				}
+			}
+		}, this)).catch(L.bind(function() {
+			var node = document.getElementById('h5fan-build');
+			if (node) node.style.display = 'none';
+		}, this));
+	},
+
 	toNum: function(value, fallback) {
 		var n = parseInt(value, 10);
 		return isNaN(n) ? fallback : n;
@@ -110,7 +128,7 @@ return view.extend({
 			'.h5fan-temp-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
 			'.h5fan-temp-badge{display:none;flex:none;padding:1px 6px;border-radius:999px;font-size:9px;font-weight:600;background:rgba(85,168,255,.16);color:var(--fan-blue)}',
 			'.h5fan-temp-item.active .h5fan-temp-badge{display:inline-block}',
-			'.h5fan-build{margin-top:10px;font-size:10px;color:var(--text-color-medium,#777);opacity:.6}',
+			'.h5fan-build{padding-left:6px;font-size:10px;color:var(--text-color-medium,#777);opacity:.6}',
 			'.h5fan-temp-item.active{background:rgba(85,168,255,.11);box-shadow:inset 0 0 0 1px rgba(85,168,255,.32)}.h5fan-temp-item.active .h5fan-temp-label{color:var(--fan-blue)}',
 			'.h5fan-temp-value{margin-top:4px;font-size:17px;font-weight:650;color:var(--text-color-high,#222);white-space:nowrap}.h5fan-temp-hint{margin-top:3px;font-size:10px;color:var(--text-color-low,#888);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
 			'.h5fan-section{margin:0 0 16px;padding:16px;border:1px solid var(--border-color-medium,#d8d8d8);border-radius:12px;background:var(--background-color-high,#fff)}',
@@ -172,13 +190,15 @@ return view.extend({
 	statusPanel: function() {
 		return E('div', {}, [
 			E('div', { 'class': 'h5fan-hero' }, [
-				E('div', {}, [ E('h2', _('Cooling management')), E('p', _('Automatically balances cooling and noise based on device temperatures.')) ]),
+				E('div', {}, [
+					E('h2', [ _('Cooling management'), E('span', { 'class': 'h5fan-build', id: 'h5fan-build' }, '') ]),
+					E('p', _('Automatically balances cooling and noise based on device temperatures.'))
+				]),
 				E('div', { 'class': 'h5fan-health', id: 'h5fan-health' }, _('Checking…'))
 			]),
 			E('div', { 'class': 'h5fan-grid' }, [
 				this.temperatureCard()
-			]),
-			E('div', { 'class': 'h5fan-build', id: 'h5fan-build' }, 'h5fan · v2.3.1')
+			])
 		]);
 	},
 
@@ -683,6 +703,8 @@ return view.extend({
 	updErrText: function(error, fallback) {
 		if (error === 'asset_pending')
 			return _('The update is still building on the server. Please wait about 15-20 minutes and try again.');
+		if (error === 'Could not reach GitHub')
+			return _('Could not check for updates. Please check the router\'s internet access.');
 		return error || fallback;
 	},
 
@@ -973,6 +995,7 @@ return view.extend({
 					new ResizeObserver(L.bind(function() { this.chartDraw(); }, this)).observe(wrap);
 				window.addEventListener('resize', L.bind(function() { this.chartDraw(); }, this));
 				this.updateStatus(data);
+				this.fetchVersion();
 			}, this), 0);
 			poll.add(L.bind(function() {
 				return this.fetchStatus().then(L.bind(function(next) { this.updateStatus(next); }, this));

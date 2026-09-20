@@ -85,6 +85,9 @@ msgstr "Только CPU"
 msgid "Could not check for updates"
 msgstr "Не удалось проверить обновления"
 
+msgid "Could not check for updates. Please check the router's internet access."
+msgstr "Не удалось проверить обновления. Проверьте доступ роутера в интернет."
+
 msgid "Current input: %s"
 msgstr "Текущий источник: %s"
 

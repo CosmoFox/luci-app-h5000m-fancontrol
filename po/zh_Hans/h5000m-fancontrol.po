@@ -154,6 +154,9 @@ msgstr "仅 CPU"
 msgid "Could not check for updates"
 msgstr "无法检查更新"
 
+msgid "Could not check for updates. Please check the router's internet access."
+msgstr "无法检查更新。请检查路由器的互联网连接。"
+
 msgid "Checking service…"
 msgstr "正在检查服务…"
 

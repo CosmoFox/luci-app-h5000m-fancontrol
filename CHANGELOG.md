@@ -12,6 +12,8 @@
   narrow screens.
 - The temperature card now tags the sensor that is currently driving the fan
   speed with a "Priority" badge.
+- The page title now shows the installed app version inline next to the title
+  (e.g. "Cooling management v2.3.1").
 - Fixed manual-control saves so the slider value is always picked up when the
   form is submitted.
 - The daemon now reports the kernel emergency floors as floor-map steps even
@@ -31,11 +33,14 @@
   in the background with a progress indicator; the application package and,
   when published, the Russian translation (`luci-i18n-h5000m-fancontrol-ru`)
   are installed together.
-- The updater reaches `api.github.com` directly first and falls back to a
-  local clash/mihomo HTTP proxy when the direct path is blocked. By default
+- The updater checks GitHub releases over the router's regular internet
+  connection (no proxy). By default
   only stable releases are offered - `-beta.N` prereleases can be opted into
   with the "Offer beta releases" checkbox, which also shows a warning that
   beta builds may be unstable and are not recommended for daily use.
+- Update-check failures are now explained in the interface language: when the
+  updater cannot reach GitHub, the page says it could not check for updates and
+  asks to verify the router's internet access.
 - After a successful update the browser re-fetches the new page scripts and
   the session is ended once (a single re-login), so the updated interface and
   RPC permissions take effect immediately.

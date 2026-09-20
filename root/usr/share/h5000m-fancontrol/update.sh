@@ -35,36 +35,6 @@ installed_version() {
 	esac
 }
 
-# --- HTTP(S) fetch with a local proxy fallback ---
-# On routers whose direct path is filtered (e.g. whitelist rules in Russia), a
-# local clash/mihomo can still reach GitHub. Try direct first, then re-run via
-# the local mixed-port. Mirrors the approach used by luci-app-5gmodem.
-
-# HTTP port of a local clash/mihomo; empty and exit 1 if there is none.
-net_proxy_port() {
-	_np_p=$(sed -n 's/^ *\(mixed-port\|port\) *: *\([0-9]*\).*/\2/p' \
-		/opt/clash/config.yaml /etc/clash/config.yaml 2>/dev/null | head -1)
-	case "$_np_p" in ''|0) ;; *) printf '%s' "$_np_p"; return 0 ;; esac
-	command -v curl >/dev/null 2>&1 || return 1
-	_np_s=$(sed -n "s/^ *secret *: *[\"']*\([^\"' ]*\).*/\1/p" \
-		/opt/clash/config.yaml /etc/clash/config.yaml 2>/dev/null | head -1)
-	_np_capi() {
-		if [ -n "$_np_s" ]; then
-			curl -s -m 3 -H "Authorization: Bearer $_np_s" "$@" 2>/dev/null
-		else
-			curl -s -m 3 "$@" 2>/dev/null
-		fi
-	}
-	_np_r=$(_np_capi "http://127.0.0.1:9090/configs" | jsonfilter -e '@["mixed-port"]' 2>/dev/null)
-	case "$_np_r" in ''|*[!0-9]*) return 1 ;; esac
-	if [ "$_np_r" = "0" ]; then
-		_np_capi -X PATCH "http://127.0.0.1:9090/configs" -d '{"mixed-port":7895}' -o /dev/null || return 1
-		_np_r=7895
-		logger -t h5000m-fancontrol "net: direct path is blocked - opened clash mixed-port 7895 (local API, 127.0.0.1 only)"
-	fi
-	printf '%s' "$_np_r"
-}
-
 # net_fetch <timeout_s> <url> [outfile] - to file when given, else to stdout.
 net_fetch() {
 	_nf_t="$1"; _nf_u="$2"; _nf_o="$3"
@@ -75,27 +45,6 @@ net_fetch() {
 		_nf_b=$(wget -qO- --timeout="$_nf_t" "$_nf_u" 2>/dev/null)
 		[ -n "$_nf_b" ] && { printf '%s' "$_nf_b"; return 0; }
 	fi
-	_nf_p=$(net_proxy_port) || return 1
-	[ -n "$_nf_p" ] || return 1
-	logger -t h5000m-fancontrol "net: direct fetch failed - retrying via local proxy 127.0.0.1:$_nf_p"
-	if command -v curl >/dev/null 2>&1; then
-		if [ -n "$_nf_o" ]; then
-			curl -fsSL -m "$_nf_t" -x "http://127.0.0.1:$_nf_p" -o "$_nf_o" "$_nf_u" 2>/dev/null \
-				&& [ -s "$_nf_o" ] && return 0
-			rm -f "$_nf_o" 2>/dev/null; return 1
-		fi
-		_nf_b=$(curl -fsSL -m "$_nf_t" -x "http://127.0.0.1:$_nf_p" "$_nf_u" 2>/dev/null)
-		[ -n "$_nf_b" ] && { printf '%s' "$_nf_b"; return 0; }
-		return 1
-	fi
-	if [ -n "$_nf_o" ]; then
-		http_proxy="http://127.0.0.1:$_nf_p" https_proxy="http://127.0.0.1:$_nf_p" \
-			wget -qO "$_nf_o" --timeout="$_nf_t" "$_nf_u" 2>/dev/null && [ -s "$_nf_o" ] && return 0
-		rm -f "$_nf_o" 2>/dev/null; return 1
-	fi
-	_nf_b=$(http_proxy="http://127.0.0.1:$_nf_p" https_proxy="http://127.0.0.1:$_nf_p" \
-		wget -qO- --timeout="$_nf_t" "$_nf_u" 2>/dev/null)
-	[ -n "$_nf_b" ] && { printf '%s' "$_nf_b"; return 0; }
 	return 1
 }
 

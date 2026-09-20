@@ -89,9 +89,8 @@ published, the Russian interface (`luci-i18n-h5000m-fancontrol-ru`) for the
 router's package manager (`.apk` on SNAPSHOT/apk, `.ipk` on opkg) and installs
 them in the background with a progress indicator.
 
-The updater first reaches `api.github.com` directly; if the direct path is
-filtered, it retries through a local clash/mihomo HTTP proxy (mixed-port).
-After a successful update the page reloads and you sign in again, so the updated interface and RPC permissions
+The updater checks GitHub releases over the router's regular internet
+connection (no proxy). After a successful update the page reloads and you sign in again, so the updated interface and RPC permissions
 apply immediately. Only release assets from this repository are downloaded —
 no device data is uploaded.
 
@@ -209,9 +208,8 @@ git apply package/luci-app-h5000m-fancontrol/openwrt-patches/h5000m-userspace-fa
 роутера (`.apk` на SNAPSHOT/apk, `.ipk` на opkg) и устанавливает их в фоне
 с индикатором прогресса.
 
-Обновление сначала обращается к `api.github.com` напрямую; если прямой путь
-блокируется, запрос повторяется через локальный HTTP-прокси clash/mihomo
-(mixed-port). После успешного обновления страница перезагружается, и вы входите заново, чтобы обновлённый
+Обновление обращается к GitHub через штатное интернет-соединение роутера
+(без прокси). После успешного обновления страница перезагружается, и вы входите заново, чтобы обновлённый
 интерфейс и новые RPC-права применились сразу. Скачиваются только ассеты
 релизов этого репозитория — данные устройства никуда не отправляются.
 
@@ -328,8 +326,7 @@ git apply package/luci-app-h5000m-fancontrol/openwrt-patches/h5000m-userspace-fa
 已发布时一并下载俄语界面包（`luci-i18n-h5000m-fancontrol-ru`），随后在
 后台安装并显示进度。
 
-更新程序优先直连 `api.github.com`；若直连被阻断，则通过本地
-clash/mihomo HTTP 代理（mixed-port）重试。更新成功后页面会刷新并需要
+更新程序通过路由器的常规网络连接访问 GitHub（不使用代理）。更新成功后页面会刷新并需要
 重新登录一次，以便新界面和 RPC 权限立即生效。仅下载本仓库的发布资源，
 不向任何地方上传设备数据。
 
