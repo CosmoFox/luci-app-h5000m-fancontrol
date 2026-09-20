@@ -43,6 +43,12 @@ return view.extend({
 			node.textContent = value;
 	},
 
+	syncTitle: function(id) {
+		var node = document.getElementById(id);
+		if (node)
+			node.title = node.textContent || '';
+	},
+
 	formatTemp: function(value) {
 		return value !== undefined && value !== null && value !== '' ? _('%s °C').format(value) : _('Unavailable');
 	},
@@ -101,16 +107,22 @@ return view.extend({
 			'.h5fan-temp-value{margin-top:4px;font-size:17px;font-weight:650;color:var(--text-color-high,#222);white-space:nowrap}.h5fan-temp-hint{margin-top:3px;font-size:10px;color:var(--text-color-low,#888);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
 			'.h5fan-section{margin:0 0 16px;padding:16px;border:1px solid var(--border-color-medium,#d8d8d8);border-radius:12px;background:var(--background-color-high,#fff)}',
 			'.h5fan-section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.h5fan-section h3{margin:0}',
-			'.h5fan-badge{padding:4px 8px;border-radius:6px;background:rgba(85,168,255,.12);color:var(--fan-blue);font-size:11px}',
-			'.h5fan-curve-layout{display:grid;grid-template-columns:minmax(300px,1fr) 190px;gap:14px}.h5fan-canvas{width:100%;height:220px;display:block;border:1px solid rgba(54,201,143,.13);border-radius:12px;background:#f7faf9}',
-			'.h5fan-side{display:grid;gap:10px}.h5fan-chip{padding:11px;border:1px solid var(--border-color-low,#ddd);border-radius:8px;background:rgba(127,127,127,.045)}',
+			'.h5fan-badge{padding:4px 8px;border-radius:6px;background:rgba(85,168,255,.12);color:var(--fan-blue);font-size:11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+			'.h5fan-curve-layout{display:grid;grid-template-columns:minmax(260px,1fr) 190px;gap:14px}',
+			'.h5fan-canvas-wrap{position:relative;aspect-ratio:2.9/1;min-height:170px;max-height:330px;border:1px solid rgba(54,201,143,.16);border-radius:12px;overflow:hidden}.h5fan-canvas{width:100%;height:100%;display:block}',
+			'.h5fan-side{display:grid;gap:10px;grid-template-rows:repeat(3,1fr)}',
+			'.h5fan-chip{display:flex;flex-direction:column;justify-content:center;min-height:0;overflow:hidden;padding:11px;border:1px solid var(--border-color-low,#ddd);border-radius:8px;background:rgba(127,127,127,.045)}',
 			'.h5fan-chip span{display:block;font-size:11px;color:var(--text-color-medium,#777);margin-bottom:5px}.h5fan-chip strong{font-size:18px}',
+			'.h5fan-chip strong.h5fan-reason{font-size:13px;line-height:1.35;min-height:2.7em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}',
 			'.h5fan-note{margin-top:12px;padding:10px 12px;border-left:3px solid var(--fan-blue);background:rgba(85,168,255,.07);color:var(--text-color-medium,#666);font-size:12px}',
+			'.h5fan-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-size:11px;color:var(--text-color-medium,#777)}',
+			'.h5fan-legend .sw{display:inline-block;vertical-align:middle;margin-right:6px}.h5fan-legend .sw-curve{width:16px;height:0;border-top:3px solid var(--fan-green);border-radius:2px}.h5fan-legend .sw-floor{width:16px;height:0;border-top:2px dashed var(--fan-amber)}',
+			'.h5fan-legend .sw-applied{width:9px;height:9px;border-radius:50%;background:var(--fan-blue);box-shadow:0 0 0 3px rgba(85,168,255,.22)}.h5fan-legend .sw-hyst{width:14px;height:10px;border-radius:3px;background:rgba(85,168,255,.14);box-shadow:inset 0 0 0 1px rgba(85,168,255,.35)}',
 			'.h5fan-slider{display:flex;align-items:center;gap:10px;max-width:480px}.h5fan-slider input[type=range]{flex:1;min-width:190px}.h5fan-slider input[type=number]{width:84px}',
 			'@media(max-width:1050px){.h5fan-grid{grid-template-columns:repeat(2,minmax(145px,1fr))}.h5fan-card.temperatures{grid-column:span 2}.h5fan-temp-grid{grid-template-columns:repeat(4,minmax(72px,1fr))}}',
-			'@media(max-width:750px){.h5fan-curve-layout{grid-template-columns:1fr}.h5fan-side{grid-template-columns:repeat(3,1fr)}}',
+			'@media(max-width:750px){.h5fan-curve-layout{grid-template-columns:1fr}.h5fan-side{grid-template-columns:repeat(3,1fr);grid-template-rows:1fr}}',
 			'@media(max-width:520px){.h5fan-hero{display:block}.h5fan-health{margin-top:12px}}',
-			'@media(max-width:520px){.h5fan-grid{grid-template-columns:1fr}.h5fan-card.temperatures{grid-column:span 1}.h5fan-temp-grid{grid-template-columns:repeat(2,minmax(110px,1fr))}.h5fan-side{grid-template-columns:1fr}.h5fan-slider{align-items:stretch;flex-direction:column}.h5fan-slider input[type=range]{width:100%;min-width:0}}'
+			'@media(max-width:520px){.h5fan-grid{grid-template-columns:1fr}.h5fan-card.temperatures{grid-column:span 1}.h5fan-temp-grid{grid-template-columns:repeat(2,minmax(110px,1fr))}.h5fan-side{grid-template-columns:1fr;grid-template-rows:repeat(3,1fr)}.h5fan-slider{align-items:stretch;flex-direction:column}.h5fan-slider input[type=range]{width:100%;min-width:0}}'
 		].join(''));
 	},
 
@@ -167,63 +179,421 @@ return view.extend({
 		return points;
 	},
 
-	drawCurve: function(data) {
-		var canvas = document.getElementById('h5fan-curve'), points = this.parseCurve(data.curve_data);
-		var ratio, width, height, ctx, left = 24, top = 28, right = 24, bottom = 32, plotW, plotH;
-		var minT = 20, maxT = 110, x, y, background, gradient, controlTemp, requested, markerX, markerY, markerText, markerWidth, markerLeft;
-		if (!canvas || points.length < 2) return;
-		width = canvas.clientWidth || 700; height = canvas.clientHeight || 220; ratio = window.devicePixelRatio || 1;
-		canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio);
-		ctx = canvas.getContext('2d'); ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-		plotW = width - left - right; plotH = height - top - bottom;
-		x = function(temp) { return left + Math.max(0, Math.min(1, (temp - minT) / (maxT - minT))) * plotW; };
-		y = function(percent) { return top + (100 - Math.max(0, Math.min(100, percent))) * plotH / 100; };
-		background = ctx.createLinearGradient(0, 0, width, height); background.addColorStop(0, '#fbfdfc'); background.addColorStop(1, '#f1f7f4');
-		ctx.fillStyle = background; ctx.fillRect(0, 0, width, height);
-		ctx.strokeStyle = 'rgba(74,104,91,.10)'; ctx.lineWidth = 1; ctx.beginPath();
-		[25, 50, 75].forEach(function(level) { ctx.moveTo(left, y(level)); ctx.lineTo(left + plotW, y(level)); });
-		ctx.stroke();
-		gradient = ctx.createLinearGradient(0, top, 0, top + plotH); gradient.addColorStop(0, 'rgba(54,201,143,.30)'); gradient.addColorStop(1, 'rgba(54,201,143,.025)');
-		ctx.beginPath(); ctx.moveTo(x(points[0].temp), top + plotH);
-		points.forEach(function(p) { ctx.lineTo(x(p.temp), y(p.percent)); });
-		ctx.lineTo(x(points[points.length - 1].temp), top + plotH); ctx.closePath(); ctx.fillStyle = gradient; ctx.fill();
-		ctx.beginPath(); points.forEach(function(p, index) { if (index) ctx.lineTo(x(p.temp), y(p.percent)); else ctx.moveTo(x(p.temp), y(p.percent)); });
-		ctx.save(); ctx.strokeStyle = '#31ba80'; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.shadowColor = 'rgba(49,186,128,.25)'; ctx.shadowBlur = 8; ctx.stroke(); ctx.restore();
-		controlTemp = this.toNum(data.control_temp, NaN); requested = this.toNum(data.requested_pwm, NaN);
-		if (!isNaN(controlTemp) && !isNaN(requested)) {
-			markerX = x(controlTemp); markerY = y(requested * 100 / 255); markerText = Math.round(controlTemp) + '°C · ' + Math.round(requested * 100 / 255) + '%';
-			ctx.font = '600 11px sans-serif'; markerWidth = ctx.measureText(markerText).width + 18; markerLeft = Math.max(8, Math.min(width - markerWidth - 8, markerX - markerWidth / 2));
-			ctx.fillStyle = '#24342d'; ctx.fillRect(markerLeft, Math.max(6, markerY - 31), markerWidth, 23);
-			ctx.fillStyle = '#fff'; ctx.textBaseline = 'middle'; ctx.fillText(markerText, markerLeft + 9, Math.max(6, markerY - 31) + 11.5);
-			ctx.beginPath(); ctx.arc(markerX, markerY, 6, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#31ba80'; ctx.lineWidth = 3; ctx.stroke();
+	chartColor: function(str) {
+		str = (str || '').trim();
+		var m = /^#([0-9a-f]{3})$/i.exec(str), s;
+		if (m) {
+			s = m[1];
+			return [parseInt(s.charAt(0) + s.charAt(0), 16), parseInt(s.charAt(1) + s.charAt(1), 16), parseInt(s.charAt(2) + s.charAt(2), 16)];
 		}
-		ctx.fillStyle = '#7d9188'; ctx.font = '11px sans-serif'; ctx.textBaseline = 'top';
-		[35, 60, 85].forEach(function(t) { ctx.fillText(t + '°', x(t) - 9, top + plotH + 10); });
+		m = /^#([0-9a-f]{6})$/i.exec(str);
+		if (m) {
+			s = m[1];
+			return [parseInt(s.substring(0, 2), 16), parseInt(s.substring(2, 4), 16), parseInt(s.substring(4, 6), 16)];
+		}
+		m = /rgba?\(([^)]+)\)/i.exec(str);
+		if (m) {
+			var p = m[1].split(',');
+			return [this.toNum(p[0], 255), this.toNum(p[1], 255), this.toNum(p[2], 255)];
+		}
+		return [255, 255, 255];
+	},
+
+	chartRgba: function(str, a) {
+		var c = this.chartColor(str);
+		return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')';
+	},
+
+	chartLum: function(str) {
+		var c = this.chartColor(str);
+		return (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255;
+	},
+
+	chartPalette: function(canvas) {
+		var cs = getComputedStyle(canvas);
+		function v(name, fb) { var s = cs.getPropertyValue(name); s = (s || '').trim(); return s || fb; }
+		var panel = v('--background-color-high', '#ffffff');
+		return {
+			dark: this.chartLum(panel) < 0.45,
+			panel: panel,
+			green: v('--fan-green', '#36c98f'),
+			blue: v('--fan-blue', '#55a8ff'),
+			amber: v('--fan-amber', '#f0aa46'),
+			red: v('--fan-red', '#ef6262'),
+			medium: v('--text-color-medium', '#666666'),
+			low: v('--text-color-low', '#888888'),
+			high: v('--text-color-high', '#222222')
+		};
+	},
+
+	curveAt: function(points, temp) {
+		if (!points.length) return NaN;
+		if (temp <= points[0].temp) return points[0].percent;
+		for (var i = 1; i < points.length; i++) {
+			if (temp <= points[i].temp) {
+				var a = points[i - 1], b = points[i];
+				if (b.temp === a.temp) return b.percent;
+				return a.percent + (b.percent - a.percent) * (temp - a.temp) / (b.temp - a.temp);
+			}
+		}
+		return points[points.length - 1].percent;
+	},
+
+	floorAt: function(levels, temp) {
+		var value = 0;
+		for (var i = 0; i < levels.length; i++)
+			if (temp >= levels[i].temp) value = levels[i].pwm;
+		return value;
+	},
+
+	chartColorForTemp: function(P, temp) {
+		return temp < 60 ? P.green : (temp < 80 ? P.amber : P.red);
+	},
+
+	chartRoundRect: function(ctx, x, y, w, h, r) {
+		ctx.beginPath();
+		ctx.moveTo(x + r, y);
+		ctx.arcTo(x + w, y, x + w, y + h, r);
+		ctx.arcTo(x + w, y + h, x, y + h, r);
+		ctx.arcTo(x, y + h, x, y, r);
+		ctx.arcTo(x, y, x + w, y, r);
+		ctx.closePath();
+	},
+
+	chartUpdate: function(data) {
+		this.chartData = data;
+		var ct = this.toNum(data.control_temp, NaN);
+		var req = this.toNum(data.requested_pwm, NaN);
+		var app = this.toNum(data.applied_pwm, this.toNum(data.pwm_value, NaN));
+		var target = (isNaN(ct) || isNaN(req) || isNaN(app)) ? null : { ct: ct, req: req * 100 / 255, app: app * 100 / 255 };
+		var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		if (!target || !this.chartMarker || reduced) {
+			this.chartMarker = target;
+			this.chartTarget = target;
+			if (this.chartRaf) { window.cancelAnimationFrame(this.chartRaf); this.chartRaf = 0; }
+			this.chartDraw();
+			return;
+		}
+		this.chartFrom = { ct: this.chartMarker.ct, req: this.chartMarker.req, app: this.chartMarker.app };
+		this.chartTarget = target;
+		this.chartAnimStart = 0;
+		if (!this.chartRaf) {
+			if (!this.chartTickFn)
+				this.chartTickFn = L.bind(function(ts) { this.chartTick(ts); }, this);
+			this.chartRaf = window.requestAnimationFrame(this.chartTickFn);
+		}
+	},
+
+	chartTick: function(ts) {
+		if (!this.chartAnimStart) this.chartAnimStart = ts;
+		var p = this.clamp((ts - this.chartAnimStart) / 320, 0, 1);
+		var e = 1 - Math.pow(1 - p, 3);
+		var f = this.chartFrom, t = this.chartTarget;
+		this.chartMarker = { ct: f.ct + (t.ct - f.ct) * e, req: f.req + (t.req - f.req) * e, app: f.app + (t.app - f.app) * e };
+		this.chartDraw();
+		if (p < 1) {
+			this.chartRaf = window.requestAnimationFrame(this.chartTickFn);
+		} else {
+			this.chartRaf = 0;
+			this.chartMarker = this.chartTarget;
+			this.chartDraw();
+		}
+	},
+
+	chartDraw: function() {
+		var canvas = document.getElementById('h5fan-curve');
+		if (!canvas || !this.chartData) return;
+		var self = this;
+		var data = this.chartData, points = this.parseCurve(data.curve_data);
+		var w = canvas.clientWidth || 600, h = canvas.clientHeight || 220;
+		var ratio = window.devicePixelRatio || 1;
+		var bw = Math.round(w * ratio), bh = Math.round(h * ratio);
+		if (canvas.width !== bw || canvas.height !== bh) { canvas.width = bw; canvas.height = bh; }
+		var ctx = canvas.getContext('2d');
+		ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+		var P = this.chartPalette(canvas);
+		function R(str, a) { return self.chartRgba(str, a); }
+		var minT = 20, maxT = 110;
+		var font = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+		var narrow = w < 460;
+		var left = narrow ? 30 : 38, right = narrow ? 10 : 16, top = 16, bottom = narrow ? 22 : 26;
+		var plotW = w - left - right, plotH = h - top - bottom;
+		if (plotW < 40 || plotH < 40) return;
+		function X(t) { return left + Math.max(0, Math.min(1, (t - minT) / (maxT - minT))) * plotW; }
+		function Y(p) { return top + (100 - Math.max(0, Math.min(100, p))) / 100 * plotH; }
+
+		ctx.clearRect(0, 0, w, h);
+		ctx.fillStyle = P.panel;
+		ctx.fillRect(0, 0, w, h);
+		var tint = ctx.createLinearGradient(0, 0, 0, h);
+		tint.addColorStop(0, R(P.green, P.dark ? 0.07 : 0.05));
+		tint.addColorStop(1, R(P.green, P.dark ? 0.015 : 0.012));
+		ctx.fillStyle = tint;
+		ctx.fillRect(0, 0, w, h);
+
+		var yTicks = plotH < 130 ? [0, 50, 100] : [0, 25, 50, 75, 100];
+		ctx.font = (narrow ? 9 : 10) + 'px ' + font;
+		ctx.textAlign = 'right';
+		ctx.textBaseline = 'middle';
+		yTicks.forEach(function(level) {
+			var y = Y(level);
+			ctx.strokeStyle = R(P.medium, (level === 0 || level === 100) ? 0.30 : 0.14);
+			ctx.lineWidth = 1;
+			ctx.beginPath();
+			ctx.moveTo(left, y);
+			ctx.lineTo(left + plotW, y);
+			ctx.stroke();
+			ctx.fillStyle = P.low;
+			ctx.fillText(level + '%', left - 6, y);
+		});
+
+		var pxPerDeg = plotW / (maxT - minT);
+		var stepChoices = [10, 15, 20, 30], step = 30;
+		for (var si = 0; si < stepChoices.length; si++) {
+			if (stepChoices[si] * pxPerDeg >= 52) { step = stepChoices[si]; break; }
+		}
+		ctx.textAlign = 'center';
+		ctx.textBaseline = 'top';
+		for (var t = Math.ceil(minT / step) * step; t <= maxT; t += step) {
+			var gx = X(t);
+			ctx.strokeStyle = R(P.medium, 0.08);
+			ctx.lineWidth = 1;
+			ctx.beginPath();
+			ctx.moveTo(gx, top);
+			ctx.lineTo(gx, top + plotH);
+			ctx.stroke();
+			ctx.fillStyle = P.low;
+			ctx.fillText(t + '°', gx, top + plotH + 7);
+		}
+
+		if (points.length < 2) {
+			ctx.fillStyle = P.low;
+			ctx.font = '12px ' + font;
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			ctx.fillText('No curve data', left + plotW / 2, top + plotH / 2);
+			return;
+		}
+
+		var m = this.chartMarker;
+		var ct = m ? m.ct : this.toNum(data.control_temp, NaN);
+		var hyst = this.toNum(data.hysteresis, 0);
+		if (data.mode === 'auto' && hyst > 0 && !isNaN(ct)) {
+			var bx = X(ct), bw2 = X(ct + hyst) - bx;
+			ctx.fillStyle = R(P.blue, 0.09);
+			ctx.fillRect(bx, top, bw2, plotH);
+			ctx.strokeStyle = R(P.blue, 0.35);
+			ctx.lineWidth = 1;
+			ctx.setLineDash([2, 3]);
+			ctx.beginPath();
+			ctx.moveTo(bx + bw2, top);
+			ctx.lineTo(bx + bw2, top + plotH);
+			ctx.stroke();
+			ctx.setLineDash([]);
+		}
+
+		var levels = this.parseFloors(data.kernel_floor_levels);
+		if (levels.length) {
+			var samples = [], st;
+			for (st = minT; st <= maxT; st += 2) {
+				var cv = this.curveAt(points, st), fv = this.floorAt(levels, st) * 100 / 255;
+				samples.push({ t: st, cv: cv, env: Math.max(cv, fv) });
+			}
+			ctx.beginPath();
+			samples.forEach(function(s, i) { if (i) ctx.lineTo(X(s.t), Y(s.env)); else ctx.moveTo(X(s.t), Y(s.env)); });
+			for (var i2 = samples.length - 1; i2 >= 0; i2--) ctx.lineTo(X(samples[i2].t), Y(samples[i2].cv));
+			ctx.closePath();
+			ctx.fillStyle = R(P.amber, P.dark ? 0.16 : 0.12);
+			ctx.fill();
+
+			ctx.strokeStyle = R(P.amber, 0.85);
+			ctx.lineWidth = 2;
+			ctx.setLineDash([6, 4]);
+			var prevT = minT, prevV = this.floorAt(levels, minT) * 100 / 255;
+			for (var li = 0; li < levels.length; li++) {
+				var segEnd = Math.min(levels[li].temp, maxT);
+				if (prevV > 0 && segEnd > prevT) {
+					ctx.beginPath();
+					ctx.moveTo(X(prevT), Y(prevV));
+					ctx.lineTo(X(segEnd), Y(prevV));
+					ctx.stroke();
+				}
+				prevT = levels[li].temp;
+				prevV = levels[li].pwm * 100 / 255;
+				if (li === levels.length - 1 && prevV > 0 && maxT > prevT) {
+					ctx.beginPath();
+					ctx.moveTo(X(prevT), Y(prevV));
+					ctx.lineTo(X(maxT), Y(prevV));
+					ctx.stroke();
+				}
+			}
+			ctx.setLineDash([]);
+		}
+
+		ctx.beginPath();
+		ctx.moveTo(X(points[0].temp), top + plotH);
+		points.forEach(function(p) { ctx.lineTo(X(p.temp), Y(p.percent)); });
+		ctx.lineTo(X(points[points.length - 1].temp), top + plotH);
+		ctx.closePath();
+		var area = ctx.createLinearGradient(0, top, 0, top + plotH);
+		area.addColorStop(0, R(P.green, P.dark ? 0.20 : 0.26));
+		area.addColorStop(1, R(P.green, 0.02));
+		ctx.fillStyle = area;
+		ctx.fill();
+
+		var stroke = ctx.createLinearGradient(X(minT), 0, X(maxT), 0);
+		stroke.addColorStop(0, P.green);
+		stroke.addColorStop(0.5, P.green);
+		stroke.addColorStop(0.72, P.amber);
+		stroke.addColorStop(1, P.red);
+		ctx.beginPath();
+		points.forEach(function(p, index) { if (index) ctx.lineTo(X(p.temp), Y(p.percent)); else ctx.moveTo(X(p.temp), Y(p.percent)); });
+		ctx.save();
+		ctx.strokeStyle = stroke;
+		ctx.lineWidth = narrow ? 2.5 : 3;
+		ctx.lineJoin = 'round';
+		ctx.lineCap = 'round';
+		ctx.shadowColor = R(P.green, P.dark ? 0.35 : 0.22);
+		ctx.shadowBlur = 8;
+		ctx.stroke();
+		ctx.restore();
+
+		points.forEach(function(p) {
+			ctx.beginPath();
+			ctx.arc(X(p.temp), Y(p.percent), narrow ? 2.5 : 3, 0, Math.PI * 2);
+			ctx.fillStyle = P.panel;
+			ctx.fill();
+			ctx.strokeStyle = self.chartColorForTemp(P, p.temp);
+			ctx.lineWidth = 2;
+			ctx.stroke();
+		});
+
+		if (m && !isNaN(m.ct)) {
+			var mx = X(m.ct), myReq = Y(m.req), myApp = Y(m.app);
+			ctx.strokeStyle = R(P.medium, 0.40);
+			ctx.lineWidth = 1;
+			ctx.setLineDash([3, 3]);
+			ctx.beginPath();
+			ctx.moveTo(mx, top);
+			ctx.lineTo(mx, top + plotH);
+			ctx.stroke();
+			ctx.strokeStyle = R(P.blue, 0.65);
+			ctx.lineWidth = 1.5;
+			ctx.setLineDash([4, 4]);
+			ctx.beginPath();
+			ctx.moveTo(left, myApp);
+			ctx.lineTo(mx, myApp);
+			ctx.stroke();
+			ctx.setLineDash([]);
+
+			ctx.font = '600 ' + (narrow ? 9 : 10) + 'px ' + font;
+			ctx.textAlign = 'left';
+			ctx.textBaseline = 'bottom';
+			var guideLabel = Math.round(m.app) + '%';
+			ctx.lineWidth = 3;
+			ctx.strokeStyle = P.panel;
+			ctx.strokeText(guideLabel, left + 4, myApp - 3);
+			ctx.fillStyle = P.blue;
+			ctx.fillText(guideLabel, left + 4, myApp - 3);
+
+			if (Math.abs(myReq - myApp) > 0.5) {
+				ctx.strokeStyle = R(P.blue, 0.85);
+				ctx.lineWidth = 3;
+				ctx.lineCap = 'round';
+				ctx.beginPath();
+				ctx.moveTo(mx, myReq);
+				ctx.lineTo(mx, myApp);
+				ctx.stroke();
+			}
+
+			var tf = this.toNum(data.thermal_floor, 0);
+			if (tf > 0) {
+				ctx.beginPath();
+				ctx.arc(mx, Y(tf * 100 / 255), 3, 0, Math.PI * 2);
+				ctx.fillStyle = P.amber;
+				ctx.fill();
+				ctx.strokeStyle = P.panel;
+				ctx.lineWidth = 1.5;
+				ctx.stroke();
+			}
+
+			ctx.beginPath();
+			ctx.arc(mx, myReq, 4.5, 0, Math.PI * 2);
+			ctx.fillStyle = P.panel;
+			ctx.fill();
+			ctx.strokeStyle = P.green;
+			ctx.lineWidth = 2.5;
+			ctx.stroke();
+
+			ctx.beginPath();
+			ctx.arc(mx, myApp, 9, 0, Math.PI * 2);
+			ctx.fillStyle = R(P.blue, 0.18);
+			ctx.fill();
+			ctx.beginPath();
+			ctx.arc(mx, myApp, 5, 0, Math.PI * 2);
+			ctx.fillStyle = P.blue;
+			ctx.fill();
+			ctx.strokeStyle = P.panel;
+			ctx.lineWidth = 2;
+			ctx.stroke();
+
+			if (!narrow) {
+				var delta = Math.round(m.app) - Math.round(m.req);
+				var text = Math.round(m.ct) + '°C · ' + (delta > 0 ? Math.round(m.req) + '% → ' + Math.round(m.app) + '%' : Math.round(m.app) + '%');
+				if (data.fan_feedback === '1' && data.fan_rpm) text += ' · ' + data.fan_rpm + ' RPM';
+				ctx.font = '600 10px ' + font;
+				var tw = ctx.measureText(text).width + 16;
+				var tx = this.clamp(mx - tw / 2, 6, w - tw - 6);
+				var ty = this.clamp(myApp - 34, 6, h - 30);
+				this.chartRoundRect(ctx, tx, ty, tw, 21, 6);
+				ctx.fillStyle = P.dark ? 'rgba(240,246,244,.95)' : 'rgba(36,52,45,.94)';
+				ctx.fill();
+				ctx.fillStyle = P.dark ? '#1c2422' : '#ffffff';
+				ctx.textAlign = 'left';
+				ctx.textBaseline = 'middle';
+				ctx.fillText(text, tx + 8, ty + 11);
+			}
+		}
 	},
 
 	curvePanel: function() {
 		return E('div', { 'class': 'h5fan-section' }, [
 			E('div', { 'class': 'h5fan-section-head' }, [ E('h3', _('Effective fan policy')), E('span', { 'class': 'h5fan-badge', id: 'h5fan-profile' }, '-') ]),
 			E('div', { 'class': 'h5fan-curve-layout' }, [
-				E('canvas', { 'class': 'h5fan-canvas', id: 'h5fan-curve', width: 720, height: 220 }),
+				E('div', { 'class': 'h5fan-canvas-wrap', id: 'h5fan-canvas-wrap' }, [
+					E('canvas', { 'class': 'h5fan-canvas', id: 'h5fan-curve' })
+				]),
 				E('div', { 'class': 'h5fan-side' }, [
 					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Requested output')), E('strong', { id: 'h5fan-requested' }, '-') ]),
 					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Applied output')), E('strong', { id: 'h5fan-applied' }, '-') ]),
-					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Policy reason')), E('strong', { id: 'h5fan-reason' }, '-') ])
+					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Policy reason')), E('strong', { 'class': 'h5fan-reason', id: 'h5fan-reason' }, '-') ])
 				])
+			]),
+			E('div', { 'class': 'h5fan-legend' }, [
+				E('span', {}, [ E('i', { 'class': 'sw sw-curve' }), _('Fan curve') ]),
+				E('span', {}, [ E('i', { 'class': 'sw sw-floor' }), _('Kernel safety floor') ]),
+				E('span', {}, [ E('i', { 'class': 'sw sw-applied' }), _('Applied output') ]),
+				E('span', {}, [ E('i', { 'class': 'sw sw-hyst' }), _('Hysteresis window') ])
 			]),
 			E('div', { 'class': 'h5fan-note', id: 'h5fan-safety-note' }, _('Kernel thermal protection is always retained. Requested output may be raised automatically when the kernel requires more cooling.'))
 		]);
 	},
 
-	parseFloorLevels: function(text) {
+	parseFloors: function(text) {
 		var out = [];
 		(text || '').split(',').forEach(function(pair) {
 			var parts = pair.split('='), temp = parseInt(parts[0], 10), pwm = parseInt(parts[1], 10);
-			if (!isNaN(temp) && !isNaN(pwm))
-				out.push(temp + ' °C → ' + Math.round(pwm * 100 / 255) + '%');
+			if (parts.length === 2 && !isNaN(temp) && !isNaN(pwm))
+				out.push({ temp: temp, pwm: pwm });
 		});
+		out.sort(function(a, b) { return a.temp - b.temp; });
 		return out;
+	},
+
+	formatFloorLevels: function(text) {
+		return this.parseFloors(text).map(function(level) {
+			return level.temp + ' °C → ' + Math.round(level.pwm * 100 / 255) + '%';
+		});
 	},
 
 	updateStatus: function(data) {
@@ -240,7 +610,7 @@ return view.extend({
 				name === 'modem' && data.control_sensor === '5G modem';
 			if (node) node.classList.toggle('active', !!active);
 		});
-		var floorLevels = this.parseFloorLevels(data.kernel_floor_levels);
+		var floorLevels = this.formatFloorLevels(data.kernel_floor_levels);
 		if (data.thermal_owner === 'userspace') {
 			this.setText('h5fan-safety-note', _('The fan manager has exclusive fan policy control. Kernel CPU throttling and hot/critical over-temperature protection remain active.'));
 		} else if (floorLevels.length) {
@@ -254,16 +624,18 @@ return view.extend({
 		this.setText('h5fan-wifi-hint', [data.wifi1_label, data.wifi2_label].filter(Boolean).join(' · '));
 		this.setText('h5fan-modem-value', this.formatTemp(data.module_temp)); this.setText('h5fan-modem-hint', _('From the local modem cache'));
 		this.setText('h5fan-profile', this.modeName(data.mode) + (data.mode === 'auto' ? ' · ' + this.profileName(data.curve) : ''));
+		this.syncTitle('h5fan-profile');
 		this.setText('h5fan-requested', isNaN(requested) ? '-' : Math.round(requested * 100 / 255) + '%');
 		this.setText('h5fan-applied', isNaN(applied) ? (isNaN(pwm) ? '-' : Math.round(pwm * 100 / 255) + '%') : Math.round(applied * 100 / 255) + '%');
 		this.setText('h5fan-reason', this.reasonName(data.reason));
+		this.syncTitle('h5fan-reason');
 		if (health) {
 			health.className = 'h5fan-health';
 			if (data.result === 'failsafe') { health.className += ' fail'; health.textContent = _('Failsafe cooling'); }
 			else if (isNaN(age) || age > interval * 3 + 5) { health.className += ' warn'; health.textContent = _('Status delayed'); }
 			else { health.textContent = _('Running normally'); }
 		}
-		this.drawCurve(data);
+		this.chartUpdate(data);
 	},
 
 	validateCurve: function(sectionId, value) {
@@ -365,7 +737,13 @@ return view.extend({
 		var formMap = this.renderForm();
 		return formMap.render().then(L.bind(function(formNode) {
 			var root = E('div', { 'class': 'h5fan' }, [ this.styleNode(), this.statusPanel(), this.curvePanel(), formNode ]);
-			window.setTimeout(L.bind(function() { this.updateStatus(data); }, this), 0);
+			window.setTimeout(L.bind(function() {
+				var wrap = document.getElementById('h5fan-canvas-wrap');
+				if (wrap && window.ResizeObserver)
+					new ResizeObserver(L.bind(function() { this.chartDraw(); }, this)).observe(wrap);
+				window.addEventListener('resize', L.bind(function() { this.chartDraw(); }, this));
+				this.updateStatus(data);
+			}, this), 0);
 			poll.add(L.bind(function() {
 				return this.fetchStatus().then(L.bind(function(next) { this.updateStatus(next); }, this));
 			}, this), 3);

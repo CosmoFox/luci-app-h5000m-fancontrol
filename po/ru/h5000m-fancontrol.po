@@ -94,17 +94,26 @@ msgstr "Не удалось применить политику охлажден
 msgid "Failsafe cooling"
 msgstr "Аварийное охлаждение"
 
+msgid "Fan curve"
+msgstr "Кривая вентилятора"
+
 msgid "From the local modem cache"
 msgstr "Из локального кэша модема"
 
 msgid "Hottest available sensor"
 msgstr "Самый горячий доступный датчик"
 
+msgid "Hysteresis window"
+msgstr "Окно гистерезиса"
+
 msgid "Kernel protection"
 msgstr "Защита ядра"
 
 msgid "Kernel protection only"
 msgstr "Только защита ядра"
+
+msgid "Kernel safety floor"
+msgstr "Нижний порог защиты ядра"
 
 msgid "Kernel thermal protection is always retained. Requested output may be raised automatically when the kernel requires more cooling."
 msgstr "Термозащита ядра сохраняется всегда. Запрошенная скорость может быть автоматически повышена, если ядру требуется больше охлаждения."

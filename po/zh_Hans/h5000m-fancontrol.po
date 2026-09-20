@@ -351,3 +351,9 @@ msgstr "%s · 已忽略固件映射"
 
 msgid "Firmware fan map: %s. Install patched firmware for full curve control."
 msgstr "固件风扇映射：%s。安装带补丁的固件可完全掌控曲线。"
+
+msgid "Fan curve"
+msgstr "风扇曲线"
+
+msgid "Hysteresis window"
+msgstr "迟滞窗口"
