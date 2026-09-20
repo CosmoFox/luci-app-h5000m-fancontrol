@@ -40,6 +40,9 @@ msgstr "Сбалансированный"
 msgid "Beta"
 msgstr "Бета"
 
+msgid "Beta update available: %s"
+msgstr "Доступно бета-обновление: %s"
+
 msgid "Beta versions may be unstable and are provided for testing. They are not recommended for daily use."
 msgstr "Бета-версии могут быть нестабильны и предназначены для тестирования. Их не рекомендуется использовать повседневно."
 
@@ -109,6 +112,9 @@ msgstr "Скачать и установить последнюю бета-ве�
 msgid "Download and install the latest version now?"
 msgstr "Скачать и установить последнюю версию прямо сейчас?"
 
+msgid "Download and reinstall the currently installed version now?"
+msgstr "Скачать и переустановить текущую версию прямо сейчас?"
+
 msgid "Effective fan policy"
 msgstr "Действующая политика вентилятора"
 
@@ -166,6 +172,9 @@ msgstr "Ручной запрос"
 msgid "No beta releases found"
 msgstr "Бета-релизы не найдены"
 
+msgid "No stable release published yet."
+msgstr "Стабильный релиз пока не опубликован."
+
 msgid "No valid sensor"
 msgstr "Нет достоверного датчика"
 
@@ -192,6 +201,9 @@ msgstr "Приоритет"
 
 msgid "Quiet"
 msgstr "Тихий"
+
+msgid "Reinstall current version"
+msgstr "Переустановить текущую версию"
 
 msgid "Release page"
 msgstr "Страница релиза"
@@ -237,6 +249,9 @@ msgstr "Менеджер вентилятора единолично управ�
 
 msgid "The hottest-sensor option considers CPU, Ethernet PHY, Wi-Fi and the available 5G modem cache."
 msgstr "Режим «самый горячий датчик» учитывает CPU, PHY Ethernet, Wi-Fi и доступный кэш температуры 5G-модема."
+
+msgid "The installed release was not identified. Install a version through the Update tab first."
+msgstr "Не удалось определить установленный релиз. Сначала установите версию через вкладку «Обновление»."
 
 msgid "The kernel safety floor may raise the effective output above this value."
 msgstr "Защитный минимум ядра может поднять фактическую скорость выше этого значения."

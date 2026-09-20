@@ -142,6 +142,9 @@ msgstr "均衡"
 msgid "Beta"
 msgstr "测试版"
 
+msgid "Beta update available: %s"
+msgstr "有新的测试版更新：%s"
+
 msgid "Beta versions may be unstable and are provided for testing. They are not recommended for daily use."
 msgstr "测试版可能不稳定，仅供测试使用，不建议日常使用。"
 
@@ -223,6 +226,9 @@ msgstr "现在下载并安装最新测试版？"
 msgid "Download and install the latest version now?"
 msgstr "现在下载并安装最新版本？"
 
+msgid "Download and reinstall the currently installed version now?"
+msgstr "现在下载并重新安装当前版本？"
+
 msgid "Effective fan policy"
 msgstr "当前生效的风扇策略"
 
@@ -286,6 +292,9 @@ msgstr "硬件或驱动没有提供转速脉冲信号"
 msgid "No beta releases found"
 msgstr "未找到测试版发布"
 
+msgid "No stable release published yet."
+msgstr "尚未发布稳定版。"
+
 msgid "No valid sensor"
 msgstr "没有有效传感器"
 
@@ -312,6 +321,9 @@ msgstr "避免温度在曲线控制点附近波动时反复改变转速。"
 
 msgid "Quiet"
 msgstr "静音"
+
+msgid "Reinstall current version"
+msgstr "重新安装当前版本"
 
 msgid "Release page"
 msgstr "发布页面"
@@ -342,6 +354,9 @@ msgstr "温度必须在 0–150 °C 范围内递增，百分比必须在 0–100
 
 msgid "The hottest-sensor option considers CPU, Ethernet PHY, Wi-Fi and the available 5G modem cache."
 msgstr "最高温度模式会综合 CPU、以太网 PHY、Wi-Fi 和可用的 5G 模块缓存温度。"
+
+msgid "The installed release was not identified. Install a version through the Update tab first."
+msgstr "无法确定已安装的发布版本。请先通过“更新”标签页安装一个版本。"
 
 msgid "The kernel safety floor may raise the effective output above this value."
 msgstr "内核安全下限可能使实际输出高于此设置值。"

@@ -6,7 +6,8 @@
 #
 # Usage:
 #   update.sh check [beta]    - compare installed vs latest (stable or beta) release
-#   update.sh install [stage] - download + install app (+ ru translation); stage: stable|beta
+#   update.sh install [stage] - download + install app (+ ru translation);
+#                               stage: stable | beta | current (reinstall the release on record)
 #   update.sh status          - print the result file of a background install
 #   update.sh version         - print the installed package version only
 #
@@ -19,6 +20,10 @@ I18N="luci-i18n-h5000m-fancontrol-ru"
 TMP=/tmp
 STATUS="$TMP/h5000m_fancontrol_update.json"
 LOCK="$TMP/h5000m_fancontrol_update.pid"
+# Full tag of the last release actually installed (persists across reboots so
+# prereleases of the installed base version can be offered again, e.g. a new
+# v2.3.1-beta.7 after v2.3.1-beta.6, whose package version is identical).
+TAGSTATE="/etc/h5000m_fancontrol.last_tag"
 
 json_esc() { echo "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'; }
 
@@ -50,10 +55,6 @@ net_fetch() {
 
 api_json() { net_fetch 15 "$API"; }
 
-latest_tag() {
-	api_json | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1
-}
-
 # The most recent GitHub prerelease (newest -beta.N tag). Only the releases
 # list endpoint returns prereleases - releases/latest always resolves to the
 # newest stable release. The first "prerelease": true in the newest-first
@@ -63,8 +64,10 @@ latest_beta() {
 	[ -n "$_j" ] || return 1
 	printf '%s' "$_j" | awk '
 		{
-			pr = index($0, "\"prerelease\": true")
-			if (pr == 0) exit
+			# GitHub API emits compact JSON ("prerelease":true), allow both
+			# forms; the matched text starts right at the "prerelease" key.
+			if (match($0, /"prerelease":[ \t]*true/) == 0) exit
+			pr = RSTART
 			head = substr($0, 1, pr - 1)
 			probe = "\"tag_name\":\""
 			pos = 0; last = 0
@@ -113,7 +116,12 @@ case "$1" in
 check)
 	PM=$(pkgman)
 	CUR=$(installed_version "$PM")
-	LAT=$(latest_tag)
+	# Distinguish "no network" (empty body) from "no stable release yet"
+	# (GitHub answers releases/latest with HTTP 404 when only prereleases
+	# exist - a non-empty body without any tag_name).
+	L_BODY=$(api_json)
+	LAT=""
+	[ -n "$L_BODY" ] && LAT=$(printf '%s' "$L_BODY" | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)
 	LATV=${LAT#v}
 	AVAIL=0
 	if [ -n "$LATV" ] && [ -n "$CUR" ]; then
@@ -133,9 +141,15 @@ check)
 			elif [ -n "$BETAV" ] && [ -z "$CUR" ]; then
 				BETA_AVAIL=1
 			fi
+			# Prereleases of the installed base version have the same package
+			# version, so also offer one whenever its tag differs from the
+			# release that is currently installed.
+			if [ "$BETA_AVAIL" = 0 ] && [ "$BETA_LAT" != "$(cat "$TAGSTATE" 2>/dev/null)" ]; then
+				BETA_AVAIL=1
+			fi
 		fi
 	fi
-	if [ -z "$LAT" ]; then
+	if [ -z "$L_BODY" ]; then
 		printf '{"success":false,"error":"Could not reach GitHub","pm":"%s","current":"%s","beta_latest":"%s","beta_available":%s}\n' \
 			"$PM" "$(json_esc "$CUR")" "$(json_esc "$BETA_LAT")" "$BETA_AVAIL"
 		exit 0
@@ -171,10 +185,37 @@ install)
 			if [ "$STAGE" = "beta" ]; then
 				TAG=$(latest_beta)
 				RELJSON=$(release_json "$TAG")
+			elif [ "$STAGE" = "current" ]; then
+				# Reinstall the exact release whose tag is on record as the
+				# installed one - scanning the release list would be ambiguous
+				# for a prerelease of the same base version as a stable release.
+				TAG=$(cat "$TAGSTATE" 2>/dev/null)
+				if [ -z "$TAG" ]; then
+					echo '{"success":false,"error":"unknown_current_release"}'
+					return
+				fi
+				RELJSON=$(release_json "$TAG")
+				if [ -z "$RELJSON" ]; then
+					echo '{"success":false,"error":"Could not reach GitHub"}'
+					return
+				fi
 			fi
 			if [ -z "$RELJSON" ]; then
 				STAGE=stable
 				RELJSON=$(api_json)
+			fi
+			# Full tag of the release we are about to install - recorded in
+			# TAGSTATE so later prereleases of the same base version are offered.
+			TAGG=""
+			[ -n "$TAG" ] && TAGG="$TAG"
+			[ -z "$TAGG" ] && TAGG=$(printf '%s' "$RELJSON" | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)
+			if [ -z "$RELJSON" ]; then
+				echo '{"success":false,"error":"Could not reach GitHub"}'; return
+			fi
+			if [ -z "$TAGG" ]; then
+				# /releases/latest answers 404 (a non-empty body without a tag)
+				# while GitHub has only prereleases. No stable release yet.
+				echo '{"success":false,"error":"No stable release published yet"}'; return
 			fi
 			# Base version of the target tag (drops any -beta.N suffix) - used
 			# below to tell a real success from an asset built with the version
@@ -231,11 +272,13 @@ install)
 				if [ -n "$TVAL" ] && [ "$TVAL" = "$CUR" ]; then
 					printf '{"success":true,"installed":"%s","current":"%s","reinstalled":1,"stage":"%s"}\n' \
 						"$(json_esc "$(echo $INSTALLED)")" "$(json_esc "$CUR")" "$STAGE"
+					[ -n "$TAGG" ] && printf '%s\n' "$TAGG" > "$TAGSTATE"
 					return
 				fi
 				printf '{"success":false,"current":"%s","error":"Reinstalled but version stayed %s - the release asset looks mispackaged (rebuild/reupload it)"}\n' "$(json_esc "$CUR")" "$(json_esc "$CUR")"
 			else
 				printf '{"success":true,"installed":"%s","current":"%s","stage":"%s"}\n' "$(json_esc "$(echo $INSTALLED)")" "$(json_esc "$CUR")" "$STAGE"
+				[ -n "$TAGG" ] && printf '%s\n' "$TAGG" > "$TAGSTATE"
 			fi
 		}
 		# Write to a temp file and move into place only when done, so status can

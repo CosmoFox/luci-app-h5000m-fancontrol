@@ -706,15 +706,18 @@ return view.extend({
 			return _('The update is still building on the server. Please wait about 15-20 minutes and try again.');
 		if (error === 'Could not reach GitHub')
 			return _('Could not check for updates. Please check the router\'s internet access.');
+		if (error === 'unknown_current_release')
+			return _('The installed release was not identified. Install a version through the Update tab first.');
 		return error || fallback;
 	},
 
 	updBusy: function(busy) {
 		var bi = document.getElementById('h5fan-upd-install'), bc = document.getElementById('h5fan-upd-check'),
-			bb = document.getElementById('h5fan-upd-install-beta');
+			bb = document.getElementById('h5fan-upd-install-beta'), br = document.getElementById('h5fan-upd-reinstall');
 		if (bi) bi.disabled = busy;
 		if (bc) bc.disabled = busy;
 		if (bb) bb.disabled = busy;
+		if (br) br.disabled = busy;
 	},
 
 	checkUpdate: function() {
@@ -729,6 +732,7 @@ return view.extend({
 			var d = {}; try { d = JSON.parse((res && res.stdout) || '{}'); } catch (e) {}
 			this.updSet('h5fan-upd-current', d.current || '—');
 			var latest = String(d.latest || '').replace(/^v/i, '');
+			var betaOn = !!(document.getElementById('h5fan-upd-beta') && document.getElementById('h5fan-upd-beta').checked);
 			if (d.release_url) { var a = document.getElementById('h5fan-upd-release'); if (a) { a.href = d.release_url; a.style.display = ''; } }
 			this.updateBeta(d);
 			if (!d.success) {
@@ -736,6 +740,13 @@ return view.extend({
 			} else if (d.update_available == 1 || d.update_available === true) {
 				this.updShow('h5fan-upd-install', true);
 				this.updSetVer('h5fan-upd-status', _('Update available'), latest || '—');
+			} else if (betaOn && d.beta_latest) {
+				if (d.beta_available == 1 || d.beta_available === true)
+					this.updSet('h5fan-upd-status', _('Beta update available: %s').format(String(d.beta_latest).replace(/^v/i, '')));
+				else
+					this.updSet('h5fan-upd-status', _('You have the latest beta'));
+			} else if (!d.latest) {
+				this.updSet('h5fan-upd-status', betaOn ? _('No beta releases found') : _('No stable release published yet.'));
 			} else {
 				this.updSet('h5fan-upd-status', _('You have the latest version'));
 			}
@@ -820,6 +831,8 @@ return view.extend({
 		stage = stage || 'stable';
 		if (stage === 'beta') {
 			if (!confirm(_('Download and install the latest beta version now?'))) return Promise.resolve();
+		} else if (stage === 'current') {
+			if (!confirm(_('Download and reinstall the currently installed version now?'))) return Promise.resolve();
 		} else if (!confirm(_('Download and install the latest version now?'))) {
 			return Promise.resolve();
 		}
@@ -839,6 +852,7 @@ return view.extend({
 		};
 		var args = [ 'install' ];
 		if (stage === 'beta') args.push('beta');
+		if (stage === 'current') args.push('current');
 		return fs.exec(UPDATE_BIN, args).then(function(res) {
 			var d = {}; try { d = JSON.parse((res && res.stdout) || '{}'); } catch (e) {}
 			if (d.started) { self.pollInstall(0); return; }
@@ -864,6 +878,9 @@ return view.extend({
 					'style': 'display:none',
 					'click': ui.createHandlerFn(view, function() { return view.installUpdate(); }) },
 					_('Install update')),
+				E('button', { 'class': 'cbi-button cbi-button-neutral', 'id': 'h5fan-upd-reinstall',
+					'click': ui.createHandlerFn(view, function() { return view.installUpdate('current'); }) },
+					_('Reinstall current version')),
 				E('a', { 'class': 'cbi-button', 'id': 'h5fan-upd-release',
 					'href': UPDATE_RELEASE_URL, 'target': '_blank', 'rel': 'noopener',
 					'style': 'display:none' },

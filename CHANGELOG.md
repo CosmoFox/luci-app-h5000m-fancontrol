@@ -41,6 +41,15 @@
 - Update-check failures are now explained in the interface language: when the
   updater cannot reach GitHub, the page says it could not check for updates and
   asks to verify the router's internet access.
+- The version poll is now reliable for repositories with no stable release: it
+  no longer reports "Could not reach GitHub" when GitHub only hosts prereleases,
+  and a new prerelease of the same base version (e.g. v2.3.1-beta.6 published
+  after beta.5) is now offered, because prerelease tags are compared against the
+  last installed tag instead of the package version. Prerelease detection also
+  matches GitHub's compact JSON (`"prerelease":true`).
+- A "Reinstall current version" button re-installs the exact release that is
+  on record as installed (local tag file), which comes in handy after a broken
+  or partial install. It works for both stable and beta releases.
 - After a successful update the browser re-fetches the new page scripts and
   the session is ended once (a single re-login), so the updated interface and
   RPC permissions take effect immediately.
