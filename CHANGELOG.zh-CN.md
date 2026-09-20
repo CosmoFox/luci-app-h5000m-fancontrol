@@ -19,6 +19,18 @@
   不在对应分支上的标签。完整指南见 `docs/RELEASING.md`。
 - GitHub Actions 发布构建现在缓存 OpenWrt SDK 归档（以 sha256 为键），
   数百 MB 的 SDK 不再每次重新下载。
+- 新增 LuCI 页面内置自更新功能：“更新”标签页会检查 GitHub Release 中最新
+  的稳定版本（按包管理器选择 `.apk`/`.ipk`）并直接在路由器上安装。下载与
+  安装在后台上完成并显示进度；除应用本身外，还会一并安装已发布的俄语界面
+  包（`luci-i18n-h5000m-fancontrol-ru`）。
+- 更新程序优先直连 `api.github.com`，直连被阻断时通过本地 clash/mihomo
+  HTTP 代理重试。默认只提供稳定版；勾选「提供测试版发布」即可列出
+  `-beta.N` 预发布版本，并会提示测试版可能不稳定、不建议日常使用。
+- 更新成功后浏览器会强制重新拉取新的页面脚本，并结束一次会话（需要重新
+  登录一次），以便刷新后的界面与新的 RPC 权限立即生效。
+- 更新逻辑位于 `/usr/share/h5000m-fancontrol/update.sh`
+  （`check`、`install`、`status`、`version`）；LuCI 用户通过应用自身的
+  RPC ACL 获得执行权限。
 - 文档（README 与更新日志）以英文、俄文和简体中文维护，中文界面翻译已
   与新字符串同步。
 

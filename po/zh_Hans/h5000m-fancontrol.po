@@ -115,6 +115,9 @@ msgstr "5G 模块"
 msgid "A short boost helps a stopped fan start reliably. Set 0 to disable."
 msgstr "短时助推可帮助停止的风扇可靠启动；设为 0 可关闭助推。"
 
+msgid "Application update"
+msgstr "应用更新"
+
 msgid "Applied output"
 msgstr "实际输出"
 
@@ -136,11 +139,20 @@ msgstr "自动"
 msgid "Balanced"
 msgstr "均衡"
 
+msgid "Beta"
+msgstr "测试版"
+
+msgid "Beta versions may be unstable and are provided for testing. They are not recommended for daily use."
+msgstr "测试版可能不稳定，仅供测试使用，不建议日常使用。"
+
 msgid "CPU"
 msgstr "CPU"
 
 msgid "CPU only"
 msgstr "仅 CPU"
+
+msgid "Could not check for updates"
+msgstr "无法检查更新"
 
 msgid "Checking service…"
 msgstr "正在检查服务…"
@@ -160,6 +172,9 @@ msgstr "控制温度"
 msgid "Current input: %s"
 msgstr "当前依据：%s"
 
+msgid "Current version"
+msgstr "当前版本"
+
 msgid "Controller running · updated %ss ago"
 msgstr "控制器运行正常 · %s 秒前更新"
 
@@ -171,6 +186,12 @@ msgstr "散热管理"
 
 msgid "Automatically balances cooling and noise based on device temperatures."
 msgstr "根据设备温度自动调节风扇，兼顾散热与安静。"
+
+msgid "Check for updates"
+msgstr "检查更新"
+
+msgid "Checking the latest release…"
+msgstr "正在检查最新版本…"
 
 msgid "Checking…"
 msgstr "正在检查…"
@@ -193,6 +214,12 @@ msgstr "自定义"
 msgid "Custom curve"
 msgstr "自定义曲线"
 
+msgid "Download and install the latest beta version now?"
+msgstr "现在下载并安装最新测试版？"
+
+msgid "Download and install the latest version now?"
+msgstr "现在下载并安装最新版本？"
+
 msgid "Effective fan policy"
 msgstr "当前生效的风扇策略"
 
@@ -204,6 +231,9 @@ msgstr "以太网 PHY"
 
 msgid "Failed to apply cooling policy:"
 msgstr "散热策略应用失败："
+
+msgid "Failed to install the update"
+msgstr "更新安装失败"
 
 msgid "Failsafe active · full cooling"
 msgstr "故障保护已启用 · 全速散热"
@@ -250,11 +280,17 @@ msgstr "手动 PWM 输出"
 msgid "No tachometer signal is exposed by the hardware/driver"
 msgstr "硬件或驱动没有提供转速脉冲信号"
 
+msgid "No beta releases found"
+msgstr "未找到测试版发布"
+
 msgid "No valid sensor"
 msgstr "没有有效传感器"
 
 msgid "Not supported"
 msgstr "不支持"
+
+msgid "Offer beta releases"
+msgstr "提供测试版发布"
 
 msgid "Operating mode"
 msgstr "运行模式"
@@ -273,6 +309,9 @@ msgstr "避免温度在曲线控制点附近波动时反复改变转速。"
 
 msgid "Quiet"
 msgstr "静音"
+
+msgid "Release page"
+msgstr "发布页面"
 
 msgid "Requested output"
 msgstr "请求输出"
@@ -304,8 +343,23 @@ msgstr "最高温度模式会综合 CPU、以太网 PHY、Wi-Fi 和可用的 5G 
 msgid "The kernel safety floor may raise the effective output above this value."
 msgstr "内核安全下限可能使实际输出高于此设置值。"
 
+msgid "The update is still building on the server. Please wait about 15-20 minutes and try again."
+msgstr "更新仍在服务器上构建。请稍等约 15–20 分钟后再试。"
+
 msgid "Unavailable"
 msgstr "不可用"
+
+msgid "Update"
+msgstr "更新"
+
+msgid "Update available"
+msgstr "有可用更新"
+
+msgid "Update installed. Refreshing…"
+msgstr "更新已安装。正在刷新…"
+
+msgid "Update is taking too long. Check the connection and try again."
+msgstr "更新耗时过长。请检查网络连接后重试。"
 
 msgid "Use comma-separated temperature:percent points, for example 35:0,45:50,70:80,90:100."
 msgstr "请使用逗号分隔“温度:百分比”控制点，例如 35:0,45:50,70:80,90:100。"
@@ -318,6 +372,12 @@ msgstr "关闭后，风扇将仅跟随内核温控保护等级。"
 
 msgid "Wi-Fi radios"
 msgstr "Wi-Fi 射频"
+
+msgid "You have the latest beta"
+msgstr "您已是最新测试版"
+
+msgid "You have the latest version"
+msgstr "您已是最新版本"
 
 msgid "%s · kernel safety floor"
 msgstr "%s · 内核安全下限"
@@ -342,6 +402,15 @@ msgstr "曲线故障保护"
 
 msgid "Ignore firmware fan map"
 msgstr "忽略固件风扇映射"
+
+msgid "Install beta"
+msgstr "安装测试版"
+
+msgid "Install update"
+msgstr "安装更新"
+
+msgid "Installing the update…"
+msgstr "正在安装更新…"
 
 msgid "Advanced. Lets automatic and manual output run below the levels the stock firmware enforces at 40, 85 and 115 °C. The kernel still raises the fan when those trip points are crossed; install patched firmware for full control."
 msgstr "高级选项：允许自动和手动模式低于出厂固件在 40、85、115 °C 强制的风扇档位。越过这些温度阈值时内核仍会提高转速；如需完全掌控曲线，请刷入包含补丁的固件。"

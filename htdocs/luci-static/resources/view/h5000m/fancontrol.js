@@ -5,6 +5,9 @@
 'require poll';
 'require ui';
 
+var UPDATE_BIN = '/usr/share/h5000m-fancontrol/update.sh';
+var UPDATE_RELEASE_URL = 'https://github.com/CosmoFox/luci-app-h5000m-fancontrol/releases/latest';
+
 return view.extend({
 	load: function() {
 		return this.fetchStatus();
@@ -124,6 +127,7 @@ return view.extend({
 			'.h5fan-legend .sw{display:inline-block;vertical-align:middle;margin-right:6px}.h5fan-legend .sw-curve{width:16px;height:0;border-top:3px solid var(--fan-green);border-radius:2px}.h5fan-legend .sw-floor{width:16px;height:0;border-top:2px dashed var(--fan-amber)}',
 			'.h5fan-legend .sw-applied{width:9px;height:9px;border-radius:50%;background:var(--fan-blue);box-shadow:0 0 0 3px rgba(85,168,255,.22)}.h5fan-legend .sw-hyst{width:14px;height:10px;border-radius:3px;background:rgba(85,168,255,.14);box-shadow:inset 0 0 0 1px rgba(85,168,255,.35)}',
 			'.h5fan-slider{display:flex;align-items:center;gap:10px;max-width:480px}.h5fan-slider input[type=range]{flex:1;min-width:190px}.h5fan-slider input[type=number]{width:84px}',
+			'.h5fan-update{display:grid;gap:10px}.h5fan-update-buttons{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.h5fan-update a.cbi-button{color:var(--text-color-high,#222);text-decoration:none}.h5fan-update-meta{font-size:12px;color:var(--text-color-medium,#666)}.h5fan-update-meta strong{color:var(--text-color-high,#222)}.h5fan-update-beta{margin-top:6px;padding-top:10px;border-top:1px dashed var(--border-color-low,#ddd)}.h5fan-update-checkbox{display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}.h5fan-update-warn{margin-top:8px;padding:8px 10px;border-left:3px solid var(--fan-amber);background:rgba(240,170,70,.1);color:var(--text-color-medium,#666);font-size:12px}',
 			'@media(max-width:1050px){.h5fan-grid{grid-template-columns:repeat(2,minmax(145px,1fr))}.h5fan-card.temperatures{grid-column:span 2}.h5fan-temp-grid{grid-template-columns:repeat(4,minmax(72px,1fr))}}',
 			'@media(max-width:750px){.h5fan-curve-layout{grid-template-columns:1fr}.h5fan-side{grid-template-columns:repeat(3,1fr);grid-template-rows:1fr}}',
 			'@media(max-width:520px){.h5fan-hero{display:block}.h5fan-health{margin-top:12px}}',
@@ -659,6 +663,214 @@ return view.extend({
 		return true;
 	},
 
+	updSet: function(id, txt) {
+		this.setText(id, txt);
+	},
+
+	updSetVer: function(id, label, ver) {
+		var node = document.getElementById(id);
+		if (!node) return;
+		node.textContent = '';
+		node.appendChild(document.createTextNode(label + ': '));
+		node.appendChild(E('strong', {}, ver));
+	},
+
+	updShow: function(id, show) {
+		var node = document.getElementById(id);
+		if (node) node.style.display = show ? '' : 'none';
+	},
+
+	updErrText: function(error, fallback) {
+		if (error === 'asset_pending')
+			return _('The update is still building on the server. Please wait about 15-20 minutes and try again.');
+		return error || fallback;
+	},
+
+	updBusy: function(busy) {
+		var bi = document.getElementById('h5fan-upd-install'), bc = document.getElementById('h5fan-upd-check'),
+			bb = document.getElementById('h5fan-upd-install-beta');
+		if (bi) bi.disabled = busy;
+		if (bc) bc.disabled = busy;
+		if (bb) bb.disabled = busy;
+	},
+
+	checkUpdate: function() {
+		this.updSet('h5fan-upd-status', _('Checking the latest release…'));
+		this.updShow('h5fan-upd-install', false);
+		this.updShow('h5fan-upd-install-beta', false);
+		var b = document.getElementById('h5fan-upd-check'); if (b) b.disabled = true;
+		var args = [ 'check' ];
+		if (document.getElementById('h5fan-upd-beta') && document.getElementById('h5fan-upd-beta').checked)
+			args.push('beta');
+		return fs.exec(UPDATE_BIN, args).then(L.bind(function(res) {
+			var d = {}; try { d = JSON.parse((res && res.stdout) || '{}'); } catch (e) {}
+			this.updSet('h5fan-upd-current', d.current || '—');
+			var latest = String(d.latest || '').replace(/^v/i, '');
+			if (d.release_url) { var a = document.getElementById('h5fan-upd-release'); if (a) { a.href = d.release_url; a.style.display = ''; } }
+			this.updateBeta(d);
+			if (!d.success) {
+				this.updSet('h5fan-upd-status', this.updErrText(d.error, _('Could not check for updates')));
+			} else if (d.update_available == 1 || d.update_available === true) {
+				this.updShow('h5fan-upd-install', true);
+				this.updSetVer('h5fan-upd-status', _('Update available'), latest || '—');
+			} else {
+				this.updSet('h5fan-upd-status', _('You have the latest version'));
+			}
+		}, this), L.bind(function(err) {
+			this.updSet('h5fan-upd-status', _('Could not check for updates') + ' ' + (err.message || err));
+		}, this)).then(L.bind(function() {
+			var b = document.getElementById('h5fan-upd-check'); if (b) b.disabled = false;
+		}, this));
+	},
+
+	updateBeta: function(d, on) {
+		var box = document.getElementById('h5fan-upd-beta');
+		on = (on !== undefined) ? on : !!(box && box.checked);
+		this.updShow('h5fan-upd-beta-warn', on);
+		var wrap = document.getElementById('h5fan-upd-beta-wrap');
+		if (wrap) wrap.style.display = on ? '' : 'none';
+		if (!on) return;
+		var tag = String(d.beta_latest || '').replace(/^v/i, '');
+		this.updSet('h5fan-upd-beta-tag', tag || '—');
+		var ib = document.getElementById('h5fan-upd-install-beta');
+		if (!d.beta_latest) {
+			this.updSet('h5fan-upd-beta-status', _('No beta releases found'));
+			if (ib) ib.style.display = 'none';
+		} else if (d.beta_available == 1 || d.beta_available === true) {
+			this.updSet('h5fan-upd-beta-status', '');
+			if (ib) ib.style.display = '';
+		} else {
+			this.updSet('h5fan-upd-beta-status', _('You have the latest beta'));
+			if (ib) ib.style.display = 'none';
+		}
+	},
+
+	onBetaToggle: function(ev) {
+		var box = ev && ev.target ? ev.target : document.getElementById('h5fan-upd-beta');
+		this.updateBeta({}, !!(box && box.checked));
+		if (box && box.checked)
+			return this.checkUpdate();
+	},
+
+	/* Installation runs in the background; poll the RESULT FILE, not the script
+	   (the script binary is replaced during the update). */
+	pollInstall: function(tries) {
+		tries = tries || 0;
+		if (tries > 75) {   // ~5 minutes
+			this.updSet('h5fan-upd-status', _('Update is taking too long. Check the connection and try again.'));
+			this.updBusy(false);
+			return;
+		}
+		L.resolveDefault(fs.read_direct('/tmp/h5000m_fancontrol_update.json'), '').then(L.bind(function(txt) {
+			txt = String(txt || '').trim();
+			if (!txt) { this.pollInstall(tries + 1); return; }
+			var d = {}; try { d = JSON.parse(txt); } catch (e) { this.pollInstall(tries + 1); return; }
+			if (d.running) { this.pollInstall(tries + 1); return; }
+			if (d.success) {
+				this.updSet('h5fan-upd-current', d.current || '—');
+				this.updShow('h5fan-upd-install', false);
+				this.updSet('h5fan-upd-status', _('Update installed. Refreshing…'));
+				this.finishUpdate();
+			} else {
+				this.updSet('h5fan-upd-status', this.updErrText(d.error, _('Failed to install the update')));
+			}
+			this.updBusy(false);
+		}, this));
+	},
+
+	finishUpdate: function() {
+		/* Force the browser to re-fetch the changed view resources, then
+		   sign out so the fresh session picks up the new ACL grants. */
+		return L.resolveDefault(fetch(L.resource('view/h5000m/fancontrol.js'), { cache: 'reload', credentials: 'same-origin' }), null)
+			.catch(function() {}).then(L.bind(function() {
+			window.setTimeout(function() {
+				var u = L.url('admin/logout');
+				if (!u) { window.location.reload(); return; }
+				if (L.env && L.env.token) u += '?token=' + encodeURIComponent(L.env.token);
+				window.location.href = u;
+			}, 1200);
+		}, this));
+	},
+
+	installUpdate: function(stage) {
+		stage = stage || 'stable';
+		if (stage === 'beta') {
+			if (!confirm(_('Download and install the latest beta version now?'))) return Promise.resolve();
+		} else if (!confirm(_('Download and install the latest version now?'))) {
+			return Promise.resolve();
+		}
+		this.updSet('h5fan-upd-status', _('Installing the update…'));
+		this.updBusy(true);
+		var self = this;
+		/* The RPC response may be lost while the script keeps running in the
+		   background (rpcd can hold the request until its timeout); on error
+		   read the result file: install may still be running or already done. */
+		var fallback = function(errText) {
+			return L.resolveDefault(fs.read_direct('/tmp/h5000m_fancontrol_update.json'), '').then(function(txt) {
+				var st = {}; try { st = JSON.parse(String(txt || '').trim() || '{}'); } catch (e) {}
+				if (st.running || st.success != null) { self.pollInstall(0); return; }
+				self.updSet('h5fan-upd-status', errText);
+				self.updBusy(false);
+			});
+		};
+		var args = [ 'install' ];
+		if (stage === 'beta') args.push('beta');
+		return fs.exec(UPDATE_BIN, args).then(function(res) {
+			var d = {}; try { d = JSON.parse((res && res.stdout) || '{}'); } catch (e) {}
+			if (d.started) { self.pollInstall(0); return; }
+			if (d.error) {
+				self.updSet('h5fan-upd-status', self.updErrText(d.error, _('Failed to install the update')));
+				self.updBusy(false);
+				return;
+			}
+			return fallback(_('Failed to install the update'));
+		}).catch(function(err) {
+			return fallback(_('Failed to install the update') + ' ' + (err.message || err));
+		});
+	},
+
+	renderUpdateWidget: function(sectionId, optionIndex, cfgvalue) {
+		var view = this;
+		return E('div', { 'class': 'h5fan-update' }, [
+			E('div', { 'class': 'h5fan-update-buttons' }, [
+				E('button', { 'class': 'cbi-button cbi-button-action', 'id': 'h5fan-upd-check',
+					'click': ui.createHandlerFn(view, function() { return view.checkUpdate(); }) },
+					_('Check for updates')),
+				E('button', { 'class': 'cbi-button cbi-button-positive', 'id': 'h5fan-upd-install',
+					'style': 'display:none',
+					'click': ui.createHandlerFn(view, function() { return view.installUpdate(); }) },
+					_('Install update')),
+				E('a', { 'class': 'cbi-button', 'id': 'h5fan-upd-release',
+					'href': UPDATE_RELEASE_URL, 'target': '_blank', 'rel': 'noopener',
+					'style': 'display:none' },
+					_('Release page'))
+			]),
+			E('div', { 'class': 'h5fan-update-meta' }, [
+				E('div', {}, [ _('Current version') + ': ', E('strong', { 'id': 'h5fan-upd-current' }, '—') ]),
+				E('div', { 'id': 'h5fan-upd-status', 'style': 'margin-top:4px' }, '')
+			]),
+			E('div', { 'class': 'h5fan-update-beta' }, [
+				E('label', { 'class': 'h5fan-update-checkbox' }, [
+					E('input', { 'type': 'checkbox', 'id': 'h5fan-upd-beta',
+						'change': ui.createHandlerFn(view, function(ev) { return view.onBetaToggle(ev); }) }),
+					_('Offer beta releases')
+				]),
+				E('div', { 'class': 'h5fan-update-warn', 'id': 'h5fan-upd-beta-warn', 'style': 'display:none' },
+					_('Beta versions may be unstable and are provided for testing. They are not recommended for daily use.')),
+				E('div', { 'class': 'h5fan-update-meta', 'id': 'h5fan-upd-beta-wrap', 'style': 'display:none' }, [
+					E('div', {}, [ _('Beta') + ': ', E('strong', { 'id': 'h5fan-upd-beta-tag' }, '—') ]),
+					E('div', { 'style': 'margin-top:6px' }, [
+						E('button', { 'class': 'cbi-button cbi-button-positive', 'id': 'h5fan-upd-install-beta',
+							'style': 'display:none',
+							'click': ui.createHandlerFn(view, function() { return view.installUpdate('beta'); }) },
+							_('Install beta')),
+						E('span', { 'style': 'margin-left:8px', 'id': 'h5fan-upd-beta-status' }, '')
+					])
+				])
+			])
+		]);
+	},
+
 	renderManualPwmWidget: function(option) {
 		option.renderWidget = function(sectionId, optionIndex, cfgvalue) {
 			var value = cfgvalue || this.default || '160', id = this.cbid(sectionId), rangeId = id + '-range', numberId = id + '-number';
@@ -688,6 +900,7 @@ return view.extend({
 		s.anonymous = true;
 		s.tab('policy', _('Policy'));
 		s.tab('safety', _('Response & safety'));
+		s.tab('update', _('Update'));
 
 		o = s.taboption('policy', form.Flag, 'enabled', _('Enable enhanced controller'));
 		o.default = '1'; o.rmempty = false;
@@ -733,6 +946,10 @@ return view.extend({
 		o = s.taboption('safety', form.Flag, 'override_floor', _('Ignore firmware fan map'));
 		o.default = '0'; o.rmempty = false;
 		o.description = _('Advanced. Lets automatic and manual output run below the levels the stock firmware enforces at 40, 85 and 115 °C. The kernel still raises the fan when those trip points are crossed; install patched firmware for full control.');
+
+		o = s.taboption('update', form.DummyValue, '_update', _('Application update'));
+		o.anonymous = true; o.rmempty = true;
+		o.renderWidget = L.bind(this.renderUpdateWidget, this);
 
 	m.handleSaveApply = function(ev, mode) {
 		return form.Map.prototype.handleSaveApply.apply(this, [ ev, mode ]).then(function() {

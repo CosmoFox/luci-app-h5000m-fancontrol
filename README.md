@@ -23,6 +23,7 @@ Versions follow the standard `major.minor.patch-rREVISION` format. GitHub Releas
 - Start boost after the fan has stopped
 - Automatic high-output failsafe mode on sensor or curve faults
 - Simplified Chinese and Russian LuCI interface (language follows LuCI settings automatically)
+- In-app self-update: offers the latest stable GitHub release from the LuCI page (optional `-beta.N` prereleases with a beta warning; the Russian interface package is installed along with the app)
 - No cloud dependency; no device data is collected or uploaded
 
 ## Compatibility
@@ -76,11 +77,30 @@ Without the device-tree patch the kernel still co-owns the fan. The stock H5000M
 
 Recommended: build firmware with `openwrt-patches/h5000m-userspace-fan-control.patch`. Experimental alternative: enable "Ignore firmware fan map" in the plugin settings to let the curve run below the firmware levels. The kernel rewrites its own level whenever a trip boundary is crossed, so expect a brief jump at 40/85/115 °C; hot/critical CPU protection is unaffected.
 
+## Self-update
+
+The management page has an "Update" tab that offers the latest **stable**
+GitHub release of this app (`releases/latest`). An optional "Offer beta
+releases" checkbox lists `-beta.N` prereleases with an "Install beta" button
+and a warning that beta builds may be unstable and are not recommended for
+daily use. "Check for updates" compares the installed version with the latest
+release; "Install update" downloads the application package and, when
+published, the Russian interface (`luci-i18n-h5000m-fancontrol-ru`) for the
+router's package manager (`.apk` on SNAPSHOT/apk, `.ipk` on opkg) and installs
+them in the background with a progress indicator.
+
+The updater first reaches `api.github.com` directly; if the direct path is
+filtered, it retries through a local clash/mihomo HTTP proxy (mixed-port).
+After a successful update the page reloads and you sign in again, so the updated interface and RPC permissions
+apply immediately. Only release assets from this repository are downloaded —
+no device data is uploaded.
+
 ## Configuration & services
 
 - UCI configuration: `/etc/config/h5000m_fancontrol`
 - procd service: `/etc/init.d/h5000m-fancontrol`
 - Controller: `/usr/sbin/h5000m-fancontrol`
+- Updater script: `/usr/share/h5000m-fancontrol/update.sh`
 - LuCI page: System → Fan Control
 
 Common commands:
@@ -121,6 +141,7 @@ Fan control is a device-safety function. Keep an eye on temperatures after chang
 - Стартовый буст после полной остановки вентилятора
 - Автоматический переход в режим высокой мощности при неисправности датчика или кривой
 - Интерфейс LuCI на русском и упрощённом китайском (язык следует настройкам LuCI)
+- Встроенное самообновление: вкладка LuCI предлагает последний стабильный релиз на GitHub (опционально пре-релизы `-beta.N` с предупреждением; вместе с приложением ставится русский интерфейс)
 - Без облачных сервисов; данные устройства не собираются и никуда не отправляются
 
 ## Совместимость
@@ -174,11 +195,32 @@ git apply package/luci-app-h5000m-fancontrol/openwrt-patches/h5000m-userspace-fa
 
 Рекомендуется: собрать прошивку с `openwrt-patches/h5000m-userspace-fan-control.patch`. Экспериментальная альтернатива: включить «Игнорировать карту вентилятора прошивки» в настройках плагина, чтобы кривая могла работать ниже уровней прошивки. Ядро перезаписывает свой уровень при пересечении порога срабатывания, поэтому ожидайте кратковременный скачок при 40/85/115 °C; защита CPU hot/critical не затрагивается.
 
+## Самообновление
+
+На странице управления есть вкладка «Обновление», которая предлагает
+последний **стабильный** релиз этого приложения на GitHub
+(`releases/latest`). Опция «Предлагать бета-релизы» показывает пре-релизы
+`-beta.N` с кнопкой «Установить бета-версию» и предупреждением, что такие
+сборки могут быть нестабильны и не рекомендуются для повседневного
+использования. «Проверить обновления» сравнивает установленную версию с
+последним релизом;
+«Установить обновление» скачивает пакет приложения и, если он опубликован,
+русский интерфейс (`luci-i18n-h5000m-fancontrol-ru`) под пакетный менеджер
+роутера (`.apk` на SNAPSHOT/apk, `.ipk` на opkg) и устанавливает их в фоне
+с индикатором прогресса.
+
+Обновление сначала обращается к `api.github.com` напрямую; если прямой путь
+блокируется, запрос повторяется через локальный HTTP-прокси clash/mihomo
+(mixed-port). После успешного обновления страница перезагружается, и вы входите заново, чтобы обновлённый
+интерфейс и новые RPC-права применились сразу. Скачиваются только ассеты
+релизов этого репозитория — данные устройства никуда не отправляются.
+
 ## Конфигурация и сервисы
 
 - Конфигурация UCI: `/etc/config/h5000m_fancontrol`
 - Сервис procd: `/etc/init.d/h5000m-fancontrol`
 - Контроллер: `/usr/sbin/h5000m-fancontrol`
+- Скрипт обновления: `/usr/share/h5000m-fancontrol/update.sh`
 - Страница LuCI: System → Fan Control
 
 Типичные команды:
@@ -221,6 +263,7 @@ git apply package/luci-app-h5000m-fancontrol/openwrt-patches/h5000m-userspace-fa
 - 风扇停转后的启动助推
 - 传感器或曲线异常时自动进入高输出安全模式
 - 简体中文和俄语 LuCI 界面（语言跟随 LuCI 设置自动切换）
+- 应用内自更新：通过 LuCI 页面提供 GitHub 最新稳定版（可选 `-beta.N` 预发布版并显示测试版警告；俄语界面包随应用一并安装）
 - 不依赖云服务，不收集或上传设备数据
 
 ## 兼容性
@@ -274,11 +317,28 @@ git apply package/luci-app-h5000m-fancontrol/openwrt-patches/h5000m-userspace-fa
 
 推荐：使用 `openwrt-patches/h5000m-userspace-fan-control.patch` 编译固件。实验性替代方案：在插件设置中启用"忽略固件风扇映射"，让曲线可以低于固件水平运行。内核会在穿越 trip 阈值时重写自己的输出，因此在 40/85/115 °C 附近可能出现短暂跳变；CPU hot/critical 保护不受影响。
 
+## 应用内更新
+
+管理页面新增“更新”标签页，用于提供本应用在 GitHub 上最新的**稳定版**
+发布（`releases/latest`）。勾选“提供测试版发布”即可列出 `-beta.N`
+预发布版本，显示“安装测试版”按钮并给出警告——测试版可能不稳定，不建议
+日常使用。点击“检查更新”
+可将已安装版本与最新发布比对；当存在新版本时，“安装更新”会按路由器的
+包管理器（SNAPSHOT/apk 使用 `.apk`，opkg 使用 `.ipk`）下载应用包，并在
+已发布时一并下载俄语界面包（`luci-i18n-h5000m-fancontrol-ru`），随后在
+后台安装并显示进度。
+
+更新程序优先直连 `api.github.com`；若直连被阻断，则通过本地
+clash/mihomo HTTP 代理（mixed-port）重试。更新成功后页面会刷新并需要
+重新登录一次，以便新界面和 RPC 权限立即生效。仅下载本仓库的发布资源，
+不向任何地方上传设备数据。
+
 ## 配置与服务
 
 - UCI 配置：`/etc/config/h5000m_fancontrol`
 - procd 服务：`/etc/init.d/h5000m-fancontrol`
 - 控制器：`/usr/sbin/h5000m-fancontrol`
+- 更新脚本：`/usr/share/h5000m-fancontrol/update.sh`
 - LuCI 页面：系统 → 风扇控制
 
 常用命令：

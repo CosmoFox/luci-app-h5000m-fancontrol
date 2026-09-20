@@ -25,6 +25,23 @@
   `docs/RELEASING.md`.
 - GitHub Actions release builds now cache the OpenWrt SDK archive (keyed on its
   sha256), so the multi-hundred-MB SDK is no longer downloaded on every run.
+- Built-in self-update from the LuCI page: the new "Update" tab checks GitHub
+  Releases for the latest stable version and installs it on the router
+  (`.apk`/`.ipk` chosen by the package manager). The download and install run
+  in the background with a progress indicator; the application package and,
+  when published, the Russian translation (`luci-i18n-h5000m-fancontrol-ru`)
+  are installed together.
+- The updater reaches `api.github.com` directly first and falls back to a
+  local clash/mihomo HTTP proxy when the direct path is blocked. By default
+  only stable releases are offered - `-beta.N` prereleases can be opted into
+  with the "Offer beta releases" checkbox, which also shows a warning that
+  beta builds may be unstable and are not recommended for daily use.
+- After a successful update the browser re-fetches the new page scripts and
+  the session is ended once (a single re-login), so the updated interface and
+  RPC permissions take effect immediately.
+- Update logic lives in `/usr/share/h5000m-fancontrol/update.sh`
+  (`check`, `install`, `status`, `version`); the LuCI user can run it via the
+  application's RPC ACL.
 - Documentation (README and changelog) is maintained in English, Russian and
   Simplified Chinese, and the Chinese UI translation is kept in sync with the
   new strings.
