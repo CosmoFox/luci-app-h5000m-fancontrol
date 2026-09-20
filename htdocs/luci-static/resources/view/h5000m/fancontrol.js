@@ -43,7 +43,8 @@ return view.extend({
 					node.style.display = 'none';
 				}
 			}
-		}, this)).catch(L.bind(function() {
+		}, this)).catch(L.bind(function(err) {
+			console.info('h5fan: update.sh version failed: ' + (err && err.message ? err.message : err));
 			var node = document.getElementById('h5fan-build');
 			if (node) node.style.display = 'none';
 		}, this));
@@ -128,7 +129,7 @@ return view.extend({
 			'.h5fan-temp-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
 			'.h5fan-temp-badge{display:none;flex:none;padding:1px 6px;border-radius:999px;font-size:9px;font-weight:600;background:rgba(85,168,255,.16);color:var(--fan-blue)}',
 			'.h5fan-temp-item.active .h5fan-temp-badge{display:inline-block}',
-			'.h5fan-build{padding-left:6px;font-size:10px;color:var(--text-color-medium,#777);opacity:.6}',
+			'.h5fan-build{padding-left:5px;font-size:10px;color:var(--text-color-medium,#777);opacity:.6}',
 			'.h5fan-temp-item.active{background:rgba(85,168,255,.11);box-shadow:inset 0 0 0 1px rgba(85,168,255,.32)}.h5fan-temp-item.active .h5fan-temp-label{color:var(--fan-blue)}',
 			'.h5fan-temp-value{margin-top:4px;font-size:17px;font-weight:650;color:var(--text-color-high,#222);white-space:nowrap}.h5fan-temp-hint{margin-top:3px;font-size:10px;color:var(--text-color-low,#888);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
 			'.h5fan-section{margin:0 0 16px;padding:16px;border:1px solid var(--border-color-medium,#d8d8d8);border-radius:12px;background:var(--background-color-high,#fff)}',
@@ -739,6 +740,7 @@ return view.extend({
 				this.updSet('h5fan-upd-status', _('You have the latest version'));
 			}
 		}, this), L.bind(function(err) {
+			console.info('h5fan: update check failed: ' + (err.message || err));
 			this.updSet('h5fan-upd-status', _('Could not check for updates') + ' ' + (err.message || err));
 		}, this)).then(L.bind(function() {
 			var b = document.getElementById('h5fan-upd-check'); if (b) b.disabled = false;
