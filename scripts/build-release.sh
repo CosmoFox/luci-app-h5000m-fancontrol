@@ -12,7 +12,9 @@ cd "${work_dir}"
 curl -fsSLO "${base_url}/sha256sums"
 archive="$(awk '/openwrt-sdk-.*Linux-x86_64\.tar\.zst$/ { print $2; exit }' sha256sums | sed 's/^\*//')"
 test -n "${archive}"
-curl -fL --retry 5 "${base_url}/${archive}" -o "${archive}"
+if ! ( test -s "${archive}" && grep "[ *]${archive}$" sha256sums | sha256sum -c - >/dev/null 2>&1 ); then
+	curl -fL --retry 5 "${base_url}/${archive}" -o "${archive}"
+fi
 grep "[ *]${archive}$" sha256sums | sha256sum -c -
 tar --zstd -xf "${archive}"
 sdk_dir="$(find "${work_dir}" -maxdepth 1 -type d -name 'openwrt-sdk-*' | head -n 1)"
