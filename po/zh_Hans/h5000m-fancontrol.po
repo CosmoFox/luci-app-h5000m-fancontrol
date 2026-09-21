@@ -259,8 +259,8 @@ msgstr "运行正常"
 msgid "Fan output"
 msgstr "风扇输出"
 
-msgid "From the local modem cache"
-msgstr "来自本地模块缓存"
+msgid "Modem unavailable"
+msgstr "调制解调器不可用"
 
 msgid "H5000M Cooling"
 msgstr "H5000M 散热管理"

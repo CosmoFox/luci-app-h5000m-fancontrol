@@ -13,7 +13,7 @@
 
 - Snapshots refreshed by the 5gmodem stack are also checked against the snapshot file mtime, and snapshots that
   report the modem missing ("modem":"-") are ignored, so a disconnected modem no longer leaves a stale
-  temperature on the page.
+  temperature or the model name on the page - the modem card then shows its "Modem unavailable" fallback.
 
 - Redesigned the LuCI fan-curve page: the curve editor now has an interactive
   canvas chart that plots the fan curve and the firmware floor map against

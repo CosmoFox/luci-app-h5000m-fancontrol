@@ -656,7 +656,7 @@ return view.extend({
 		this.setText('h5fan-phy-value', this.formatTemp(data.phy_temp)); this.setText('h5fan-phy-hint', data.phy_label || '');
 		this.setText('h5fan-wifi-value', data.wifi1_temp || data.wifi2_temp ? [data.wifi1_temp, data.wifi2_temp].filter(Boolean).join(' / ') + ' °C' : _('Unavailable'));
 		this.setText('h5fan-wifi-hint', [data.wifi1_label, data.wifi2_label].filter(Boolean).join(' · '));
-		this.setText('h5fan-modem-value', this.formatTemp(data.module_temp)); this.setText('h5fan-modem-hint', data.module_name || _('From the local modem cache'));
+		this.setText('h5fan-modem-value', this.formatTemp(data.module_temp)); this.setText('h5fan-modem-hint', data.module_name || _('Modem unavailable'));
 		this.setText('h5fan-profile', this.modeName(data.mode) + (data.mode === 'auto' ? ' · ' + this.profileName(data.curve) : ''));
 		this.syncTitle('h5fan-profile');
 		this.setText('h5fan-requested', isNaN(requested) ? '-' : Math.round(requested * 100 / 255) + '%');

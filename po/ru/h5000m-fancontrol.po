@@ -136,8 +136,8 @@ msgstr "Аварийное охлаждение"
 msgid "Fan curve"
 msgstr "Кривая вентилятора"
 
-msgid "From the local modem cache"
-msgstr "Из локального кэша модема"
+msgid "Modem unavailable"
+msgstr "Модем недоступен"
 
 msgid "Hottest available sensor"
 msgstr "Самый горячий доступный датчик"

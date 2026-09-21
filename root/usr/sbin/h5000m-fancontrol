@@ -219,7 +219,7 @@ find_5gmodem_temp() {
 }
 
 find_5gmodem_name() {
-	local file name have_metrics
+	local file name age have_metrics
 	have_metrics=""
 	for file in /tmp/5gmodem_metrics_*.json; do
 		[ -f "$file" ] || continue
@@ -228,12 +228,15 @@ find_5gmodem_name() {
 		case "$name" in
 			""|-) continue ;;
 		esac
+		age="$(sed -n 's/.*"age"[[:space:]]*:[[:space:]]*"\{0,1\}\([0-9][0-9]*\)".*/\1/p' "$file" 2>/dev/null | head -n 1)"
+		fresh_enough "$file" "$age" || continue
 		printf '%s\n' "$name"
 		return 0
 	done
 	[ -n "$have_metrics" ] && return 1
 	for file in /tmp/5gmodem_stats/temp.*.label; do
 		[ -f "$file" ] || continue
+		fresh_enough "$file" || continue
 		name="$(cat "$file" 2>/dev/null | head -n 1)"
 		[ -n "$name" ] && printf '%s\n' "$name" && return 0
 	done
