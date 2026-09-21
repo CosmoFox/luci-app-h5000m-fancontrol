@@ -72,33 +72,26 @@ net_fetch() {
 
 api_json() { net_fetch 15 "$API"; }
 
-# The most recent GitHub prerelease (newest -beta.N tag). Only the releases
-# list endpoint returns prereleases - releases/latest always resolves to the
-# newest stable release. The first "prerelease": true in the newest-first
-# listing belongs to the newest built beta; its tag_name sits right before it.
+# The most recent GitHub prerelease, chosen as the newest v<base>-beta.<N>
+# tag over the whole release listing. GitHub orders releases by the time the
+# release record was created, which can disagree with the build order of the
+# tags, so the first "prerelease": true in the listing is not always the
+# newest beta - compare the tag numbers instead.
 latest_beta() {
-	_j=$(net_fetch 15 "https://api.github.com/repos/$REPO/releases?per_page=20" | tr -d '\n\r')
+	_j=$(net_fetch 15 "https://api.github.com/repos/$REPO/releases?per_page=50" | tr -d '\n\r')
 	[ -n "$_j" ] || return 1
-	printf '%s' "$_j" | awk '
-		{
-			# GitHub API emits compact JSON ("prerelease":true), allow both
-			# forms; the matched text starts right at the "prerelease" key.
-			if (match($0, /"prerelease":[ \t]*true/) == 0) exit
-			pr = RSTART
-			head = substr($0, 1, pr - 1)
-			probe = "\"tag_name\":\""
-			pos = 0; last = 0
-			while ((q = index(substr(head, pos + 1), probe)) > 0) {
-				pos = pos + q
-				last = pos
-			}
-			if (last == 0) exit
-			rest = substr(head, last + length(probe))
-			if (match(rest, /^[^"]*/)) {
-				print substr(rest, 1, RLENGTH)
-				exit
-			}
-		}'
+	BEST=""; BEST_B=""; BEST_N=-1
+	for _t in $(printf '%s' "$_j" | grep -o '"tag_name":"v[0-9][0-9.]*-beta\.[0-9][0-9]*"' | sed 's/"tag_name":"//; s/"//'); do
+		_tb=${_t#v}; _tb=${_tb%%-*}
+		_tn=${_t##*-beta.}
+		if [ "$BEST_B" = "$_tb" ]; then
+			[ "$_tn" -gt "$BEST_N" ] && { BEST="$_t"; BEST_B="$_tb"; BEST_N="$_tn"; }
+		elif [ -z "$BEST_B" ] || [ "$(version_gt "$_tb" "$BEST_B")" = 1 ]; then
+			BEST="$_t"; BEST_B="$_tb"; BEST_N="$_tn"
+		fi
+	done
+	[ -n "$BEST" ] && { echo "$BEST"; return 0; }
+	return 1
 }
 
 # JSON of one release by tag (assets included), collapsed to a single line so
