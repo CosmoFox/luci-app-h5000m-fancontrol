@@ -146,7 +146,11 @@ return view.extend({
 			'.h5fan-legend .sw{display:inline-block;vertical-align:middle;margin-right:6px}.h5fan-legend .sw-curve{width:16px;height:0;border-top:3px solid var(--fan-green);border-radius:2px}.h5fan-legend .sw-floor{width:16px;height:0;border-top:2px dashed var(--fan-amber)}',
 			'.h5fan-legend .sw-applied{width:9px;height:9px;border-radius:50%;background:var(--fan-blue);box-shadow:0 0 0 3px rgba(85,168,255,.22)}.h5fan-legend .sw-hyst{width:14px;height:10px;border-radius:3px;background:rgba(85,168,255,.14);box-shadow:inset 0 0 0 1px rgba(85,168,255,.35)}',
 			'.h5fan-slider{display:flex;align-items:center;gap:10px;max-width:480px}.h5fan-slider input[type=range]{flex:1;min-width:190px}.h5fan-slider input[type=number]{width:84px}',
-			'.h5fan-update{display:grid;gap:10px}.h5fan-update-buttons{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.h5fan-update a.cbi-button{color:var(--text-color-high,#222);text-decoration:none}.h5fan-update-meta{font-size:12px;color:var(--text-color-medium,#666)}.h5fan-update-meta strong{color:var(--text-color-high,#222)}.h5fan-update-beta{margin-top:6px;padding-top:10px;border-top:1px dashed var(--border-color-low,#ddd)}.h5fan-update-checkbox{display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}.h5fan-update-warn{margin-top:8px;padding:8px 10px;border-left:3px solid var(--fan-amber);background:rgba(240,170,70,.1);color:var(--text-color-medium,#666);font-size:12px}',
+			'.h5fan-update{display:grid;gap:10px}.h5fan-update-buttons{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.h5fan-update a.cbi-button{color:var(--text-color-high,#222);text-decoration:none}.h5fan-update-meta{font-size:12px;color:var(--text-color-medium,#666)}.h5fan-update-meta strong{color:var(--text-color-high,#222)}.h5fan-update-beta{margin-top:6px;padding-top:10px;border-top:1px dashed var(--border-color-low,#ddd)}.h5fan-update-checkbox{display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}.h5fan-update-warn{margin:8px 0;padding:8px 10px;border-left:3px solid var(--fan-amber);background:rgba(240,170,70,.1);color:var(--text-color-medium,#666);font-size:12px}',
+			'.h5fan-temp-item.off{opacity:.55}.h5fan-temp-item.off .h5fan-temp-value{color:var(--text-color-low,#888)}',
+			'.h5fan-temp-badge.off{display:inline-block;background:rgba(239,98,98,.16);color:var(--fan-red)}',
+			'.h5fan-update-progress{display:none;height:8px;margin-top:8px;border-radius:4px;background:var(--background-color-high,#f2f2f2);overflow:hidden}.h5fan-update-progress.show{display:block}',
+			'.h5fan-update-progress-bar{height:100%;width:0;border-radius:4px;background:linear-gradient(90deg,var(--fan-green),var(--fan-blue));transition:width .4s ease}',
 			'@media(max-width:1050px){.h5fan-grid{grid-template-columns:repeat(2,minmax(145px,1fr))}.h5fan-card.temperatures{grid-column:span 2}.h5fan-temp-grid{grid-template-columns:repeat(4,minmax(72px,1fr))}}',
 			'@media(max-width:750px){.h5fan-curve-layout{grid-template-columns:1fr}.h5fan-side{grid-template-columns:repeat(3,1fr);grid-template-rows:1fr}}',
 			'@media(max-width:520px){.h5fan-hero{display:block}.h5fan-health{margin-top:12px}}',
@@ -642,7 +646,18 @@ return view.extend({
 				name === 'phy' && data.control_sensor === data.phy_label ||
 				name === 'wifi' && (data.control_sensor === data.wifi1_label || data.control_sensor === data.wifi2_label) ||
 				name === 'modem' && data.control_sensor === '5G modem';
-			if (node) node.classList.toggle('active', !!active);
+			var tempOK = name === 'cpu' ? data.cpu_temp : name === 'phy' ? data.phy_temp :
+				name === 'wifi' ? (data.wifi1_temp || data.wifi2_temp) : data.module_temp;
+			var off = !tempOK;
+			if (node) {
+				node.classList.toggle('active', !!active && !off);
+				node.classList.toggle('off', !!off);
+				var badge = node.querySelector('.h5fan-temp-badge');
+				if (badge) {
+					badge.textContent = off ? _('Offline') : _('Priority');
+					badge.classList.toggle('off', !!off);
+				}
+			}
 		});
 		var floorLevels = this.formatFloorLevels(data.kernel_floor_levels);
 		if (data.thermal_owner === 'userspace') {
@@ -688,6 +703,18 @@ return view.extend({
 		this.setText(id, txt);
 	},
 
+	updProgress: function(percent) {
+		var box = document.getElementById('h5fan-upd-progress'), bar = document.getElementById('h5fan-upd-progress-bar');
+		if (!box || !bar) return;
+		box.classList.add('show'); bar.style.width = Math.max(2, Math.min(100, percent)) + '%';
+	},
+
+	updProgressHide: function() {
+		var box = document.getElementById('h5fan-upd-progress'), bar = document.getElementById('h5fan-upd-progress-bar');
+		if (box) box.classList.remove('show');
+		if (bar) bar.style.width = '0';
+	},
+
 	updSetVer: function(id, label, ver) {
 		var node = document.getElementById(id);
 		if (!node) return;
@@ -707,7 +734,7 @@ return view.extend({
 		if (error === 'Could not reach GitHub')
 			return _('Could not check for updates. Please check the router\'s internet access.');
 		if (error === 'unknown_current_release')
-			return _('The installed release was not identified. Install a version through the Update tab first.');
+			return _('The installed release was not identified. Install a version through the Settings tab first.');
 		return error || fallback;
 	},
 
@@ -807,6 +834,7 @@ return view.extend({
 		tries = tries || 0;
 		if (tries > 100) {   // ~7 minutes (4 s per poll)
 			this.updSet('h5fan-upd-status', _('Update is taking too long. Check the connection and try again.'));
+			this.updProgressHide();
 			this.updBusy(false);
 			return;
 		}
@@ -814,7 +842,16 @@ return view.extend({
 			txt = String(txt || '').trim();
 			if (!txt) { this.retryPoll(tries + 1); return; }
 			var d = {}; try { d = JSON.parse(txt); } catch (e) { this.retryPoll(tries + 1); return; }
-			if (d.running) { this.retryPoll(tries + 1); return; }
+			if (d.running) {
+				this.updSet('h5fan-upd-status',
+					d.stage === 'download' ? _('Downloading the update…') :
+					d.stage === 'install' ? _('Installing packages…') :
+					d.stage === 'finish' ? _('Finishing the update…') :
+					_('Installing the update…'));
+				if (typeof d.progress === 'number') this.updProgress(d.progress);
+				this.retryPoll(tries + 1);
+				return;
+			}
 			if (d.success) {
 				this.updSet('h5fan-upd-current', d.current || '—');
 				this.updShow('h5fan-upd-install', false);
@@ -822,6 +859,7 @@ return view.extend({
 				this.finishUpdate();
 			} else {
 				this.updSet('h5fan-upd-status', this.updErrText(d.error, _('Failed to install the update')));
+				this.updProgressHide();
 			}
 			this.updBusy(false);
 		}, this));
@@ -858,6 +896,7 @@ return view.extend({
 			return Promise.resolve();
 		}
 		this.updSet('h5fan-upd-status', _('Installing the update…'));
+		this.updProgress(5);
 		this.updBusy(true);
 		var self = this;
 		/* The RPC response may be lost while the script keeps running in the
@@ -868,6 +907,7 @@ return view.extend({
 				var st = {}; try { st = JSON.parse(String(txt || '').trim() || '{}'); } catch (e) {}
 				if (st.running || st.success != null) { self.pollInstall(0); return; }
 				self.updSet('h5fan-upd-status', errText);
+				self.updProgressHide();
 				self.updBusy(false);
 			});
 		};
@@ -879,6 +919,7 @@ return view.extend({
 			if (d.started) { self.pollInstall(0); return; }
 			if (d.error) {
 				self.updSet('h5fan-upd-status', self.updErrText(d.error, _('Failed to install the update')));
+				self.updProgressHide();
 				self.updBusy(false);
 				return;
 			}
@@ -911,6 +952,9 @@ return view.extend({
 				E('div', {}, [ _('Current version') + ': ', E('strong', { 'id': 'h5fan-upd-current' }, '—') ]),
 				E('div', { 'id': 'h5fan-upd-status', 'style': 'margin-top:4px' }, '')
 			]),
+			E('div', { 'class': 'h5fan-update-progress', 'id': 'h5fan-upd-progress' }, [
+				E('div', { 'class': 'h5fan-update-progress-bar', 'id': 'h5fan-upd-progress-bar' })
+			]),
 			E('div', { 'class': 'h5fan-update-beta' }, [
 				E('label', { 'class': 'h5fan-update-checkbox' }, [
 					E('input', { 'type': 'checkbox', 'id': 'h5fan-upd-beta',
@@ -921,12 +965,12 @@ return view.extend({
 					_('Beta versions may be unstable and are provided for testing. They are not recommended for daily use.')),
 				E('div', { 'class': 'h5fan-update-meta', 'id': 'h5fan-upd-beta-wrap', 'style': 'display:none' }, [
 					E('div', {}, [ _('Beta') + ': ', E('strong', { 'id': 'h5fan-upd-beta-tag' }, '—') ]),
-					E('div', { 'style': 'margin-top:6px' }, [
+					E('div', { 'style': 'margin-top:4px' }, [
 						E('button', { 'class': 'cbi-button cbi-button-positive', 'id': 'h5fan-upd-install-beta',
 							'style': 'display:none',
 							'click': ui.createHandlerFn(view, function() { return view.installUpdate('beta'); }) },
 							_('Install beta')),
-						E('span', { 'style': 'margin-left:8px', 'id': 'h5fan-upd-beta-status' }, '')
+						E('span', {'id': 'h5fan-upd-beta-status' }, '')
 					])
 				])
 			])
@@ -962,7 +1006,7 @@ return view.extend({
 		s.anonymous = true;
 		s.tab('policy', _('Policy'));
 		s.tab('safety', _('Response & safety'));
-		s.tab('update', _('Update'));
+		s.tab('update', _('Settings'));
 
 		o = s.taboption('policy', form.Flag, 'enabled', _('Enable enhanced controller'));
 		o.default = '1'; o.rmempty = false;
@@ -1005,7 +1049,7 @@ return view.extend({
 		o = s.taboption('safety', form.Value, 'start_boost_ms', _('Startup boost duration'));
 		o.datatype = 'range(0,3000)'; o.default = '700'; o.rmempty = false; o.description = _('A short boost helps a stopped fan start reliably. Set 0 to disable.');
 
-		o = s.taboption('safety', form.Flag, 'override_floor', _('Ignore firmware fan map'));
+		o = s.taboption('update', form.Flag, 'override_floor', _('Ignore firmware fan map'));
 		o.default = '0'; o.rmempty = false;
 		o.description = _('Advanced. Lets automatic and manual output run below the levels the stock firmware enforces at 40, 85 and 115 °C. The kernel still raises the fan when those trip points are crossed; install patched firmware for full control.');
 

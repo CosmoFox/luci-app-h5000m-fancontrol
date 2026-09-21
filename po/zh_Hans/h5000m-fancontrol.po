@@ -355,8 +355,8 @@ msgstr "温度必须在 0–150 °C 范围内递增，百分比必须在 0–100
 msgid "The hottest-sensor option considers CPU, Ethernet PHY, Wi-Fi and the available 5G modem cache."
 msgstr "最高温度模式会综合 CPU、以太网 PHY、Wi-Fi 和可用的 5G 模块缓存温度。"
 
-msgid "The installed release was not identified. Install a version through the Update tab first."
-msgstr "无法确定已安装的发布版本。请先通过“更新”标签页安装一个版本。"
+msgid "The installed release was not identified. Install a version through the Settings tab first."
+msgstr "无法确定已安装的发布版本。请先通过“设置”标签页安装一个版本。"
 
 msgid "The kernel safety floor may raise the effective output above this value."
 msgstr "内核安全下限可能使实际输出高于此设置值。"
@@ -438,6 +438,21 @@ msgstr "%s · 已忽略固件映射"
 
 msgid "Firmware fan map: %s. Install patched firmware for full curve control."
 msgstr "固件风扇映射：%s。安装带补丁的固件可完全掌控曲线。"
+
+msgid "Settings"
+msgstr "设置"
+
+msgid "Offline"
+msgstr "离线"
+
+msgid "Downloading the update…"
+msgstr "正在下载更新…"
+
+msgid "Installing packages…"
+msgstr "正在安装软件包…"
+
+msgid "Finishing the update…"
+msgstr "正在完成更新…"
 
 msgid "Fan curve"
 msgstr "风扇曲线"

@@ -27,6 +27,11 @@ TAGSTATE="/etc/h5000m_fancontrol.last_tag"
 
 json_esc() { echo "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'; }
 
+# Live progress snapshot for the page poll: the STAGE + a 0-100 percentage.
+progress() {
+	echo "{\"running\":true,\"stage\":\"$1\",\"progress\":$2}" > "$STATUS"
+}
+
 pkgman() {
 	command -v apk >/dev/null 2>&1 && { echo apk; return; }
 	command -v opkg >/dev/null 2>&1 && { echo opkg; return; }
@@ -237,7 +242,9 @@ install)
 			fi
 			PREV=$(installed_version "$PM")
 			INSTALLED=""
+			STEP=0
 			for BASE in "$PKG" "$I18N"; do
+				STEP=$((STEP+1))
 				URL=$(asset_url_in "$RELJSON" "$BASE" "$EXT")
 				if [ -z "$URL" ]; then
 					# The ru translation may not exist for this release - only
@@ -248,6 +255,7 @@ install)
 				fi
 				F="$TMP/$BASE.$EXT"
 				rm -f "$F"
+				progress download $((10 + STEP*20))
 				if ! net_fetch 90 "$URL" "$F"; then
 					echo '{"success":false,"error":"Download failed for '"$BASE"'"}'; return
 				fi
@@ -271,7 +279,9 @@ install)
 				fi
 				rm -f "$F"
 				INSTALLED="$INSTALLED $BASE"
+				progress install $((55 + STEP*15))
 			done
+			progress finish 90
 			# Drop LuCI's cached indexes/modules so the new bundle is served.
 			rm -rf /tmp/luci-indexcache* /tmp/luci-modulecache/* 2>/dev/null
 			CUR=$(installed_version "$PM")

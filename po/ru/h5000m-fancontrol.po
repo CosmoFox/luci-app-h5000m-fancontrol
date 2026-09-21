@@ -250,8 +250,8 @@ msgstr "Менеджер вентилятора единолично управ�
 msgid "The hottest-sensor option considers CPU, Ethernet PHY, Wi-Fi and the available 5G modem cache."
 msgstr "Режим «самый горячий датчик» учитывает CPU, PHY Ethernet, Wi-Fi и доступный кэш температуры 5G-модема."
 
-msgid "The installed release was not identified. Install a version through the Update tab first."
-msgstr "Не удалось определить установленный релиз. Сначала установите версию через вкладку «Обновление»."
+msgid "The installed release was not identified. Install a version through the Settings tab first."
+msgstr "Не удалось определить установленный релиз. Сначала установите версию через вкладку «Настройки»."
 
 msgid "The kernel safety floor may raise the effective output above this value."
 msgstr "Защитный минимум ядра может поднять фактическую скорость выше этого значения."
@@ -315,3 +315,18 @@ msgstr "%s · игнорирую карту прошивки"
 
 msgid "Firmware fan map: %s. Install patched firmware for full curve control."
 msgstr "Карта прошивки: %s. Установка прошивки с патчем даёт полный контроль над кривой."
+
+msgid "Settings"
+msgstr "Настройки"
+
+msgid "Offline"
+msgstr "Недоступен"
+
+msgid "Downloading the update…"
+msgstr "Загрузка обновления…"
+
+msgid "Installing packages…"
+msgstr "Установка пакетов…"
+
+msgid "Finishing the update…"
+msgstr "Завершение обновления…"

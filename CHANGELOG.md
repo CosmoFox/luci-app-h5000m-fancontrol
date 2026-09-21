@@ -74,6 +74,15 @@
 - Documentation (README and changelog) is maintained in English, Russian and
   Simplified Chinese, and the Chinese UI translation is kept in sync with the
   new strings.
+- Sensors that report no temperature are now shown as offline on the LuCI
+  page: the card is greyed out and carries an "Offline" badge instead of
+  "Priority".
+- The update tab is renamed to "Settings", and the "Ignore firmware fan map"
+  option moved there from "Response & safety".
+- The built-in updater now shows live install progress: a progress bar on the
+  page fills in as the update runs in the background, with the current stage
+  ("Downloading the update…", "Installing packages…", "Finishing the
+  update…") replacing the generic "Installing the update…" text.
 
 ## 2.3.0
 
