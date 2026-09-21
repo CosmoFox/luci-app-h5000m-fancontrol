@@ -4,7 +4,8 @@
 		"read": {
 			"file": {
 				"/usr/sbin/h5000m-fancontrol-status": [ "exec" ],
-				"/usr/share/h5000m-fancontrol/update.sh": [ "exec" ]
+				"/usr/share/h5000m-fancontrol/update.sh": [ "exec" ],
+				"/tmp/h5000m_fancontrol_update.json": [ "read" ]
 			},
 			"uci": [ "h5000m_fancontrol" ]
 		},

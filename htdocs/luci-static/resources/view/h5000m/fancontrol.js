@@ -787,8 +787,22 @@ return view.extend({
 			return this.checkUpdate();
 	},
 
-	/* Installation runs in the background; poll the RESULT FILE, not the script
-	   (the script binary is replaced during the update). */
+	/* The app's ACL grants exec on update.sh but no file read on /tmp, so the
+	   install result cannot be fetched with fs.read_direct (cgi-download would
+	   answer 403 "Access to path denied by ACL"). 'update.sh status' prints
+	   the same JSON and needs no session file grant; both the old and the new
+	   copy of the script implement it, so polling stays reliable even while
+	   the package is replacing update.sh during the install. */
+	readInstallStatus: function() {
+		return fs.exec(UPDATE_BIN, [ 'status' ]).then(function(res) {
+			return String((res && res.stdout) || '').trim();
+		}, function() {
+			return '';
+		});
+	},
+
+	/* Installation runs in the background; poll 'update.sh status', not the
+	   install command (the script binary is replaced during the update). */
 	pollInstall: function(tries) {
 		tries = tries || 0;
 		if (tries > 100) {   // ~7 minutes (4 s per poll)
@@ -796,7 +810,7 @@ return view.extend({
 			this.updBusy(false);
 			return;
 		}
-		L.resolveDefault(fs.read_direct('/tmp/h5000m_fancontrol_update.json'), '').then(L.bind(function(txt) {
+		this.readInstallStatus().then(L.bind(function(txt) {
 			txt = String(txt || '').trim();
 			if (!txt) { this.retryPoll(tries + 1); return; }
 			var d = {}; try { d = JSON.parse(txt); } catch (e) { this.retryPoll(tries + 1); return; }
@@ -850,7 +864,7 @@ return view.extend({
 		   background (rpcd can hold the request until its timeout); on error
 		   read the result file: install may still be running or already done. */
 		var fallback = function(errText) {
-			return L.resolveDefault(fs.read_direct('/tmp/h5000m_fancontrol_update.json'), '').then(function(txt) {
+			return self.readInstallStatus().then(function(txt) {
 				var st = {}; try { st = JSON.parse(String(txt || '').trim() || '{}'); } catch (e) {}
 				if (st.running || st.success != null) { self.pollInstall(0); return; }
 				self.updSet('h5fan-upd-status', errText);
