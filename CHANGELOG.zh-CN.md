@@ -4,6 +4,11 @@
 
 ## 2.3.1
 
+- 守护进程现在读取固件标配 5gmodem 软件栈发布的 5G 调制解调器温度（/tmp/5gmodem_metrics_*.json、
+  /tmp/5gmodem_stats/temp.*、/tmp/5gmodem_temp_*），不再只依赖旧版 MTK 温度缓存（/var/run/mt5700m/temperature），
+  该缓存不存在于 H5000M + Fibocom FM350-GL 这类设备上。
+- LuCI 中的调制解调器温度卡片现在会在温度旁显示调制解调器型号（例如“Fibocom FM350-GL”）。
+
 - 重新设计 LuCI 风扇曲线页面：曲线编辑器现在带有交互式 canvas 图表，同时
   绘制风扇曲线与固件下限映射，并显示当前温度标记（含请求与实际 PWM 值）、
   迟滞条带和颜色图例。图表平滑动画，自适应 LuCI 深色/浅色主题，在窄屏上

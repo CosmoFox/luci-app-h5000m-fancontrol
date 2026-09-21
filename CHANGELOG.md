@@ -4,6 +4,13 @@
 
 ## 2.3.1
 
+- The daemon now reads the 5G modem temperature published by the stock 5gmodem stack 
+  (`/tmp/5gmodem_metrics_*.json`, `/tmp/5gmodem_stats/temp.*`, `/tmp/5gmodem_temp_*`). This replaces the legacy
+  MTK temperature cache for devices such as the H5000M with a Fibocom FM350-GL, which do not provide
+  /var/run/mt5700m/temperature.
+- The modem temperature card in LuCI now shows the modem model (e.g. "Fibocom FM350-GL") next to the
+  temperature instead of a generic hint.
+
 - Redesigned the LuCI fan-curve page: the curve editor now has an interactive
   canvas chart that plots the fan curve and the firmware floor map against
   temperature, plus a marker for the current temperature with the requested

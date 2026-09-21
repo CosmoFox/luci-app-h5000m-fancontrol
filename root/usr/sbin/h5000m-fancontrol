@@ -155,6 +155,76 @@ read_temp_c() {
 	echo "$value"
 }
 
+fresh_enough() { # <file> [snapshot_age]
+	local now mtime
+	is_uint "$MT5700M_TEMP_MAX_AGE" || return 1
+	now="$(date +%s 2>/dev/null)"
+	is_uint "$now" || return 1
+	[ -n "$2" ] && is_uint "$2" && [ "$2" -le "$MT5700M_TEMP_MAX_AGE" ] && return 0
+	mtime="$(date -r "$1" +%s 2>/dev/null)"
+	is_uint "$mtime" || return 1
+	[ $((now - mtime)) -ge 0 ] && [ $((now - mtime)) -le "$MT5700M_TEMP_MAX_AGE" ]
+}
+
+# Firmware with the 5gmodem stack (ModemManager + /usr/share/5gmodem, e.g. the
+# FM350-GL builds) publishes the modem temperature in per-modem metrics JSON
+# ("mtemp") and in stats/port series. The files are maintained by that
+# firmware's own 5gmodem daemon, so reading them is safe - the AT port is
+# locked by that daemon. Sources are tried in order, the hottest fresh value
+# wins.
+find_5gmodem_temp() {
+	local file v age best
+	best=""
+	for file in /tmp/5gmodem_metrics_*.json; do
+		[ -f "$file" ] || continue
+		age="$(sed -n 's/.*"age"[[:space:]]*:[[:space:]]*"\{0,1\}\([0-9][0-9]*\)".*/\1/p' "$file" 2>/dev/null | head -n 1)"
+		fresh_enough "$file" "$age" || continue
+		v="$(sed -n 's/.*"mtemp"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$file" 2>/dev/null | head -n 1)"
+		v="$(printf '%s' "$v" | grep -Eo -- '-?[0-9][0-9]*([.][0-9]+)?' | head -n 1)"
+		[ -n "$v" ] || continue
+		v="$(printf '%s' "$v" | sed 's/[.].*//')"
+		[ "$v" -ge -40 ] 2>/dev/null && [ "$v" -le 150 ] 2>/dev/null || continue
+		if [ -z "$best" ] || [ "$v" -gt "$best" ]; then best="$v"; fi
+	done
+	[ -n "$best" ] && { echo "$best"; return 0; }
+	for file in /tmp/5gmodem_stats/temp.*; do
+		case "$file" in *.label) continue ;; esac
+		[ -f "$file" ] || continue
+		fresh_enough "$file" || continue
+		v="$(tail -n 1 "$file" 2>/dev/null | awk '{ print $2 }')"
+		case "$v" in ''|*[!0-9-]*) continue ;; esac
+		[ "$v" -ge -40 ] 2>/dev/null && [ "$v" -le 150 ] 2>/dev/null || continue
+		if [ -z "$best" ] || [ "$v" -gt "$best" ]; then best="$v"; fi
+	done
+	[ -n "$best" ] && { echo "$best"; return 0; }
+	for file in /tmp/5gmodem_temp_*; do
+		[ -f "$file" ] || continue
+		fresh_enough "$file" || continue
+		v="$(awk 'NR == 1 { print $1 }' "$file" 2>/dev/null)"
+		v="$(printf '%s' "$v" | grep -Eo -- '-?[0-9][0-9]*([.][0-9]+)?' | head -n 1)"
+		[ -n "$v" ] || continue
+		v="$(printf '%s' "$v" | sed 's/[.].*//')"
+		[ "$v" -ge -40 ] 2>/dev/null && [ "$v" -le 150 ] 2>/dev/null || continue
+		if [ -z "$best" ] || [ "$v" -gt "$best" ]; then best="$v"; fi
+	done
+	[ -n "$best" ] && echo "$best"
+}
+
+find_5gmodem_name() {
+	local file name
+	for file in /tmp/5gmodem_metrics_*.json; do
+		[ -f "$file" ] || continue
+		name="$(sed -n 's/.*"modem"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$file" 2>/dev/null | head -n 1)"
+		[ -n "$name" ] && printf '%s\n' "$name" && return 0
+	done
+	for file in /tmp/5gmodem_stats/temp.*.label; do
+		[ -f "$file" ] || continue
+		name="$(cat "$file" 2>/dev/null | head -n 1)"
+		[ -n "$name" ] && printf '%s\n' "$name" && return 0
+	done
+	return 1
+}
+
 find_module_temp() {
 	local file value updated now age
 	if [ -r "$MT5700M_TEMP_CACHE" ]; then
@@ -183,6 +253,8 @@ find_module_temp() {
 		echo "$value"
 		return 0
 	done
+	v="$(find_5gmodem_temp 2>/dev/null || true)"
+	[ -n "$v" ] && { echo "$v"; return 0; }
 	return 1
 }
 
@@ -596,7 +668,7 @@ print_status() {
 	echo "phy_temp=$PHY_TEMP"; echo "phy_label=$PHY_LABEL"
 	echo "wifi1_temp=$WIFI1_TEMP"; echo "wifi1_label=$WIFI1_LABEL"
 	echo "wifi2_temp=$WIFI2_TEMP"; echo "wifi2_label=$WIFI2_LABEL"
-	echo "module_temp=$MODULE_TEMP"; echo "module_label=5G modem"
+	echo "module_temp=$MODULE_TEMP"; echo "module_label=5G modem"; echo "module_name=$(find_5gmodem_name 2>/dev/null || true)"
 	echo "control_temp=$CONTROL_TEMP"; echo "control_sensor=$CONTROL_SENSOR"
 	echo "thermal_floor=$THERMAL_FLOOR"
 	echo "kernel_floor_levels=${THERMAL_MAP_STEPS:-}"
