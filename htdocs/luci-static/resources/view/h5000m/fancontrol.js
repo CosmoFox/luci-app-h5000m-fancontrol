@@ -791,16 +791,16 @@ return view.extend({
 	   (the script binary is replaced during the update). */
 	pollInstall: function(tries) {
 		tries = tries || 0;
-		if (tries > 75) {   // ~5 minutes
+		if (tries > 100) {   // ~7 minutes (4 s per poll)
 			this.updSet('h5fan-upd-status', _('Update is taking too long. Check the connection and try again.'));
 			this.updBusy(false);
 			return;
 		}
 		L.resolveDefault(fs.read_direct('/tmp/h5000m_fancontrol_update.json'), '').then(L.bind(function(txt) {
 			txt = String(txt || '').trim();
-			if (!txt) { this.pollInstall(tries + 1); return; }
-			var d = {}; try { d = JSON.parse(txt); } catch (e) { this.pollInstall(tries + 1); return; }
-			if (d.running) { this.pollInstall(tries + 1); return; }
+			if (!txt) { this.retryPoll(tries + 1); return; }
+			var d = {}; try { d = JSON.parse(txt); } catch (e) { this.retryPoll(tries + 1); return; }
+			if (d.running) { this.retryPoll(tries + 1); return; }
 			if (d.success) {
 				this.updSet('h5fan-upd-current', d.current || '—');
 				this.updShow('h5fan-upd-install', false);
@@ -811,6 +811,13 @@ return view.extend({
 			}
 			this.updBusy(false);
 		}, this));
+	},
+
+	/* Pace the background install polling: the download + opkg install can take
+	   minutes, while a delay-free loop would burn the whole attempt budget in
+	   a few seconds and give up before the result file ever changes. */
+	retryPoll: function(tries) {
+		window.setTimeout(L.bind(function() { this.pollInstall(tries); }, this), 4000);
 	},
 
 	finishUpdate: function() {
