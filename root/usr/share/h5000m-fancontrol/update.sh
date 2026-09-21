@@ -40,6 +40,23 @@ installed_version() {
 	esac
 }
 
+# Display version of the installed release: the base version from the package
+# manager, extended with the -beta.N suffix when the tag on record (TAGSTATE)
+# shares that base. apk/opkg cannot tell a stable from a prerelease build of
+# the same package version, so the tag is the only reliable source for it.
+current_display() {
+	_v="$1"
+	if [ -s "$TAGSTATE" ]; then
+		_t=$(cat "$TAGSTATE" 2>/dev/null)
+		_b=${_t#v}; _b=${_b%%-*}
+		if [ -n "$_b" ] && [ "$_b" = "$_v" ]; then
+			printf '%s\n' "$_t" | sed 's/^v//'
+			return
+		fi
+	fi
+	echo "$_v"
+}
+
 # net_fetch <timeout_s> <url> [outfile] - to file when given, else to stdout.
 net_fetch() {
 	_nf_t="$1"; _nf_u="$2"; _nf_o="$3"
@@ -116,6 +133,7 @@ case "$1" in
 check)
 	PM=$(pkgman)
 	CUR=$(installed_version "$PM")
+	CUR_DISP=$(current_display "$CUR")
 	# Distinguish "no network" (empty body) from "no stable release yet"
 	# (GitHub answers releases/latest with HTTP 404 when only prereleases
 	# exist - a non-empty body without any tag_name).
@@ -151,11 +169,11 @@ check)
 	fi
 	if [ -z "$L_BODY" ]; then
 		printf '{"success":false,"error":"Could not reach GitHub","pm":"%s","current":"%s","beta_latest":"%s","beta_available":%s}\n' \
-			"$PM" "$(json_esc "$CUR")" "$(json_esc "$BETA_LAT")" "$BETA_AVAIL"
+			"$PM" "$(json_esc "$CUR_DISP")" "$(json_esc "$BETA_LAT")" "$BETA_AVAIL"
 		exit 0
 	fi
 	printf '{"success":true,"pm":"%s","current":"%s","latest":"%s","update_available":%s,"release_url":"%s","beta_latest":"%s","beta_available":%s}\n' \
-		"$PM" "$(json_esc "$CUR")" "$(json_esc "$LAT")" "$AVAIL" "$PAGE" "$(json_esc "$BETA_LAT")" "$BETA_AVAIL"
+		"$PM" "$(json_esc "$CUR_DISP")" "$(json_esc "$LAT")" "$AVAIL" "$PAGE" "$(json_esc "$BETA_LAT")" "$BETA_AVAIL"
 	;;
 
 install)
@@ -305,7 +323,9 @@ status)
 	;;
 
 version)
-	printf '{"installed":"%s","pm":"%s"}\n' "$(json_esc "$(installed_version "$(pkgman)")")" "$(pkgman)"
+	PM=$(pkgman)
+	V=$(installed_version "$PM")
+	printf '{"installed":"%s","pm":"%s"}\n' "$(json_esc "$(current_display "$V")")" "$PM"
 	;;
 
 *)

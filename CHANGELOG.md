@@ -50,6 +50,10 @@
 - A "Reinstall current version" button re-installs the exact release that is
   on record as installed (local tag file), which comes in handy after a broken
   or partial install. It works for both stable and beta releases.
+- The version shown in the page header and on the "Update" tab now includes the
+  beta suffix when a prerelease is installed (e.g. "v2.3.1-beta.7"), since the
+  package manager cannot tell a stable from a prerelease build of the same
+  package version.
 - After a successful update the browser re-fetches the new page scripts and
   the session is ended once (a single re-login), so the updated interface and
   RPC permissions take effect immediately.
