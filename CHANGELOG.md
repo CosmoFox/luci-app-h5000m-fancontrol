@@ -11,6 +11,10 @@
 - The modem temperature card in LuCI now shows the modem model (e.g. "Fibocom FM350-GL") next to the
   temperature instead of a generic hint.
 
+- Snapshots refreshed by the 5gmodem stack are also checked against the snapshot file mtime, and snapshots that
+  report the modem missing ("modem":"-") are ignored, so a disconnected modem no longer leaves a stale
+  temperature on the page.
+
 - Redesigned the LuCI fan-curve page: the curve editor now has an interactive
   canvas chart that plots the fan curve and the firmware floor map against
   temperature, plus a marker for the current temperature with the requested

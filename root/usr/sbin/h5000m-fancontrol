@@ -160,10 +160,11 @@ fresh_enough() { # <file> [snapshot_age]
 	is_uint "$MT5700M_TEMP_MAX_AGE" || return 1
 	now="$(date +%s 2>/dev/null)"
 	is_uint "$now" || return 1
-	[ -n "$2" ] && is_uint "$2" && [ "$2" -le "$MT5700M_TEMP_MAX_AGE" ] && return 0
 	mtime="$(date -r "$1" +%s 2>/dev/null)"
 	is_uint "$mtime" || return 1
-	[ $((now - mtime)) -ge 0 ] && [ $((now - mtime)) -le "$MT5700M_TEMP_MAX_AGE" ]
+	[ $((now - mtime)) -ge 0 ] && [ $((now - mtime)) -le "$MT5700M_TEMP_MAX_AGE" ] || return 1
+	[ -n "$2" ] || return 0
+	is_uint "$2" && [ "$2" -le "$MT5700M_TEMP_MAX_AGE" ]
 }
 
 # Firmware with the 5gmodem stack (ModemManager + /usr/share/5gmodem, e.g. the
@@ -173,10 +174,14 @@ fresh_enough() { # <file> [snapshot_age]
 # locked by that daemon. Sources are tried in order, the hottest fresh value
 # wins.
 find_5gmodem_temp() {
-	local file v age best
-	best=""
+	local file v age best have_metrics
+	best=""; have_metrics=""
 	for file in /tmp/5gmodem_metrics_*.json; do
 		[ -f "$file" ] || continue
+		have_metrics=1
+		case "$(sed -n 's/.*"modem"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$file" 2>/dev/null | head -n 1)" in
+			""|-) continue ;;
+		esac
 		age="$(sed -n 's/.*"age"[[:space:]]*:[[:space:]]*"\{0,1\}\([0-9][0-9]*\)".*/\1/p' "$file" 2>/dev/null | head -n 1)"
 		fresh_enough "$file" "$age" || continue
 		v="$(sed -n 's/.*"mtemp"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$file" 2>/dev/null | head -n 1)"
@@ -187,6 +192,9 @@ find_5gmodem_temp() {
 		if [ -z "$best" ] || [ "$v" -gt "$best" ]; then best="$v"; fi
 	done
 	[ -n "$best" ] && { echo "$best"; return 0; }
+	# Metrics exist but every snapshot reports the modem missing ("modem":"-"):
+	# the stock daemon is offline, do not fall back to shrinking stale series.
+	[ -n "$have_metrics" ] && return 1
 	for file in /tmp/5gmodem_stats/temp.*; do
 		case "$file" in *.label) continue ;; esac
 		[ -f "$file" ] || continue
@@ -211,12 +219,19 @@ find_5gmodem_temp() {
 }
 
 find_5gmodem_name() {
-	local file name
+	local file name have_metrics
+	have_metrics=""
 	for file in /tmp/5gmodem_metrics_*.json; do
 		[ -f "$file" ] || continue
+		have_metrics=1
 		name="$(sed -n 's/.*"modem"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$file" 2>/dev/null | head -n 1)"
-		[ -n "$name" ] && printf '%s\n' "$name" && return 0
+		case "$name" in
+			""|-) continue ;;
+		esac
+		printf '%s\n' "$name"
+		return 0
 	done
+	[ -n "$have_metrics" ] && return 1
 	for file in /tmp/5gmodem_stats/temp.*.label; do
 		[ -f "$file" ] || continue
 		name="$(cat "$file" 2>/dev/null | head -n 1)"
