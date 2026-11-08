@@ -281,6 +281,7 @@ install)
 				INSTALLED="$INSTALLED $BASE"
 				progress install $((55 + STEP*15))
 			done
+			INSTALLED="${INSTALLED# }"
 			progress finish 90
 			# Drop LuCI's cached indexes/modules so the new bundle is served.
 			rm -rf /tmp/luci-indexcache* /tmp/luci-modulecache/* 2>/dev/null
@@ -292,13 +293,13 @@ install)
 			if [ -n "$PREV" ] && [ "$CUR" = "$PREV" ]; then
 				if [ -n "$TVAL" ] && [ "$TVAL" = "$CUR" ]; then
 					printf '{"success":true,"installed":"%s","current":"%s","reinstalled":1,"stage":"%s"}\n' \
-						"$(json_esc "$(echo $INSTALLED)")" "$(json_esc "$CUR")" "$STAGE"
+						"$(json_esc "$INSTALLED")" "$(json_esc "$CUR")" "$STAGE"
 					[ -n "$TAGG" ] && printf '%s\n' "$TAGG" > "$TAGSTATE"
 					return
 				fi
 				printf '{"success":false,"current":"%s","error":"Reinstalled but version stayed %s - the release asset looks mispackaged (rebuild/reupload it)"}\n' "$(json_esc "$CUR")" "$(json_esc "$CUR")"
 			else
-				printf '{"success":true,"installed":"%s","current":"%s","stage":"%s"}\n' "$(json_esc "$(echo $INSTALLED)")" "$(json_esc "$CUR")" "$STAGE"
+				printf '{"success":true,"installed":"%s","current":"%s","stage":"%s"}\n' "$(json_esc "$INSTALLED")" "$(json_esc "$CUR")" "$STAGE"
 				[ -n "$TAGG" ] && printf '%s\n' "$TAGG" > "$TAGSTATE"
 			fi
 		}

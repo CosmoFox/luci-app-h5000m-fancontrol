@@ -10,7 +10,7 @@ us **English** | [🇷🇺 Русский](#ru) | [🇨🇳 简体中文](#zh)
 
 An OpenWrt LuCI fan manager for the Hiveton H5000M: temperature monitoring, automatic fan curves, manual PWM, start boost, temperature hysteresis, delayed spin-down and sensor-fault failsafe — while the kernel's CPU throttling, hot and critical overheat protections remain intact.
 
-Versions follow the standard `major.minor.patch-rREVISION` format. GitHub Release tags use the semantic version only (currently `v2.3.0`); the OpenWrt package version is `2.3.0-r1`.
+Versions follow the standard `major.minor.patch-rREVISION` format. GitHub Release tags use the semantic version only (currently `v2.3.0`); the OpenWrt package version is `2.3.1-r1`.
 
 ![Fan control UI](docs/fan-control-ui.jpg)
 
@@ -127,7 +127,7 @@ Fan control is a device-safety function. Keep an eye on temperatures after chang
 
 Менеджер вентилятора для OpenWrt/LuCI на Hiveton H5000M: мониторинг температур, автоматические кривые охлаждения, ручное управление PWM, стартовый буст, температурный гистерезис, задержка остановки и аварийная защита при отказе датчиков — при сохранении ядерных механизмов троттлинга CPU, а также защит hot и critical.
 
-Версии следуют формату `мажор.минор.патч-rРЕВИЗИЯ`. Теги GitHub Release используют только семантическую версию (сейчас `v2.3.0`), версия пакета OpenWrt — `2.3.0-r1`.
+Версии следуют формату `мажор.минор.патч-rРЕВИЗИЯ`. Теги GitHub Release используют только семантическую версию (сейчас `v2.3.0`), версия пакета OpenWrt — `2.3.1-r1`.
 
 ![Страница управления вентилятором](docs/fan-control-ui.jpg)
 
@@ -248,7 +248,7 @@ git apply package/luci-app-h5000m-fancontrol/openwrt-patches/h5000m-userspace-fa
 
 面向 Hiveton H5000M 的 OpenWrt LuCI 风扇管理器。提供温度监控、自动风扇曲线、手动 PWM、启停助推、温度滞回、降速延迟和传感器故障保护，并保留内核的 CPU 降频、高温及临界过热保护。
 
-版本采用标准的 `主版本.次版本.修订版本-r打包修订` 格式。GitHub Release 仅使用语义版本标签（当前为 `v2.3.0`），OpenWrt 安装包版本为 `2.3.0-r1`。
+版本采用标准的 `主版本.次版本.修订版本-r打包修订` 格式。GitHub Release 仅使用语义版本标签（当前为 `v2.3.0`），OpenWrt 安装包版本为 `2.3.1-r1`。
 
 ![散热管理界面](docs/fan-control-ui.jpg)
 

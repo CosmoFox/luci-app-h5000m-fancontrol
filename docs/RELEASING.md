@@ -69,6 +69,7 @@ GitHub Actions enforces three rules on every tag push:
   ```
 
 - A manual workflow run (`workflow_dispatch`) skips validation and publishing: it only produces build artifacts — useful for testing the SDK build.
+- CI requires the top `## X.Y.Z` heading of every `CHANGELOG*.md` to equal `PKG_VERSION` in the Makefile: update the changelogs in the same commit that bumps the version.
 - On Windows run `scripts/release.sh` from Git Bash or WSL; the script already tolerates CRLF checkouts of the Makefile.
 
 <a id="ru"></a>
@@ -143,6 +144,7 @@ GitHub Actions при каждом пуше тега проверяет три �
   ```
 
 - Ручной запуск workflow (`workflow_dispatch`) пропускает валидацию и публикацию: собираются только артефакты — удобно для теста SDK-сборки.
+- CI требует, чтобы верхний заголовок `## X.Y.Z` каждого `CHANGELOG*.md` совпадал с `PKG_VERSION` в Makefile: обновляйте чейнджлоги в том же коммите, что и подъём версии.
 - На Windows запускайте `scripts/release.sh` из Git Bash или WSL; скрипт учитывает CRLF-рабочее дерево Makefile.
 
 </details>
@@ -219,6 +221,7 @@ GitHub Actions при каждом пуше тега проверяет три �
   ```
 
 - 手动运行 workflow（`workflow_dispatch`）跳过校验与发布，只产出构建工件 —— 适合测试 SDK 构建。
+- CI 要求每份 `CHANGELOG*.md` 顶部的 `## X.Y.Z` 标题与 Makefile 中的 `PKG_VERSION` 一致：请在提升版本的同一提交中更新各语言变更日志。
 - Windows 下请在 Git Bash 或 WSL 中运行 `scripts/release.sh`；脚本已兼容 Makefile 的 CRLF 工作副本。
 
 </details>

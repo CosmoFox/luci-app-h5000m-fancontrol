@@ -83,6 +83,17 @@
   page fills in as the update runs in the background, with the current stage
   ("Downloading the update…", "Installing packages…", "Finishing the
   update…") replacing the generic "Installing the update…" text.
+- Controller performance: the daemon now loads its configuration with a single
+  `uci show` pass, reads sysfs and state files with shell builtins instead of
+  cat/sed/head pipelines, and parses the device-tree cooling maps once per boot
+  into a /var/run cache that the LuCI status poll reuses instead of re-reading
+  the device tree every few seconds. External process forks per iteration drop
+  from well over a hundred to a handful.
+- The shared helpers moved to /usr/share/h5000m-fancontrol/lib.sh and are
+  covered by unit tests; the uci-defaults migrations gained fixture-based
+  tests, and CI now also runs ShellCheck, a Makefile/changelog version sync
+  check and a translation-coverage check. The RPC ACL no longer grants an
+  unused exec right on the controller binary.
 
 ## 2.3.0
 
