@@ -357,3 +357,33 @@ msgstr "%s с"
 
 msgid "Delay before applying"
 msgstr "Задержка применения"
+
+msgid "Not enough free space in /tmp to download the update."
+msgstr "Недостаточно свободного места в /tmp для загрузки обновления."
+
+msgid "Could not download the update from GitHub. Check the internet connection and try again."
+msgstr "Не удалось скачать обновление с GitHub. Проверьте подключение к интернету и попробуйте снова."
+
+msgid "The download was interrupted: the file is incomplete. Try again."
+msgstr "Загрузка прервана: файл неполный. Попробуйте снова."
+
+msgid "The package manager refuses to install anything: /etc/apk/world lists %s, which apk cannot find (usually a package previously installed from a file). Remove its line from /etc/apk/world or reinstall it from its file, then try the update again."
+msgstr "Пакетный менеджер отказывается что-либо устанавливать: /etc/apk/world содержит %s, которое apk не может найти (обычно это пакет, установленный ранее из файла). Удалите его строку из /etc/apk/world или установите пакет повторно из файла, затем попробуйте обновление снова."
+
+msgid "The package manager could not install the update."
+msgstr "Пакетный менеджер не смог установить обновление."
+
+msgid "The package was installed, but the version did not change. The release file looks broken."
+msgstr "Пакет установлен, но версия не изменилась. Похоже, файл релиза повреждён."
+
+msgid "Downloading: %s of %s KB"
+msgstr "Загрузка: %s из %s КБ"
+
+msgid "Downloading: %s KB"
+msgstr "Загрузка: %s КБ"
+
+msgid "Refreshing package lists…"
+msgstr "Обновление списков пакетов…"
+
+msgid "Published: %s"
+msgstr "Опубликовано: %s"

@@ -250,6 +250,9 @@ return view.extend({
 			'.h5fan-temp-badge.off{display:inline-block;background:rgba(239,98,98,.16);color:var(--fan-red)}',
 			'.h5fan-update-progress{display:none;height:8px;margin-top:8px;border-radius:4px;background:var(--background-color-high,#f2f2f2);overflow:hidden}.h5fan-update-progress.show{display:block}',
 			'.h5fan-update-progress-bar{height:100%;width:0;border-radius:4px;background:linear-gradient(90deg,var(--fan-green),var(--fan-blue));transition:width .4s ease}',
+			'.h5fan-upd-published{margin-top:4px;font-size:11px;color:var(--text-color-low,#888)}',
+			'.h5fan-upd-detail{margin:8px 0 0;padding:8px 10px;border-left:3px solid var(--fan-red);background:rgba(239,98,98,.08);color:var(--text-color-medium,#666);font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere;max-width:640px}',
+			'.h5fan-upd-notes{margin-top:8px;padding:8px 10px;border-left:3px solid var(--fan-blue);background:rgba(85,168,255,.06);color:var(--text-color-medium,#666);font-size:11px;max-width:640px;max-height:180px;overflow-y:auto}',
 			'@media(max-width:1050px){.h5fan-grid{grid-template-columns:repeat(2,minmax(145px,1fr))}.h5fan-card.temperatures{grid-column:span 2}.h5fan-temp-grid{grid-template-columns:repeat(4,minmax(72px,1fr))}}',
 			'@media(max-width:750px){.h5fan-curve-layout{grid-template-columns:1fr}.h5fan-side{grid-template-columns:repeat(3,1fr);grid-template-rows:1fr}}',
 			'@media(max-width:520px){.h5fan-hero{display:block}.h5fan-health{margin-top:12px}}',
@@ -841,14 +844,65 @@ return view.extend({
 		if (node) node.style.display = show ? '' : 'none';
 	},
 
-	updErrText: function(error, fallback) {
+	updErrText: function(error, fallback, pkgs) {
 		if (error === 'asset_pending')
 			return _('The update is still building on the server. Please wait about 15-20 minutes and try again.');
 		if (error === 'Could not reach GitHub')
 			return _('Could not check for updates. Please check the router\'s internet access.');
 		if (error === 'unknown_current_release')
 			return _('The installed release was not identified. Install a version through the Settings tab first.');
+		if (error === 'no_space')
+			return _('Not enough free space in /tmp to download the update.');
+		if (error === 'download_failed')
+			return _('Could not download the update from GitHub. Check the internet connection and try again.');
+		if (error === 'download_incomplete')
+			return _('The download was interrupted: the file is incomplete. Try again.');
+		if (error === 'world_broken')
+			return _('The package manager refuses to install anything: /etc/apk/world lists %s, which apk cannot find (usually a package previously installed from a file). Remove its line from /etc/apk/world or reinstall it from its file, then try the update again.').format(pkgs || '?');
+		if (error === 'install_failed')
+			return _('The package manager could not install the update.');
+		if (error === 'version_mismatch')
+			return _('The package was installed, but the version did not change. The release file looks broken.');
 		return error || fallback;
+	},
+
+	updKB: function(bytes) {
+		var n = parseInt(bytes, 10);
+		if (isNaN(n) || n <= 0) return '0';
+		return String(Math.round(n / 1024));
+	},
+
+	updDetail: function(text) {
+		var box = document.getElementById('h5fan-upd-detail');
+		if (!box) return;
+		text = String(text || '').trim();
+		if (!text) { box.style.display = 'none'; box.textContent = ''; return; }
+		box.textContent = text;
+		box.style.display = '';
+	},
+
+	notesText: function(t) {
+		return String(t || '').replace(/\*\*([^*]+)\*\*/g, '$1').replace(/`([^`]+)`/g, '$1').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+	},
+
+	/* Release notes travel base64-encoded inside the check JSON; decode and
+	   flatten them into a simple list, skipping markdown headers and empties. */
+	renderNotes: function(b64) {
+		var box = document.getElementById('h5fan-upd-notes');
+		if (!box) return;
+		var txt = '';
+		try { txt = decodeURIComponent(escape(atob(b64 || ''))); } catch (e) { txt = ''; }
+		box.innerHTML = '';
+		var body = E('div', { 'class': 'h5fan-upd-notes-list' });
+		txt.replace(/\r/g, '').split('\n').forEach(function(line) {
+			var l = line.trim();
+			if (!l || /^#{1,6}\s/.test(l)) return;
+			var m = l.match(/^[-*+]\s+(.*)$/);
+			body.appendChild(E('div', {}, [ m ? '- ' + this.notesText(m[1]) : this.notesText(l) ]));
+		}, this);
+		if (!body.childNodes.length) { box.style.display = 'none'; return; }
+		box.appendChild(body);
+		box.style.display = '';
 	},
 
 	updBusy: function(busy) {
@@ -874,20 +928,26 @@ return view.extend({
 			var latest = String(d.latest || '').replace(/^v/i, '');
 			var betaOn = !!(document.getElementById('h5fan-upd-beta') && document.getElementById('h5fan-upd-beta').checked);
 			if (d.release_url) { var a = document.getElementById('h5fan-upd-release'); if (a) { a.href = d.release_url; a.style.display = ''; } }
+			this.updSet('h5fan-upd-published', d.published ? _('Published: %s').format(String(d.published).substring(0, 10)) : '');
 			this.updateBeta(d);
 			if (!d.success) {
 				this.updSet('h5fan-upd-status', this.updErrText(d.error, _('Could not check for updates')));
+				this.renderNotes('');
 			} else if (d.update_available == 1 || d.update_available === true) {
 				this.updShow('h5fan-upd-install', true);
 				this.updSetVer('h5fan-upd-status', _('Update available'), latest || '—');
+				this.renderNotes(d.notes);
 			} else if (betaOn && d.beta_latest) {
+				this.renderNotes('');
 				if (d.beta_available == 1 || d.beta_available === true)
 					this.updSet('h5fan-upd-status', _('Beta update available: %s').format(String(d.beta_latest).replace(/^v/i, '')));
 				else
 					this.updSet('h5fan-upd-status', _('You have the latest beta'));
 			} else if (!d.latest) {
+				this.renderNotes('');
 				this.updSet('h5fan-upd-status', betaOn ? _('No beta releases found') : _('No stable release published yet.'));
 			} else {
+				this.renderNotes('');
 				this.updSet('h5fan-upd-status', _('You have the latest version'));
 			}
 		}, this), L.bind(function(err) {
@@ -956,12 +1016,19 @@ return view.extend({
 			if (!txt) { this.retryPoll(tries + 1); return; }
 			var d = {}; try { d = JSON.parse(txt); } catch (e) { this.retryPoll(tries + 1); return; }
 			if (d.running) {
-				this.updSet('h5fan-upd-status',
-					d.stage === 'download' ? _('Downloading the update…') :
-					d.stage === 'install' ? _('Installing packages…') :
+				var txt = d.stage === 'download' ? (+d.total > 0 ?
+						_('Downloading: %s of %s KB').format(this.updKB(d.done), this.updKB(d.total)) :
+						_('Downloading: %s KB').format(this.updKB(d.done))) :
+					d.stage === 'install' ? (d.step === 'deps' ? _('Refreshing package lists…') : _('Installing packages…')) :
 					d.stage === 'finish' ? _('Finishing the update…') :
-					_('Installing the update…'));
-				if (typeof d.progress === 'number') this.updProgress(d.progress);
+					_('Installing the update…');
+				this.updSet('h5fan-upd-status', txt);
+				if (d.stage === 'download' && +d.total > 0)
+					this.updProgress(5 + 20 * Math.min(+d.done || 0, +d.total) / +d.total);
+				else if (d.stage === 'install')
+					this.updProgress(40);
+				else if (d.stage === 'finish')
+					this.updProgress(90);
 				this.retryPoll(tries + 1);
 				return;
 			}
@@ -969,9 +1036,11 @@ return view.extend({
 				this.updSet('h5fan-upd-current', d.current || '—');
 				this.updShow('h5fan-upd-install', false);
 				this.updSet('h5fan-upd-status', _('Update installed. Refreshing…'));
+				this.updDetail('');
 				this.finishUpdate();
 			} else {
-				this.updSet('h5fan-upd-status', this.updErrText(d.error, _('Failed to install the update')));
+				this.updSet('h5fan-upd-status', this.updErrText(d.error, _('Failed to install the update'), d.pkgs));
+				this.updDetail(d.detail);
 				this.updProgressHide();
 			}
 			this.updBusy(false);
@@ -1031,7 +1100,8 @@ return view.extend({
 			var d = {}; try { d = JSON.parse((res && res.stdout) || '{}'); } catch (e) {}
 			if (d.started) { self.pollInstall(0); return; }
 			if (d.error) {
-				self.updSet('h5fan-upd-status', self.updErrText(d.error, _('Failed to install the update')));
+				self.updSet('h5fan-upd-status', self.updErrText(d.error, _('Failed to install the update'), d.pkgs));
+				self.updDetail(d.detail);
 				self.updProgressHide();
 				self.updBusy(false);
 				return;
@@ -1063,11 +1133,14 @@ return view.extend({
 			]),
 			E('div', { 'class': 'h5fan-update-meta' }, [
 				E('div', {}, [ _('Current version') + ': ', E('strong', { 'id': 'h5fan-upd-current' }, '—') ]),
+				E('div', { 'id': 'h5fan-upd-published', 'class': 'h5fan-upd-published' }, ''),
 				E('div', { 'id': 'h5fan-upd-status', 'style': 'margin-top:4px' }, '')
 			]),
 			E('div', { 'class': 'h5fan-update-progress', 'id': 'h5fan-upd-progress' }, [
 				E('div', { 'class': 'h5fan-update-progress-bar', 'id': 'h5fan-upd-progress-bar' })
 			]),
+			E('pre', { 'class': 'h5fan-upd-detail', 'id': 'h5fan-upd-detail', 'style': 'display:none' }, []),
+			E('div', { 'class': 'h5fan-upd-notes', 'id': 'h5fan-upd-notes', 'style': 'display:none' }, []),
 			E('div', { 'class': 'h5fan-update-beta' }, [
 				E('label', { 'class': 'h5fan-update-checkbox' }, [
 					E('input', { 'type': 'checkbox', 'id': 'h5fan-upd-beta',

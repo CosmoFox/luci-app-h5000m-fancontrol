@@ -2,6 +2,22 @@
 
 [🇬🇧 English](CHANGELOG.md) | [🇷🇺 Русский](CHANGELOG.ru.md) | 🇨🇳 **简体中文**
 
+## 2.3.2
+
+- 应用内更新更加可靠、透明——移植了 luci-app-5gmodem 更新器的改进：
+  - 发布资产改经由 GitHub API 资产地址并附带 `Accept: application/octet-stream`
+    头下载——旧的 `browser_download_url` 指向 github.com，其返回的
+    Content-Security-Policy 头超过 4 KB，会导致 uclient-fetch（OpenWrt 上的
+    wget）一直等待直至超时，下载可能因此卡住。
+  - 发布元数据改用 `jsonfilter` 解析（替代脆弱的 sed 单行脚本），
+    `/releases/latest` 的响应缓存 5 分钟。
+  - 进度条显示实际字节数（“下载中：X / Y KB”），下载完成后与资产大小校验，
+    并在下载前检查 /tmp 剩余空间。
+  - 错误信息附带 `detail` 字段（软件包管理器日志末尾），会在页面上显示；
+    apk 在软件包列表过期时刷新后重试一次；`/etc/apk/world` 中的损坏条目
+    会按名称报告。
+  - 更新检查还会返回发布日期和更新说明，并在安装前展示在页面上。
+
 ## 2.3.1
 
 - 守护进程现在读取固件标配 5gmodem 软件栈发布的 5G 调制解调器温度（/tmp/5gmodem_metrics_*.json、

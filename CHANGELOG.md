@@ -2,6 +2,25 @@
 
 🇬🇧 **English** | [🇷🇺 Русский](CHANGELOG.ru.md) | [🇨🇳 简体中文](CHANGELOG.zh-CN.md)
 
+## 2.3.2
+
+- In-app updates are more robust and transparent, backporting the improvements
+  from the luci-app-5gmodem updater:
+  - Assets are downloaded through the GitHub API asset URL with an
+    `Accept: application/octet-stream` header - the old `browser_download_url`
+    host answers with a Content-Security-Policy header over 4 KB that stalls
+    uclient-fetch (wget on OpenWrt) until the timeout, so downloads could hang.
+  - Release metadata is parsed with `jsonfilter` instead of fragile sed
+    one-liners, and the `/releases/latest` response is cached for 5 minutes.
+  - The progress bar now shows real bytes ("Downloading: X of Y KB"), the
+    downloaded file is verified against the asset size, and free space in /tmp
+    is checked before downloading.
+  - Failures carry a `detail` field with the tail of the package manager log,
+    shown on the page, and apk retries once after refreshing stale package
+    lists; broken `/etc/apk/world` entries are reported by name.
+  - The update check also returns the release date and release notes, rendered
+    on the page before you install.
+
 ## 2.3.1
 
 - The daemon now reads the 5G modem temperature published by the stock 5gmodem stack

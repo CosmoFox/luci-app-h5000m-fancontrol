@@ -11,25 +11,58 @@
 #   update.sh status          - print the result file of a background install
 #   update.sh version         - print the installed package version only
 #
+# Robustness notes (backported from luci-app-5gmodem):
+# - Assets are fetched through the GitHub API asset URL with an
+#   "Accept: application/octet-stream" header: the browser_download_url host
+#   (github.com) answers with a Content-Security-Policy header line over 4 KB,
+#   and uclient-fetch (wget on OpenWrt) waits for the end of such a line until
+#   the timeout, stalling the download.
+# - All GitHub JSON is parsed with jsonfilter instead of sed one-liners, the
+#   /releases/latest response is cached for 5 minutes, the download reports
+#   real byte progress (done/total), is verified against the asset size and
+#   is preceded by a /tmp free-space check; package manager failures carry a
+#   "detail" field with the tail of its log.
+#
 
 REPO="CosmoFox/luci-app-h5000m-fancontrol"
 API="https://api.github.com/repos/$REPO/releases/latest"
+API_LIST="https://api.github.com/repos/$REPO/releases?per_page=50"
 PAGE="https://github.com/$REPO/releases/latest"
 PKG="luci-app-h5000m-fancontrol"
 I18N="luci-i18n-h5000m-fancontrol-ru"
 TMP=/tmp
 STATUS="$TMP/h5000m_fancontrol_update.json"
 LOCK="$TMP/h5000m_fancontrol_update.pid"
+# Cached /releases/latest response (5 min TTL) - fewer GitHub API hits.
+APIC="$TMP/h5000m_fancontrol_update.api.json"
+# Package manager output of the running install - tail goes into failures.
+LOG="$TMP/h5000m_fancontrol_update.log"
+# Current install sub-step (e.g. "deps" while refreshing apk package lists).
+STEPF="$TMP/h5000m_fancontrol_update.step"
 # Full tag of the last release actually installed (persists across reboots so
 # prereleases of the installed base version can be offered again, e.g. a new
 # v2.3.1-beta.7 after v2.3.1-beta.6, whose package version is identical).
 TAGSTATE="/etc/h5000m_fancontrol.last_tag"
 
-json_esc() { echo "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'; }
+json_esc() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr -d '\r' | tr '\n\t' '  '; }
 
-# Live progress snapshot for the page poll: the STAGE + a 0-100 percentage.
-progress() {
-	echo "{\"running\":true,\"stage\":\"$1\",\"progress\":$2}" > "$STATUS"
+# Base64-encode (release notes travel inside JSON); busybox base64, then
+# openssl, then a pure-awk fallback for the tiniest images.
+b64() {
+	if command -v base64 >/dev/null 2>&1; then printf '%s' "$1" | base64 | tr -d '\n'; return; fi
+	if command -v openssl >/dev/null 2>&1; then printf '%s' "$1" | openssl base64 | tr -d '\n'; return; fi
+	printf '%s' "$1" | hexdump -v -e '/1 "%u\n"' | awk '
+		BEGIN { t = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/" }
+		{ b[n++] = $1 }
+		END {
+			for (i = 0; i < n; i += 3) {
+				x = b[i] * 65536 + (i + 1 < n ? b[i + 1] : 0) * 256 + (i + 2 < n ? b[i + 2] : 0)
+				printf "%c", substr(t, int(x / 262144) % 64 + 1, 1)
+				printf "%c", substr(t, int(x / 4096) % 64 + 1, 1)
+				printf "%c", i + 1 < n ? substr(t, int(x / 64) % 64 + 1, 1) : "="
+				printf "%c", i + 2 < n ? substr(t, x % 64 + 1, 1) : "="
+			}
+		}'
 }
 
 pkgman() {
@@ -62,20 +95,33 @@ current_display() {
 	echo "$_v"
 }
 
-# net_fetch <timeout_s> <url> [outfile] - to file when given, else to stdout.
+# net_fetch <timeout_s> <url> [outfile] [header] - to file when given, else to
+# stdout; <header> is one optional request header, e.g.
+# "Accept: application/octet-stream".
 net_fetch() {
-	_nf_t="$1"; _nf_u="$2"; _nf_o="$3"
+	_nf_t="$1"; _nf_u="$2"; _nf_o="$3"; _nf_h="$4"
 	if [ -n "$_nf_o" ]; then
-		wget -qO "$_nf_o" --timeout="$_nf_t" "$_nf_u" 2>/dev/null && [ -s "$_nf_o" ] && return 0
+		wget -qO "$_nf_o" ${_nf_h:+"--header=$_nf_h"} --timeout="$_nf_t" "$_nf_u" 2>/dev/null && [ -s "$_nf_o" ] && return 0
 		rm -f "$_nf_o" 2>/dev/null
 	else
-		_nf_b=$(wget -qO- --timeout="$_nf_t" "$_nf_u" 2>/dev/null)
+		_nf_b=$(wget -qO- ${_nf_h:+"--header=$_nf_h"} --timeout="$_nf_t" "$_nf_u" 2>/dev/null)
 		[ -n "$_nf_b" ] && { printf '%s' "$_nf_b"; return 0; }
 	fi
 	return 1
 }
 
-api_json() { net_fetch 15 "$API"; }
+# api_json [fresh] - /releases/latest JSON, cached for 5 minutes. The cache
+# keeps the JSON pretty-printed (jsonfilter reads it either way); the write
+# goes through a temp file so readers never see a partial document.
+api_json() {
+	if [ "$1" != fresh ] && [ -s "$APIC" ] && [ -n "$(find "$APIC" -mmin -5 2>/dev/null)" ]; then
+		cat "$APIC"; return 0
+	fi
+	_aj=$(net_fetch 15 "$API") || return 1
+	printf '%s' "$_aj" | jsonfilter -e '@.tag_name' >/dev/null 2>&1 || return 1
+	printf '%s' "$_aj" > "$APIC.tmp" && mv "$APIC.tmp" "$APIC"
+	printf '%s' "$_aj"
+}
 
 # The most recent GitHub prerelease, chosen as the newest v<base>-beta.<N>
 # tag over the whole release listing. GitHub orders releases by the time the
@@ -83,12 +129,16 @@ api_json() { net_fetch 15 "$API"; }
 # tags, so the first "prerelease": true in the listing is not always the
 # newest beta - compare the tag numbers instead.
 latest_beta() {
-	_j=$(net_fetch 15 "https://api.github.com/repos/$REPO/releases?per_page=50" | tr -d '\n\r')
-	[ -n "$_j" ] || return 1
+	_j=$(net_fetch 15 "$API_LIST") || return 1
 	BEST=""; BEST_B=""; BEST_N=-1
-	for _t in $(printf '%s' "$_j" | grep -o '"tag_name":"v[0-9][0-9.]*-beta\.[0-9][0-9]*"' | sed 's/"tag_name":"//; s/"//'); do
+	for _t in $(printf '%s' "$_j" | jsonfilter -e '@[*].tag_name' 2>/dev/null); do
+		case "$_t" in
+		v[0-9]*-beta.[0-9]*) ;;
+		*) continue ;;
+		esac
 		_tb=${_t#v}; _tb=${_tb%%-*}
 		_tn=${_t##*-beta.}
+		case "$_tn" in ''|*[!0-9]*) continue ;; esac
 		if [ "$BEST_B" = "$_tb" ]; then
 			[ "$_tn" -gt "$BEST_N" ] && { BEST="$_t"; BEST_B="$_tb"; BEST_N="$_tn"; }
 		elif [ -z "$BEST_B" ] || [ "$(version_gt "$_tb" "$BEST_B")" = 1 ]; then
@@ -99,21 +149,31 @@ latest_beta() {
 	return 1
 }
 
-# JSON of one release by tag (assets included), collapsed to a single line so
-# sed-based extraction below can work on it.
+# JSON of one release by tag (assets included).
 release_json() {
 	[ -n "$1" ] || return 1
-	net_fetch 15 "https://api.github.com/repos/$REPO/releases/tags/$1" | tr -d '\n\r'
+	net_fetch 15 "https://api.github.com/repos/$REPO/releases/tags/$1"
 }
 
-# asset_url_in <json> <basename> <ext> - browser_download_url of a matching
-# asset inside the given release JSON. The match is anchored on the FILE NAME
-# (github.com/<user>/<repo> is part of every asset URL, a bare substring would
-# match the wrong one) and accepts both the apk ('-') and ipk ('_') name-to-
-# version separators.
-asset_url_in() {
+# asset_name <json> <basename> <ext> - the file name of a matching asset,
+# anchored on the package base and accepting both the apk ('-') and ipk ('_')
+# name-to-version separators plus the ipk '_all' architecture suffix.
+asset_name() {
 	[ -n "$1" ] || return 1
-	printf '%s' "$1" | sed -n 's|.*"browser_download_url"[[:space:]]*:[[:space:]]*"\([^"]*/'"$2"'[-_][0-9][^"]*\.'"$3"'\)".*|\1|p' | head -n1
+	printf '%s' "$1" | jsonfilter -e '@.assets[*].name' 2>/dev/null \
+		| grep -E "^$2[-_][0-9][0-9.]*-r[0-9]+([-_.][a-z_]+)?\.$3\$" | head -n1
+}
+
+# asset_field <json> <asset name> <field> - one field (url, browser_download_url
+# or size) of the named asset.
+asset_field() {
+	printf '%s' "$1" | jsonfilter -e "@.assets[@.name='$2'].$3" 2>/dev/null | head -n1
+}
+
+# ver_from_name <asset file name> - the package version baked into the file
+# name (...-2.5.5-r1.apk, ..._2.5.5-r1_all.ipk).
+ver_from_name() {
+	printf '%s' "$1" | sed -n 's/^.*[-_]\([0-9][0-9.]*\)-r[0-9][0-9]*[-_.].*$/\1/p'
 }
 
 # version_gt <a> <b> - prints 1 if a > b else 0 (numeric, dot-separated)
@@ -127,6 +187,49 @@ version_gt() {
 	}'
 }
 
+fsize() { [ -f "$1" ] && wc -c < "$1" 2>/dev/null | tr -d ' ' || echo 0; }
+
+# Failure JSON with the package manager log tail in "detail" and the
+# offending package list in "pkgs", so the page can explain the error. PM and
+# TARGET are the caller's globals.
+fail() {
+	printf '{"success":false,"error":"%s","detail":"%s","current":"%s","target":"%s","pkgs":"%s"}\n' \
+		"$(json_esc "$1")" "$(json_esc "$(tail -n 4 "$LOG" 2>/dev/null)")" \
+		"$(json_esc "$(installed_version "$PM")")" "$(json_esc "$TARGET")" "$(json_esc "$2")"
+}
+
+# Packages /etc/apk/world requires that apk cannot find (usually a package
+# once installed from a file): apk then refuses ANY install, not only ours.
+# Parsed out of the apk error log ($LOG).
+apk_world_blockers() {
+	awk '/^  [^ ].* \(no such package\):/ { n = $1; next }
+		n != "" && /required by: world\[/ { print n; n = ""; next }
+		/^  [^ ]/ { n = "" }' "$LOG" 2>/dev/null | sort -u | tr '\n' ' ' | sed 's/ $//'
+}
+
+# apk fails with "unable to select packages" when its package lists are
+# stale; refresh them once and retry when no unrelated package blocks it.
+# Installs $F, logging into $LOG; "deps" is recorded in $STEPF while the
+# package lists are refreshed so the page can show the sub-step.
+apk_install() {
+	apk add --allow-untrusted "$F" >"$LOG" 2>&1 && return 0
+	grep -q 'unable to select packages' "$LOG" 2>/dev/null || return 1
+	[ -z "$(apk_world_blockers)" ] || return 1
+	logger -t h5000m-fancontrol "update: apk could not resolve dependencies - refreshing package lists and retrying"
+	echo deps > "$STEPF"
+	apk update >/dev/null 2>&1
+	apk add --allow-untrusted "$F" >"$LOG" 2>&1
+}
+
+# Live progress snapshot for the page poll. TARGET names the release being
+# installed; done/total are bytes for the download/install stages.
+progress() {
+	printf '{"running":true,"stage":"%s","done":%s,"total":%s,"target":"%s","step":"%s"}\n' \
+		"$1" "${2:-0}" "${3:-0}" "$(json_esc "$TARGET")" "$(json_esc "${4:-}")" > "$STATUS.tmp" \
+		&& mv "$STATUS.tmp" "$STATUS"
+}
+
+if [ -z "${H5FAN_UPDATE_SOURCED:-}" ]; then
 case "$1" in
 check)
 	PM=$(pkgman)
@@ -135,9 +238,9 @@ check)
 	# Distinguish "no network" (empty body) from "no stable release yet"
 	# (GitHub answers releases/latest with HTTP 404 when only prereleases
 	# exist - a non-empty body without any tag_name).
-	L_BODY=$(api_json)
+	J=$(api_json fresh)
 	LAT=""
-	[ -n "$L_BODY" ] && LAT=$(printf '%s' "$L_BODY" | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)
+	[ -n "$J" ] && LAT=$(printf '%s' "$J" | jsonfilter -e '@.tag_name' 2>/dev/null)
 	LATV=${LAT#v}
 	AVAIL=0
 	if [ -n "$LATV" ] && [ -n "$CUR" ]; then
@@ -165,13 +268,22 @@ check)
 			fi
 		fi
 	fi
-	if [ -z "$L_BODY" ]; then
+	NOTES=""
+	PUB=""
+	if [ -n "$J" ]; then
+		# Release notes travel base64-encoded inside the JSON; cap their size
+		# so a huge release body cannot bloat the page response.
+		NOTES=$(printf '%s' "$J" | jsonfilter -e '@.body' 2>/dev/null | head -c 8192)
+		PUB=$(printf '%s' "$J" | jsonfilter -e '@.published_at' 2>/dev/null)
+	fi
+	if [ -z "$J" ]; then
 		printf '{"success":false,"error":"Could not reach GitHub","pm":"%s","current":"%s","beta_latest":"%s","beta_available":%s}\n' \
 			"$PM" "$(json_esc "$CUR_DISP")" "$(json_esc "$BETA_LAT")" "$BETA_AVAIL"
 		exit 0
 	fi
-	printf '{"success":true,"pm":"%s","current":"%s","latest":"%s","update_available":%s,"release_url":"%s","beta_latest":"%s","beta_available":%s}\n' \
-		"$PM" "$(json_esc "$CUR_DISP")" "$(json_esc "$LAT")" "$AVAIL" "$PAGE" "$(json_esc "$BETA_LAT")" "$BETA_AVAIL"
+	printf '{"success":true,"pm":"%s","current":"%s","latest":"%s","update_available":%s,"release_url":"%s","published":"%s","notes":"%s","beta_latest":"%s","beta_available":%s}\n' \
+		"$PM" "$(json_esc "$CUR_DISP")" "$(json_esc "$LAT")" "$AVAIL" "$PAGE" "$(json_esc "$PUB")" "$(b64 "$NOTES")" \
+		"$(json_esc "$BETA_LAT")" "$BETA_AVAIL"
 	;;
 
 install)
@@ -184,35 +296,36 @@ install)
 		echo '{"started":true,"already":true}'
 		exit 0
 	fi
-	rm -f "$STATUS" "$STATUS.tmp"
+	rm -f "$STATUS" "$STATUS.tmp" "$STATUS.res" "$LOG" "$STEPF"
 	# Create the progress file right away so the page can poll it (the script
 	# binary itself is replaced during the update).
 	echo '{"running":true}' > "$STATUS"
 	echo '{"started":true}'
 	(
 		do_install() {
+			TARGET=""
 			PM=$(pkgman)
-			[ -n "$PM" ] || { echo '{"success":false,"error":"No package manager found"}'; return; }
+			[ -n "$PM" ] || { fail "No package manager found"; return; }
 			case "$PM" in apk) EXT=apk ;; opkg) EXT=ipk ;; esac
 			# Beta releases are built from pre-release tags only (their assets
 			# then differ in build number, not version). Fall back to stable when
 			# no beta is published yet.
-			TAG="" RELJSON=""
+			TAG=""; RELJSON=""
 			if [ "$STAGE" = "beta" ]; then
 				TAG=$(latest_beta)
-				RELJSON=$(release_json "$TAG")
+				[ -n "$TAG" ] && RELJSON=$(release_json "$TAG")
 			elif [ "$STAGE" = "current" ]; then
 				# Reinstall the exact release whose tag is on record as the
 				# installed one - scanning the release list would be ambiguous
 				# for a prerelease of the same base version as a stable release.
 				TAG=$(cat "$TAGSTATE" 2>/dev/null)
 				if [ -z "$TAG" ]; then
-					echo '{"success":false,"error":"unknown_current_release"}'
+					fail "unknown_current_release"
 					return
 				fi
 				RELJSON=$(release_json "$TAG")
 				if [ -z "$RELJSON" ]; then
-					echo '{"success":false,"error":"Could not reach GitHub"}'
+					fail "Could not reach GitHub"
 					return
 				fi
 			fi
@@ -220,96 +333,159 @@ install)
 				STAGE=stable
 				RELJSON=$(api_json)
 			fi
+			if [ -z "$RELJSON" ]; then
+				fail "Could not reach GitHub"
+				return
+			fi
 			# Full tag of the release we are about to install - recorded in
 			# TAGSTATE so later prereleases of the same base version are offered.
 			TAGG=""
 			[ -n "$TAG" ] && TAGG="$TAG"
-			[ -z "$TAGG" ] && TAGG=$(printf '%s' "$RELJSON" | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)
-			if [ -z "$RELJSON" ]; then
-				echo '{"success":false,"error":"Could not reach GitHub"}'; return
+			if [ -z "$TAGG" ]; then
+				TAGG=$(printf '%s' "$RELJSON" | jsonfilter -e '@.tag_name' 2>/dev/null)
 			fi
 			if [ -z "$TAGG" ]; then
 				# /releases/latest answers 404 (a non-empty body without a tag)
 				# while GitHub has only prereleases. No stable release yet.
-				echo '{"success":false,"error":"No stable release published yet"}'; return
-			fi
-			# Base version of the target tag (drops any -beta.N suffix) - used
-			# below to tell a real success from an asset built with the version
-			# that is already installed.
-			TVAL=$(printf '%s' "$TAG" | sed -n 's/^v\([0-9][0-9.]*\).*/\1/p')
-			if [ -z "$TVAL" ]; then
-				TVAL=$(printf '%s' "$RELJSON" | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"v\([0-9][0-9.]*\).*/\1/p' | head -n1)
+				fail "No stable release published yet"
+				return
 			fi
 			PREV=$(installed_version "$PM")
 			INSTALLED=""
 			STEP=0
 			for BASE in "$PKG" "$I18N"; do
 				STEP=$((STEP+1))
-				URL=$(asset_url_in "$RELJSON" "$BASE" "$EXT")
-				if [ -z "$URL" ]; then
+				NAME=$(asset_name "$RELJSON" "$BASE" "$EXT")
+				if [ -z "$NAME" ]; then
 					# The ru translation may not exist for this release - only
 					# the main app package is mandatory.
 					[ "$BASE" = "$I18N" ] && continue
 					# Tag published but CI hasn't built the asset yet.
-					echo '{"success":false,"error":"asset_pending"}'; return
+					fail "asset_pending"; return
 				fi
+				# The API address of the asset, not browser_download_url:
+				# github.com answers the latter with a Content-Security-Policy
+				# line over 4 KB, and uclient-fetch waits for the end of a header
+				# line longer than its 4 KB buffer until the timeout. The API
+				# redirects straight to the file server with short headers.
+				AURL=$(asset_field "$RELJSON" "$NAME" url)
+				URL="$AURL"
+				ACC="Accept: application/octet-stream"
+				if [ -z "$URL" ]; then
+					URL=$(asset_field "$RELJSON" "$NAME" browser_download_url)
+					ACC=""
+				fi
+				if [ -z "$URL" ]; then
+					fail "asset_pending"; return
+				fi
+				TOTAL=$(asset_field "$RELJSON" "$NAME" size)
+				case "$TOTAL" in ''|*[!0-9]*) TOTAL=0 ;; esac
+				if [ "$BASE" = "$PKG" ]; then
+					# Version we are about to install, from the asset FILE NAME
+					# - later verified against what the package manager reports.
+					TARGET=$(ver_from_name "$NAME")
+				fi
+				_free=$(df -k "$TMP" 2>/dev/null | awk 'NR==2 {print $4}')
+				case "$_free" in ''|*[!0-9]*) _free=0 ;; esac
+				if [ "$TOTAL" -gt 0 ] && [ "$_free" -gt 0 ] && [ $((_free * 1024)) -lt $((TOTAL * 2)) ]; then
+					fail "no_space"; return
+				fi
+
 				F="$TMP/$BASE.$EXT"
-				rm -f "$F"
-				progress download $((10 + STEP*20))
-				if ! net_fetch 90 "$URL" "$F"; then
-					echo '{"success":false,"error":"Download failed for '"$BASE"'"}'; return
+				rm -f "$F" "$F.ok" "$F.rc"
+				progress download 0 "$TOTAL"
+				# Download in the background and poll the file size, so the page
+				# sees real byte progress instead of a stalled bar.
+				( net_fetch 120 "$URL" "$F" "$ACC" && : > "$F.ok" ) >/dev/null 2>&1 </dev/null &
+				_dp=$!
+				while kill -0 "$_dp" 2>/dev/null; do
+					progress download "$(fsize "$F")" "$TOTAL"
+					sleep 1
+				done
+				wait "$_dp" 2>/dev/null
+				if [ ! -f "$F.ok" ] || [ ! -s "$F" ]; then
+					rm -f "$F" "$F.ok"
+					fail "download_failed" "$BASE"; return
 				fi
-				# Version from the asset FILE NAME (…-2.5.5-r1.apk, …_2.5.5-r1_all.ipk)
-				# to tell a real failure from a non-zero exit when the package
-				# actually landed.
-				_want=$(basename "$URL" | sed -n 's/^.*[-_]\([0-9][0-9.]*\)-r[0-9][0-9]*[._].*$/\1/p')
-				if [ "$PM" = apk ]; then
-					apk add --allow-untrusted "$F" >/dev/null 2>&1; _rc=$?
-				else
-					opkg install --force-reinstall "$F" >/dev/null 2>&1; _rc=$?
+				rm -f "$F.ok"
+				_got=$(fsize "$F")
+				if [ "$TOTAL" -gt 0 ] && [ "$_got" != "$TOTAL" ]; then
+					rm -f "$F"
+					fail "download_incomplete" "$BASE"; return
 				fi
+
+				rm -f "$STEPF" "$F.rc"
+				progress install "$_got" "$TOTAL"
+				# Same for the package manager call: keep reporting progress
+				# (including the apk deps-refresh sub-step) while it runs.
+				(
+					if [ "$PM" = apk ]; then
+						apk_install
+					else
+						opkg install --force-reinstall "$F" >"$LOG" 2>&1
+					fi
+					echo $? > "$F.rc"
+				) >/dev/null 2>&1 </dev/null &
+				_ip=$!
+				while kill -0 "$_ip" 2>/dev/null; do
+					progress install "$_got" "$TOTAL" "$(cat "$STEPF" 2>/dev/null)"
+					sleep 1
+				done
+				wait "$_ip" 2>/dev/null
+				_rc=$(cat "$F.rc" 2>/dev/null)
+				[ -n "$_rc" ] || _rc=1
+				rm -f "$F" "$F.rc" "$STEPF"
+
+				# Version from the asset FILE NAME to tell a real failure from a
+				# non-zero exit when the package actually landed.
+				_want=$(ver_from_name "$NAME")
 				if [ "$_rc" != 0 ]; then
 					if [ -n "$_want" ] && [ "$(installed_version "$PM")" = "$_want" ]; then
 						logger -t h5000m-fancontrol "update: $PM returned $_rc, but $BASE $_want is installed - treating as success"
 					elif [ "$BASE" = "$I18N" ]; then
 						logger -t h5000m-fancontrol "update: ru translation install failed (non-fatal): $_rc"
 					else
-						rm -f "$F"; echo '{"success":false,"error":"Install failed for '"$BASE"'"}'; return
+						if [ "$PM" = apk ]; then
+							_wb=$(apk_world_blockers)
+							if [ -n "$_wb" ]; then
+								logger -t h5000m-fancontrol "update: apk refuses any install - /etc/apk/world lists packages it cannot find: $_wb"
+								fail "world_broken" "$_wb"; return
+							fi
+						fi
+						fail "install_failed" "$BASE"; return
 					fi
 				fi
-				rm -f "$F"
 				INSTALLED="$INSTALLED $BASE"
-				progress install $((55 + STEP*15))
+				progress install 100 100
 			done
 			INSTALLED="${INSTALLED# }"
-			progress finish 90
+			progress finish 100 100
 			# Drop LuCI's cached indexes/modules so the new bundle is served.
 			rm -rf /tmp/luci-indexcache* /tmp/luci-modulecache/* 2>/dev/null
 			CUR=$(installed_version "$PM")
-			# Verify the version actually changed; opkg/apk return 0 even when a
-			# release asset was built with the already-installed version. Compare
-			# against the version of the tag we actually installed, so a beta
-			# build of the current stable version is not misreported either.
-			if [ -n "$PREV" ] && [ "$CUR" = "$PREV" ]; then
-				if [ -n "$TVAL" ] && [ "$TVAL" = "$CUR" ]; then
-					printf '{"success":true,"installed":"%s","current":"%s","reinstalled":1,"stage":"%s"}\n' \
-						"$(json_esc "$INSTALLED")" "$(json_esc "$CUR")" "$STAGE"
-					[ -n "$TAGG" ] && printf '%s\n' "$TAGG" > "$TAGSTATE"
-					return
-				fi
-				printf '{"success":false,"current":"%s","error":"Reinstalled but version stayed %s - the release asset looks mispackaged (rebuild/reupload it)"}\n' "$(json_esc "$CUR")" "$(json_esc "$CUR")"
-			else
-				printf '{"success":true,"installed":"%s","current":"%s","stage":"%s"}\n' "$(json_esc "$INSTALLED")" "$(json_esc "$CUR")" "$STAGE"
+			# Verify the version actually matches the release we installed;
+			# opkg/apk return 0 even when the asset was built with the
+			# already-installed version. When the asset name gave no version at
+			# all, fall back to "the installed version at least changed".
+			if { [ -n "$TARGET" ] && [ "$CUR" = "$TARGET" ]; } \
+				|| { [ -z "$TARGET" ] && [ -n "$PREV" ] && [ "$CUR" != "$PREV" ]; }; then
+				[ "$_rc" = 0 ] || logger -t h5000m-fancontrol "update: $PM returned $_rc, but $PKG $TARGET is installed - treating as success"
+				printf '{"success":true,"installed":"%s","current":"%s","previous":"%s","target":"%s"%s,"stage":"%s"}\n' \
+					"$(json_esc "$INSTALLED")" "$(json_esc "$CUR")" "$(json_esc "$PREV")" "$(json_esc "$TARGET")" \
+					"$([ "$PREV" = "$CUR" ] && echo ',"reinstalled":1')" "$STAGE"
 				[ -n "$TAGG" ] && printf '%s\n' "$TAGG" > "$TAGSTATE"
+				return
 			fi
+			fail "version_mismatch" "$PKG"
 		}
-		# Write to a temp file and move into place only when done, so status can
-		# tell "running" (no final file yet) from "finished". The lock holds the
-		# subshell PID ($$ would be the parent, which already exited).
+		# Write to a separate temp file and move into place only when done: the
+		# progress snapshots above move STATUS.tmp away continuously, so the
+		# final result must live in its own file. The lock holds the subshell
+		# PID ($$ would be the parent, which already exited).
 		read -r _upid _ < /proc/self/stat 2>/dev/null
 		echo "$_upid" > "$LOCK" 2>/dev/null
-		do_install > "$STATUS.tmp" 2>/dev/null
-		mv "$STATUS.tmp" "$STATUS"
+		do_install > "$STATUS.res" 2>/dev/null
+		mv "$STATUS.res" "$STATUS"
 		rm -f "$LOCK"
 	) >/dev/null 2>&1 </dev/null &
 	# rpcd's file exec backend can lose the script exit when it spawns a
@@ -321,8 +497,10 @@ install)
 status)
 	if [ -s "$STATUS" ]; then
 		cat "$STATUS"
-	else
+	elif [ -f "$LOCK" ] && kill -0 "$(cat "$LOCK" 2>/dev/null)" 2>/dev/null; then
 		echo '{"running":true}'
+	else
+		echo '{"idle":true}'
 	fi
 	;;
 
@@ -342,7 +520,7 @@ install-5gmodem)
 	BODY=$(net_fetch 15 "https://api.github.com/repos/fildunsky/luci-app-5gmodem/releases/latest" | tr -d '\n\r')
 	[ -n "$BODY" ] || { echo '{"success":false,"error":"Could not reach GitHub"}'; exit 0; }
 	TAGG=$(printf '%s' "$BODY" | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)
-	URL=$(asset_url_in "$BODY" "luci-app-5gmodem" "$EXT")
+	URL=$(printf '%s' "$BODY" | sed -n 's|.*"browser_download_url"[[:space:]]*:[[:space:]]*"\([^"]*/luci-app-5gmodem[-_][0-9][^"]*\.'"$EXT"'\)".*|\1|p' | head -n1)
 	if [ -z "$URL" ]; then
 		printf '{"success":false,"error":"No luci-app-5gmodem .%s asset in the latest release (%s)"}\n' "$EXT" "$(json_esc "$TAGG")"
 		exit 0
@@ -374,7 +552,8 @@ install-5gmodem)
 	;;
 
 *)
-	echo '{"success":false,"error":"usage: update.sh check [beta]|install [stable|beta]|status|version"}'
+	echo '{"success":false,"error":"usage: update.sh check [beta]|install [stable|beta|current]|status|version"}'
 	exit 1
 	;;
 esac
+fi
