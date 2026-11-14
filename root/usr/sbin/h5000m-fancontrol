@@ -116,14 +116,15 @@ release_thermal_control() {
 
 # Firmware with the 5gmodem stack (ModemManager + /usr/share/5gmodem, e.g. the
 # FM350-GL builds) publishes the modem temperature in per-modem metrics JSON
-# ("mtemp") and in stats/port series. The files are maintained by that
-# firmware's own 5gmodem daemon, so reading them is safe - the AT port is
-# locked by that daemon. Sources are tried in order, the hottest fresh value
-# wins.
+# ("mtemp") and in stats/port series. Two layouts exist: the older flat /tmp
+# files and the newer /tmp/5gmodem/ directory used by current 5gmodem builds;
+# both are tried. The files are maintained by that firmware's own 5gmodem
+# daemon, so reading them is safe - the AT port is locked by that daemon.
+# Sources are tried in order, the hottest fresh value wins.
 find_5gmodem_temp() {
 	local file v age best have_metrics parsed rest mtemp
 	best=""; have_metrics=""
-	for file in /tmp/5gmodem_metrics_*.json; do
+	for file in /tmp/5gmodem_metrics_*.json /tmp/5gmodem/metrics_*.json; do
 		[ -f "$file" ] || continue
 		have_metrics=1
 		parsed="$(parse_5gmodem_metrics "$file" 2>/dev/null || true)"
@@ -148,7 +149,7 @@ find_5gmodem_temp() {
 	# Metrics exist but every snapshot reports the modem missing ("modem":"-"):
 	# the stock daemon is offline, do not fall back to shrinking stale series.
 	[ -n "$have_metrics" ] && return 1
-	for file in /tmp/5gmodem_stats/temp.*; do
+	for file in /tmp/5gmodem_stats/temp.* /tmp/5gmodem/stats/temp.*; do
 		case "$file" in *.label) continue ;; esac
 		[ -f "$file" ] || continue
 		fresh_enough "$file" || continue
@@ -158,7 +159,7 @@ find_5gmodem_temp() {
 		if [ -z "$best" ] || [ "$v" -gt "$best" ]; then best="$v"; fi
 	done
 	[ -n "$best" ] && { echo "$best"; return 0; }
-	for file in /tmp/5gmodem_temp_*; do
+	for file in /tmp/5gmodem_temp_* /tmp/5gmodem/temp_*; do
 		[ -f "$file" ] || continue
 		fresh_enough "$file" || continue
 		v="$(awk 'NR == 1 { print $1 }' "$file" 2>/dev/null)"
@@ -174,7 +175,7 @@ find_5gmodem_temp() {
 find_5gmodem_name() {
 	local file name have_metrics parsed
 	have_metrics=""
-	for file in /tmp/5gmodem_metrics_*.json; do
+	for file in /tmp/5gmodem_metrics_*.json /tmp/5gmodem/metrics_*.json; do
 		[ -f "$file" ] || continue
 		have_metrics=1
 		parsed="$(parse_5gmodem_metrics "$file" 2>/dev/null || true)"
@@ -186,7 +187,7 @@ find_5gmodem_name() {
 		return 0
 	done
 	[ -n "$have_metrics" ] && return 1
-	for file in /tmp/5gmodem_stats/temp.*.label; do
+	for file in /tmp/5gmodem_stats/temp.*.label /tmp/5gmodem/stats/temp.*.label; do
 		[ -f "$file" ] || continue
 		read_file name "$file"
 		[ -n "$name" ] && printf '%s\n' "$name" && return 0
@@ -849,6 +850,13 @@ print_status() {
 	echo "target_pwm=$PREV_TARGET_PWM"
 	echo "applied_pwm=$PREV_APPLIED_PWM"
 	now="$(date +%s)"
+	if [ "$PREV_DOWN_SINCE" -gt 0 ]; then
+		down_remaining=$((DOWN_DELAY - (now - PREV_DOWN_SINCE)))
+		[ "$down_remaining" -lt 0 ] && down_remaining=0
+	else
+		down_remaining=""
+	fi
+	echo "down_remaining=$down_remaining"
 	if is_uint "$PREV_UPDATED"; then age=$((now - PREV_UPDATED)); else age=""; fi
 	echo "state_age=$age"
 }

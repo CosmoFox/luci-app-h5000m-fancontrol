@@ -50,6 +50,22 @@ return view.extend({
 		}, this));
 	},
 
+	installModemStack: function() {
+		if (!confirm(_('Install the 5gmodem package now? It is downloaded from the official GitHub releases of the luci-app-5gmodem project.')))
+			return Promise.resolve();
+		return fs.exec(UPDATE_BIN, [ 'install-5gmodem' ]).then(function(res) {
+			var d = {}; try { d = JSON.parse((res && res.stdout) || '{}'); } catch (e) {}
+			if (d.success) {
+				ui.addNotification(null, E('p', _('5gmodem %s installed successfully. Reloading…').format(d.installed || '')));
+				window.setTimeout(function() { window.location.reload(); }, 1500);
+			} else {
+				ui.addNotification(null, E('p', _('Could not install 5gmodem:') + ' ' + (d.error || _('unknown error'))), 'danger');
+			}
+		}, function(err) {
+			ui.addNotification(null, E('p', _('Could not install 5gmodem:') + ' ' + (err.message || err)), 'danger');
+			});
+	},
+
 	toNum: function(value, fallback) {
 		var n = parseInt(value, 10);
 		return isNaN(n) ? fallback : n;
@@ -154,7 +170,9 @@ return view.extend({
 			'@media(max-width:1050px){.h5fan-grid{grid-template-columns:repeat(2,minmax(145px,1fr))}.h5fan-card.temperatures{grid-column:span 2}.h5fan-temp-grid{grid-template-columns:repeat(4,minmax(72px,1fr))}}',
 			'@media(max-width:750px){.h5fan-curve-layout{grid-template-columns:1fr}.h5fan-side{grid-template-columns:repeat(3,1fr);grid-template-rows:1fr}}',
 			'@media(max-width:520px){.h5fan-hero{display:block}.h5fan-health{margin-top:12px}}',
-			'@media(max-width:520px){.h5fan-grid{grid-template-columns:1fr}.h5fan-card.temperatures{grid-column:span 1}.h5fan-temp-grid{grid-template-columns:repeat(2,minmax(110px,1fr))}.h5fan-side{grid-template-columns:1fr;grid-template-rows:repeat(3,1fr)}.h5fan-slider{align-items:stretch;flex-direction:column}.h5fan-slider input[type=range]{width:100%;min-width:0}}'
+			'@media(max-width:520px){.h5fan-grid{grid-template-columns:1fr}.h5fan-card.temperatures{grid-column:span 1}.h5fan-temp-grid{grid-template-columns:repeat(2,minmax(110px,1fr))}.h5fan-side{grid-template-columns:1fr;grid-template-rows:repeat(3,1fr)}.h5fan-slider{align-items:stretch;flex-direction:column}.h5fan-slider input[type=range]{width:100%;min-width:0}}',
+			'.h5fan-delaybar{display:none;height:4px;margin-top:7px;border-radius:2px;background:rgba(127,127,127,.16);overflow:hidden}.h5fan-delaybar.show{display:block}.h5fan-delaybar-fill{height:100%;width:0;border-radius:2px;background:linear-gradient(90deg,var(--fan-blue),var(--fan-amber));transition:width .9s linear}',
+			'.h5fan-modem-setup{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}.h5fan-modem-setup a{white-space:nowrap}'
 		].join(''));
 	},
 
@@ -188,6 +206,11 @@ return view.extend({
 				this.temperatureItem('h5fan-phy', _('Ethernet PHY')),
 				this.temperatureItem('h5fan-wifi', _('Wi-Fi radios')),
 				this.temperatureItem('h5fan-modem', _('5G modem'))
+			]),
+			E('div', { 'class': 'h5fan-note h5fan-modem-setup', id: 'h5fan-modem-setup', 'style': 'display:none' }, [
+				E('span', {}, _('Modem temperature monitoring requires the 5gmodem package.')),
+				E('a', { 'href': 'https://github.com/fildunsky/luci-app-5gmodem', 'target': '_blank', 'rel': 'noopener' }, _('Project page')),
+				E('button', { 'class': 'cbi-button cbi-button-action', 'click': ui.createHandlerFn(this, function() { return this.installModemStack(); }) }, _('Install 5gmodem'))
 			])
 		]);
 	},
@@ -603,7 +626,7 @@ return view.extend({
 				]),
 				E('div', { 'class': 'h5fan-side' }, [
 					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Requested output')), E('strong', { id: 'h5fan-requested' }, '-') ]),
-					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Applied output')), E('strong', { id: 'h5fan-applied' }, '-') ]),
+					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Applied output')), E('strong', { id: 'h5fan-applied' }, '-'), E('div', { 'class': 'h5fan-delaybar', id: 'h5fan-delaybar' }, E('div', { 'class': 'h5fan-delaybar-fill', id: 'h5fan-delaybar-fill' })) ]),
 					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Policy reason')), E('strong', { 'class': 'h5fan-reason', id: 'h5fan-reason' }, '-') ])
 				])
 			]),
@@ -678,6 +701,20 @@ return view.extend({
 		this.setText('h5fan-applied', isNaN(applied) ? (isNaN(pwm) ? '-' : Math.round(pwm * 100 / 255) + '%') : Math.round(applied * 100 / 255) + '%');
 		this.setText('h5fan-reason', this.reasonName(data.reason));
 		this.syncTitle('h5fan-reason');
+		var dbar = document.getElementById('h5fan-delaybar'), dfill = document.getElementById('h5fan-delaybar-fill');
+		var drem = this.toNum(data.down_remaining, 0), ddel = this.toNum(data.down_delay, 0);
+		if (dbar && dfill) {
+			if (drem > 0 && ddel > 0) {
+				dbar.classList.add('show');
+				dbar.title = _('Waiting before speed down') + ' — ' + _('%s s').format(drem);
+				dfill.style.width = Math.max(0, Math.min(100, drem * 100 / ddel)) + '%';
+			} else {
+				dbar.classList.remove('show');
+				dbar.title = '';
+				dfill.style.width = '0';
+			}
+		}
+		this.updShow('h5fan-modem-setup', !data.module_temp && !data.module_name);
 		if (health) {
 			health.className = 'h5fan-health';
 			if (data.result === 'failsafe') { health.className += ' fail'; health.textContent = _('Failsafe cooling'); }

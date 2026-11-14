@@ -332,6 +332,47 @@ version)
 	printf '{"installed":"%s","pm":"%s"}\n' "$(json_esc "$(current_display "$V")")" "$PM"
 	;;
 
+install-5gmodem)
+	# Offer the 5gmodem stack (fildunsky/luci-app-5gmodem): it publishes the
+	# modem metrics this app reads. Downloads the latest full (non-lite)
+	# release asset (.apk on apk snapshots, .ipk on opkg) and installs it.
+	PM=$(pkgman)
+	[ -n "$PM" ] || { echo '{"success":false,"error":"No package manager found"}'; exit 0; }
+	case "$PM" in apk) EXT=apk ;; opkg) EXT=ipk ;; esac
+	BODY=$(net_fetch 15 "https://api.github.com/repos/fildunsky/luci-app-5gmodem/releases/latest" | tr -d '\n\r')
+	[ -n "$BODY" ] || { echo '{"success":false,"error":"Could not reach GitHub"}'; exit 0; }
+	TAGG=$(printf '%s' "$BODY" | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)
+	URL=$(asset_url_in "$BODY" "luci-app-5gmodem" "$EXT")
+	if [ -z "$URL" ]; then
+		printf '{"success":false,"error":"No luci-app-5gmodem .%s asset in the latest release (%s)"}\n' "$EXT" "$(json_esc "$TAGG")"
+		exit 0
+	fi
+	F="$TMP/luci-app-5gmodem.$EXT"
+	rm -f "$F"
+	if ! net_fetch 180 "$URL" "$F"; then
+		rm -f "$F"
+		echo '{"success":false,"error":"Download failed"}'
+		exit 0
+	fi
+	if [ "$PM" = "apk" ]; then
+		apk add --allow-untrusted "$F" >/dev/null 2>&1; _rc=$?
+	else
+		opkg install "$F" >/dev/null 2>&1; _rc=$?
+	fi
+	rm -f "$F"
+	if [ "$_rc" != 0 ]; then
+		printf '{"success":false,"error":"Package manager returned %s"}\n' "$_rc"
+		exit 0
+	fi
+	if [ "$PM" = "apk" ]; then
+		V=$(apk info -v 2>/dev/null | sed -n 's/^luci-app-5gmodem-\([0-9][0-9.]*\)-r[0-9].*/\1/p' | head -n1)
+	else
+		V=$(opkg list-installed "luci-app-5gmodem" 2>/dev/null | sed -n 's/^luci-app-5gmodem - \([0-9][0-9.]*\).*/\1/p' | head -n1)
+	fi
+	[ -n "$V" ] || V=${TAGG#v}
+	printf '{"success":true,"installed":"%s","tag":"%s"}\n' "$(json_esc "$V")" "$(json_esc "$TAGG")"
+	;;
+
 *)
 	echo '{"success":false,"error":"usage: update.sh check [beta]|install [stable|beta]|status|version"}'
 	exit 1

@@ -100,5 +100,7 @@ printf '{\n  "modem": "FM350",\n  "age": "7",\n  "mtemp": "40.2"\n}\n' > "${TMP}
 expect_eq "$(parse_5gmodem_metrics "${TMP}/g4")" 'FM350|7|40.2' 'metrics multi-line'
 printf 'garbage\n' > "${TMP}/g5"
 expect_eq "$(parse_5gmodem_metrics "${TMP}/g5")" '||' 'metrics garbage'
+printf '{"path":"2-1","iface":"modem","conn_time":"0d, 00:07:17","modem":"Fibocom FM350-GL","mtemp":"28.0 &deg;C"}\n' > "${TMP}/g6"
+expect_eq "$(parse_5gmodem_metrics "${TMP}/g6")" 'Fibocom FM350-GL||28.0 &deg;C' 'metrics iface-value must not match the modem key'
 
 echo 'library unit tests passed'

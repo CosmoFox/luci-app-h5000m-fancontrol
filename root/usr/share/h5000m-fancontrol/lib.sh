@@ -88,27 +88,48 @@ parse_mt5700m_cache() {
 # pipelines). Prints "<modem>|<age>|<mtemp>"; missing keys come out empty.
 parse_5gmodem_metrics() {
 	awk '
-		function grab_str(key, s,   pos, rest) {
-			pos = index(s, "\"" key "\"")
-			if (!pos) return ""
-			rest = substr(s, pos + length(key) + 2)
-			sub(/^[ \t]*:[ \t]*"/, "", rest)
-			pos = index(rest, "\"")
-			if (!pos) return ""
-			return substr(rest, 1, pos - 1)
-		}
-		function grab_num(key, s,   pos, rest, i, c, out) {
-			pos = index(s, "\"" key "\"")
-			if (!pos) return ""
-			rest = substr(s, pos + length(key) + 2)
-			sub(/^[ \t]*:[ \t]*"?/, "", rest)
-			out = ""
-			for (i = 1; i <= length(rest); i++) {
-				c = substr(rest, i, 1)
-				if (c !~ /[0-9]/) break
-				out = out c
+		# Find the next "<key>" that is actually a JSON key (a colon may
+		# follow); values that merely contain the word (e.g. "iface":"modem")
+		# must not match.
+		function grab_str(key, s,   pos, rest, i, q) {
+			pos = 1
+			while ((q = index(substr(s, pos), "\"" key "\"")) > 0) {
+				pos = pos + q - 1
+				rest = substr(s, pos + length(key) + 2)
+				i = 1
+				while (i <= length(rest) && substr(rest, i, 1) ~ /[ \t]/) i++
+				if (substr(rest, i, 1) == ":") {
+					rest = substr(rest, i + 1)
+					sub(/^[ \t]*"/, "", rest)
+					q = index(rest, "\"")
+					if (!q) return ""
+					return substr(rest, 1, q - 1)
+				}
+				pos = pos + 1
 			}
-			return out
+			return ""
+		}
+		function grab_num(key, s,   pos, rest, i, q, c, out) {
+			pos = 1
+			while ((q = index(substr(s, pos), "\"" key "\"")) > 0) {
+				pos = pos + q - 1
+				rest = substr(s, pos + length(key) + 2)
+				i = 1
+				while (i <= length(rest) && substr(rest, i, 1) ~ /[ \t]/) i++
+				if (substr(rest, i, 1) == ":") {
+					rest = substr(rest, i + 1)
+					sub(/^[ \t]*"?/, "", rest)
+					out = ""
+					for (i = 1; i <= length(rest); i++) {
+						c = substr(rest, i, 1)
+						if (c !~ /[0-9]/) break
+						out = out c
+					}
+					return out
+				}
+				pos = pos + 1
+			}
+			return ""
 		}
 		{ line = (line == "" ? $0 : line " " $0) }
 		END { printf "%s|%s|%s\n", grab_str("modem", line), grab_num("age", line), grab_str("mtemp", line) }

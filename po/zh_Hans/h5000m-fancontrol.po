@@ -462,3 +462,27 @@ msgstr "迟滞窗口"
 
 msgid "Priority"
 msgstr "优先"
+
+msgid "Modem temperature monitoring requires the 5gmodem package."
+msgstr "监控调制解调器温度需要安装 5gmodem 软件包。"
+
+msgid "Project page"
+msgstr "项目页面"
+
+msgid "Install 5gmodem"
+msgstr "安装 5gmodem"
+
+msgid "Install the 5gmodem package now? It is downloaded from the official GitHub releases of the luci-app-5gmodem project."
+msgstr "立即安装 5gmodem 软件包？软件将从 luci-app-5gmodem 项目的 GitHub 官方发布页下载。"
+
+msgid "5gmodem %s installed successfully. Reloading…"
+msgstr "5gmodem %s 安装成功，正在刷新…"
+
+msgid "Could not install 5gmodem:"
+msgstr "无法安装 5gmodem："
+
+msgid "unknown error"
+msgstr "未知错误"
+
+msgid "%s s"
+msgstr "%s 秒"

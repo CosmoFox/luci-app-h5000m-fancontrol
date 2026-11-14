@@ -330,3 +330,27 @@ msgstr "Установка пакетов…"
 
 msgid "Finishing the update…"
 msgstr "Завершение обновления…"
+
+msgid "Modem temperature monitoring requires the 5gmodem package."
+msgstr "Мониторинг температуры модема требует пакет 5gmodem."
+
+msgid "Project page"
+msgstr "Страница проекта"
+
+msgid "Install 5gmodem"
+msgstr "Установить 5gmodem"
+
+msgid "Install the 5gmodem package now? It is downloaded from the official GitHub releases of the luci-app-5gmodem project."
+msgstr "Установить пакет 5gmodem сейчас? Он будет скачан с официальных релизов GitHub проекта luci-app-5gmodem."
+
+msgid "5gmodem %s installed successfully. Reloading…"
+msgstr "5gmodem %s установлен. Перезагрузка страницы…"
+
+msgid "Could not install 5gmodem:"
+msgstr "Не удалось установить 5gmodem:"
+
+msgid "unknown error"
+msgstr "неизвестная ошибка"
+
+msgid "%s s"
+msgstr "%s с"

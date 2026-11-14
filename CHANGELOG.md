@@ -4,8 +4,10 @@
 
 ## 2.3.1
 
-- The daemon now reads the 5G modem temperature published by the stock 5gmodem stack 
-  (`/tmp/5gmodem_metrics_*.json`, `/tmp/5gmodem_stats/temp.*`, `/tmp/5gmodem_temp_*`). This replaces the legacy
+- The daemon now reads the 5G modem temperature published by the stock 5gmodem stack
+  (`/tmp/5gmodem_metrics_*.json`, `/tmp/5gmodem_stats/temp.*`, `/tmp/5gmodem_temp_*`, plus the
+  `/tmp/5gmodem/metrics_*.json`, `/tmp/5gmodem/stats/temp.*` and `/tmp/5gmodem/temp_*` layouts used by
+  current 5gmodem builds). This replaces the legacy
   MTK temperature cache for devices such as the H5000M with a Fibocom FM350-GL, which do not provide
   /var/run/mt5700m/temperature.
 - The modem temperature card in LuCI now shows the modem model (e.g. "Fibocom FM350-GL") next to the
@@ -94,6 +96,11 @@
   tests, and CI now also runs ShellCheck, a Makefile/changelog version sync
   check and a translation-coverage check. The RPC ACL no longer grants an
   unused exec right on the controller binary.
+- LuCI additions: while the controller holds the fan at a higher output
+  during the speed-down delay, the "Applied output" chip shows a live progress
+  bar with the remaining seconds; when no modem temperature source is
+  available, the temperature card offers the 5gmodem package (project page
+  plus one-click install of the latest release from GitHub).
 
 ## 2.3.0
 

@@ -5,7 +5,8 @@
 ## 2.3.1
 
 - 守护进程现在读取固件标配 5gmodem 软件栈发布的 5G 调制解调器温度（/tmp/5gmodem_metrics_*.json、
-  /tmp/5gmodem_stats/temp.*、/tmp/5gmodem_temp_*），不再只依赖旧版 MTK 温度缓存（/var/run/mt5700m/temperature），
+  /tmp/5gmodem_stats/temp.*、/tmp/5gmodem_temp_*，以及现行 5gmodem 构建使用的
+  /tmp/5gmodem/metrics_*.json、/tmp/5gmodem/stats/temp.*、/tmp/5gmodem/temp_* 路径），不再只依赖旧版 MTK 温度缓存（/var/run/mt5700m/temperature），
   该缓存不存在于 H5000M + Fibocom FM350-GL 这类设备上。
 - LuCI 中的调制解调器温度卡片现在会在温度旁显示调制解调器型号（例如“Fibocom FM350-GL”）。
 
@@ -68,6 +69,9 @@
   uci-defaults 迁移脚本新增基于测试桩的测试；CI 新增 ShellCheck、
   Makefile 与变更日志版本一致性检查以及翻译覆盖检查。RPC ACL 不再授予
   控制器二进制文件未使用的 exec 权限。
+- LuCI 新增：当控制器在降速延迟期间保持较高转速时，「实际输出」块会显示
+  剩余秒数的进度条；当找不到调制解调器温度来源时，温度卡片会推荐安装
+  5gmodem 软件包（项目页面及一键安装 GitHub 最新发布）。
 
 ## 2.3.0
 
