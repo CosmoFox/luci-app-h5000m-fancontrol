@@ -486,3 +486,6 @@ msgstr "未知错误"
 
 msgid "%s s"
 msgstr "%s 秒"
+
+msgid "Holding the previous speed briefly to avoid frequent fan surging"
+msgstr "短暂保持当前转速，避免风扇频繁波动"

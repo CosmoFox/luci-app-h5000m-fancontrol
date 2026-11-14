@@ -354,3 +354,6 @@ msgstr "неизвестная ошибка"
 
 msgid "%s s"
 msgstr "%s с"
+
+msgid "Holding the previous speed briefly to avoid frequent fan surging"
+msgstr "Ненадолго удерживаем прежние обороты, чтобы вентилятор не дёргался"

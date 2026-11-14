@@ -50,6 +50,50 @@ return view.extend({
 		}, this));
 	},
 
+	updateDownDelay: function(remain, delay) {
+		var active = remain > 0 && delay > 0;
+		this.downState = active ? { delay: delay, until: Date.now() + remain * 1000 } : null;
+		this.renderDownDelay();
+		if (active && !this.downTimer) {
+			var self = this;
+			this.downTimer = window.setInterval(function() { self.tickDownDelay(); }, 1000);
+		} else if (!active && this.downTimer) {
+			window.clearInterval(this.downTimer);
+			this.downTimer = null;
+		}
+	},
+
+	tickDownDelay: function() {
+		if (!this.downState) return;
+		var left = Math.max(0, Math.round((this.downState.until - Date.now()) / 1000));
+		if (left <= 0) {
+			this.downState = null;
+			this.renderDownDelay();
+			window.clearInterval(this.downTimer);
+			this.downTimer = null;
+			return;
+		}
+		this.renderDownDelay(left);
+	},
+
+	renderDownDelay: function(leftOverride) {
+		var bar = document.getElementById('h5fan-delaybar'), fill = document.getElementById('h5fan-delaybar-fill'),
+			sec = document.getElementById('h5fan-delaysec'), cap = document.getElementById('h5fan-delaycap');
+		if (!bar || !fill || !sec || !cap) return;
+		var st = this.downState;
+		if (!st) {
+			bar.classList.remove('show'); cap.classList.remove('show');
+			fill.style.width = '0'; sec.textContent = '';
+			return;
+		}
+		var left = (leftOverride !== undefined) ? leftOverride : Math.max(0, Math.round((st.until - Date.now()) / 1000));
+		bar.classList.add('show');
+		cap.classList.add('show');
+		sec.textContent = _('%s s').format(left);
+		fill.style.width = Math.max(0, Math.min(100, left * 100 / st.delay)) + '%';
+		bar.title = _('Waiting before speed down');
+	},
+
 	installModemStack: function() {
 		if (!confirm(_('Install the 5gmodem package now? It is downloaded from the official GitHub releases of the luci-app-5gmodem project.')))
 			return Promise.resolve();
@@ -171,8 +215,9 @@ return view.extend({
 			'@media(max-width:750px){.h5fan-curve-layout{grid-template-columns:1fr}.h5fan-side{grid-template-columns:repeat(3,1fr);grid-template-rows:1fr}}',
 			'@media(max-width:520px){.h5fan-hero{display:block}.h5fan-health{margin-top:12px}}',
 			'@media(max-width:520px){.h5fan-grid{grid-template-columns:1fr}.h5fan-card.temperatures{grid-column:span 1}.h5fan-temp-grid{grid-template-columns:repeat(2,minmax(110px,1fr))}.h5fan-side{grid-template-columns:1fr;grid-template-rows:repeat(3,1fr)}.h5fan-slider{align-items:stretch;flex-direction:column}.h5fan-slider input[type=range]{width:100%;min-width:0}}',
-			'.h5fan-delaybar{display:none;height:4px;margin-top:7px;border-radius:2px;background:rgba(127,127,127,.16);overflow:hidden}.h5fan-delaybar.show{display:block}.h5fan-delaybar-fill{height:100%;width:0;border-radius:2px;background:linear-gradient(90deg,var(--fan-blue),var(--fan-amber));transition:width .9s linear}',
-			'.h5fan-modem-setup{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}.h5fan-modem-setup a{white-space:nowrap}'
+			'.h5fan-delaybar{display:none;align-items:center;gap:6px;margin-top:7px}.h5fan-delaybar.show{display:flex}.h5fan-delaybar-track{flex:1;height:4px;border-radius:2px;background:rgba(127,127,127,.16);overflow:hidden}.h5fan-delaybar-fill{height:100%;width:0;border-radius:2px;background:linear-gradient(90deg,var(--fan-blue),var(--fan-amber));transition:width 1s linear}.h5fan-delaysec{font-size:10px;font-weight:600;color:var(--text-color-medium,#777);white-space:nowrap;min-width:26px;text-align:right}',
+			'.h5fan-modem-setup{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}.h5fan-modem-setup a{white-space:nowrap}',
+			'.h5fan-delaycap{display:none;font-size:9px;line-height:1.35;color:var(--text-color-low,#888);margin-top:3px}.h5fan-delaycap.show{display:block}'
 		].join(''));
 	},
 
@@ -626,7 +671,10 @@ return view.extend({
 				]),
 				E('div', { 'class': 'h5fan-side' }, [
 					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Requested output')), E('strong', { id: 'h5fan-requested' }, '-') ]),
-					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Applied output')), E('strong', { id: 'h5fan-applied' }, '-'), E('div', { 'class': 'h5fan-delaybar', id: 'h5fan-delaybar' }, E('div', { 'class': 'h5fan-delaybar-fill', id: 'h5fan-delaybar-fill' })) ]),
+					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Applied output')), E('strong', { id: 'h5fan-applied' }, '-'), E('div', { 'class': 'h5fan-delaybar', id: 'h5fan-delaybar' }, [
+					E('div', { 'class': 'h5fan-delaybar-track' }, E('div', { 'class': 'h5fan-delaybar-fill', id: 'h5fan-delaybar-fill' })),
+					E('span', { 'class': 'h5fan-delaysec', id: 'h5fan-delaysec' }, '')
+				]), E('div', { 'class': 'h5fan-delaycap', id: 'h5fan-delaycap' }, _('Holding the previous speed briefly to avoid frequent fan surging')) ]),
 					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Policy reason')), E('strong', { 'class': 'h5fan-reason', id: 'h5fan-reason' }, '-') ])
 				])
 			]),
@@ -701,19 +749,7 @@ return view.extend({
 		this.setText('h5fan-applied', isNaN(applied) ? (isNaN(pwm) ? '-' : Math.round(pwm * 100 / 255) + '%') : Math.round(applied * 100 / 255) + '%');
 		this.setText('h5fan-reason', this.reasonName(data.reason));
 		this.syncTitle('h5fan-reason');
-		var dbar = document.getElementById('h5fan-delaybar'), dfill = document.getElementById('h5fan-delaybar-fill');
-		var drem = this.toNum(data.down_remaining, 0), ddel = this.toNum(data.down_delay, 0);
-		if (dbar && dfill) {
-			if (drem > 0 && ddel > 0) {
-				dbar.classList.add('show');
-				dbar.title = _('Waiting before speed down') + ' — ' + _('%s s').format(drem);
-				dfill.style.width = Math.max(0, Math.min(100, drem * 100 / ddel)) + '%';
-			} else {
-				dbar.classList.remove('show');
-				dbar.title = '';
-				dfill.style.width = '0';
-			}
-		}
+		this.updateDownDelay(this.toNum(data.down_remaining, 0), this.toNum(data.down_delay, 0));
 		this.updShow('h5fan-modem-setup', !data.module_temp && !data.module_name);
 		if (health) {
 			health.className = 'h5fan-health';
