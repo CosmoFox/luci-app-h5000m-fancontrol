@@ -257,7 +257,7 @@ return view.extend({
 			'.h5fan-modem-setup{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}.h5fan-modem-setup a{white-space:nowrap}',
 			'.h5fan-adtrack{height:5px;border-radius:3px;background:rgba(130,130,130,.5);overflow:hidden;margin-top:3px}',
 			'.h5fan-adfill{height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,var(--fan-blue),var(--fan-amber));transition:width 1s linear}',
-			'.h5fan-adrow{display:flex;justify-content:space-between;align-items:baseline;gap:6px;margin-top:2px}',
+			'.h5fan-adrow{display:flex;justify-content:space-between;align-items:baseline;gap:6px;margin-top:15px}',
 			'.h5fan-adcap{font-size:9px;line-height:1.3;color:var(--text-color-low,#888);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}',
 			'.h5fan-adsec{flex:none;font-size:10px;font-weight:600;color:var(--text-color-medium,#777)}',
 			'.h5fan-adsec.idle{opacity:.55;font-weight:400}'
