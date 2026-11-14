@@ -1,13 +1,16 @@
 #!/bin/sh
 #
 # Check for / install the latest luci-app-h5000m-fancontrol release from GitHub
-# right from the LuCI page. Prints a small JSON object. The ru translation
-# package is installed along with the app when its matching asset exists.
+# right from the LuCI page. Prints a small JSON object. Translation packages
+# are installed along with the app for the languages the page selects - or the
+# LuCI config implies - whenever their matching assets exist in the release.
 #
 # Usage:
-#   update.sh check [beta]    - compare installed vs latest (stable or beta) release
-#   update.sh install [stage] - download + install app (+ ru translation);
-#                               stage: stable | beta | current (reinstall the release on record)
+#   update.sh check [beta]           - compare installed vs latest (stable or beta) release
+#   update.sh install [stage] [lang...] - download + install app (+ translations
+#                                      for each lang, e.g. ru, zh-cn);
+#                                      stage: stable | beta | current;
+#                                      no lang = detect from the LuCI config
 #   update.sh status          - print the result file of a background install
 #   update.sh version         - print the installed package version only
 #
@@ -29,7 +32,7 @@ API="https://api.github.com/repos/$REPO/releases/latest"
 API_LIST="https://api.github.com/repos/$REPO/releases?per_page=50"
 PAGE="https://github.com/$REPO/releases/latest"
 PKG="luci-app-h5000m-fancontrol"
-I18N="luci-i18n-h5000m-fancontrol-ru"
+I18NPREFIX="luci-i18n-h5000m-fancontrol"
 TMP=/tmp
 STATUS="$TMP/h5000m_fancontrol_update.json"
 LOCK="$TMP/h5000m_fancontrol_update.pid"
@@ -176,6 +179,73 @@ ver_from_name() {
 	printf '%s' "$1" | sed -n 's/^.*[-_]\([0-9][0-9.]*\)-r[0-9][0-9]*[-_.].*$/\1/p'
 }
 
+# norm_lang <lang code> - fold a language code to the i18n package spelling:
+# lowercase, underscores to dashes, zh-hans/zh-hant to their package codes
+# (zh-cn/zh-tw). "auto" and empty mean "not configured" and print nothing.
+norm_lang() {
+	[ -n "$1" ] || return 0
+	_l=$(printf '%s' "$1" | tr 'A-Z' 'a-z' | tr '_' '-')
+	case "$_l" in
+	auto) return 0 ;;
+	zh-hans) _l=zh-cn ;;
+	zh-hant) _l=zh-tw ;;
+	esac
+	printf '%s\n' "$_l"
+}
+
+# i18n_lang_from_name <asset file name> - the language code of a translation
+# asset (luci-i18n-h5000m-fancontrol-<lang>-<ver>-rN.apk, or the ipk spelling
+# with '_' separators and the '_all' suffix); nothing for any other name.
+i18n_lang_from_name() {
+	printf '%s' "$1" | sed -n "s/^$I18NPREFIX-\([a-z-]*\)[-_][0-9][0-9.]*-r[0-9][0-9]*[-_.].*$/\1/p"
+}
+
+# langs_from_release <release JSON> <ext> - the translation languages of the
+# release's assets (filtered by package extension when given), sorted and
+# space-separated.
+langs_from_release() {
+	_lf_out=""
+	for _n in $(printf '%s' "$1" | jsonfilter -e '@.assets[*].name' 2>/dev/null); do
+		if [ -n "$2" ]; then
+			case "$_n" in *."$2") ;; *) continue ;; esac
+		fi
+		_l=$(i18n_lang_from_name "$_n")
+		[ -n "$_l" ] && _lf_out="$_lf_out $_l"
+	done
+	printf '%s' "$_lf_out" | tr ' ' '\n' | sort -u | tr '\n' ' ' | sed 's/^ *//; s/ *$//'
+}
+
+# json_str_list <items...> - a compact JSON string array of the items.
+json_str_list() {
+	_jsl=""
+	for _i in "$@"; do
+		_jsl="$_jsl,\"$_i\""
+	done
+	printf '[%s]' "${_jsl#,}"
+}
+
+# The language LuCI is configured for. "auto" resolves to empty - the browser
+# decides then, so callers should treat empty as "no system language".
+sys_lang() {
+	command -v uci >/dev/null 2>&1 || return 0
+	norm_lang "$(uci -q get luci.main.lang 2>/dev/null)"
+}
+
+# collect_langs <codes...> - normalize each requested language, drop empty
+# and duplicate entries, and print the survivors space-separated.
+collect_langs() {
+	_out=""
+	for _a in "$@"; do
+		_c=$(norm_lang "$_a")
+		[ -n "$_c" ] || continue
+		case " $_out " in
+		*" $_c "*) continue ;;
+		esac
+		_out="$_out $_c"
+	done
+	printf '%s' "$_out" | sed 's/^ //'
+}
+
 # version_gt <a> <b> - prints 1 if a > b else 0 (numeric, dot-separated)
 version_gt() {
 	awk -v a="$1" -v b="$2" 'BEGIN{
@@ -248,12 +318,18 @@ check)
 	elif [ -n "$LATV" ] && [ -z "$CUR" ]; then
 		AVAIL=1
 	fi
+	# Package file extension for the asset filtering below (apk vs ipk).
+	case "$PM" in apk) EXT=apk ;; opkg) EXT=ipk ;; *) EXT="" ;; esac
 	# Only when asked for; the releases list call is heavier than /releases/latest.
 	BETA_LAT=""
 	BETA_AVAIL=0
+	BETA_LANGS=""
 	if [ "$2" = "beta" ]; then
 		BETA_LAT=$(latest_beta)
 		if [ -n "$BETA_LAT" ]; then
+			# Languages shipped by the beta release - the page swaps the
+			# update dialog's language list when the beta toggle is on.
+			BETA_LANGS=$(langs_from_release "$(release_json "$BETA_LAT")" "$EXT")
 			BETAV=${BETA_LAT#v}; BETAV=${BETAV%%-*}
 			if [ -n "$BETAV" ] && [ -n "$CUR" ]; then
 				BETA_AVAIL=$(version_gt "$BETAV" "$CUR")
@@ -281,13 +357,22 @@ check)
 			"$PM" "$(json_esc "$CUR_DISP")" "$(json_esc "$BETA_LAT")" "$BETA_AVAIL"
 		exit 0
 	fi
-	printf '{"success":true,"pm":"%s","current":"%s","latest":"%s","update_available":%s,"release_url":"%s","published":"%s","notes":"%s","beta_latest":"%s","beta_available":%s}\n' \
+	# Languages shipped by the latest release (one translation asset each) -
+	# the page lists them in the update dialog next to the install buttons.
+	LANGS=$(langs_from_release "$J" "$EXT")
+	printf '{"success":true,"pm":"%s","current":"%s","latest":"%s","update_available":%s,"release_url":"%s","published":"%s","notes":"%s","beta_latest":"%s","beta_available":%s,"i18n":%s,"lang":"%s","beta_i18n":%s}\n' \
 		"$PM" "$(json_esc "$CUR_DISP")" "$(json_esc "$LAT")" "$AVAIL" "$PAGE" "$(json_esc "$PUB")" "$(b64 "$NOTES")" \
-		"$(json_esc "$BETA_LAT")" "$BETA_AVAIL"
+		"$(json_esc "$BETA_LAT")" "$BETA_AVAIL" "$(json_str_list $LANGS)" "$(json_esc "$(sys_lang)")" "$(json_str_list $BETA_LANGS)"
 	;;
 
 install)
 	STAGE=${2:-stable}
+	# Any further arguments name translation languages to install.
+	LANG_CODES=""
+	if [ "$#" -gt 2 ]; then
+		shift 2
+		LANG_CODES=$(collect_langs "$@")
+	fi
 	# The download + install can take longer than the LuCI RPC/XHR timeout, so
 	# run it in the background, write the result to a status file, and let the
 	# page poll 'update.sh status'. A second install over a running one is not
@@ -353,13 +438,40 @@ install)
 			PREV=$(installed_version "$PM")
 			INSTALLED=""
 			STEP=0
-			for BASE in "$PKG" "$I18N"; do
+			# Translation packages for the requested languages; without a
+			# request (older page cache) fall back to the language LuCI is
+			# configured for, and when that yields nothing skip translations.
+			if [ -z "$LANG_CODES" ]; then
+				LANG_CODES=$(sys_lang)
+			fi
+			# Resolve each language to the package the release actually
+			# ships: "pt-br"-style requests fall back to the base subtag
+			# ("pt"), and languages without any asset are skipped (with a
+			# log note) - translations are optional, the app is mandatory.
+			I18N_PKGS=""
+			for _c in $LANG_CODES; do
+				_p="$I18NPREFIX-$_c"
+				if [ -z "$(asset_name "$RELJSON" "$_p" "$EXT")" ]; then
+					_b=${_c%%-*}
+					[ "$_b" != "$_c" ] && _p="$I18NPREFIX-$_b"
+				fi
+				if [ -z "$(asset_name "$RELJSON" "$_p" "$EXT")" ]; then
+					logger -t h5000m-fancontrol "update: no '$_c' translation asset in $TAGG - skipping"
+					continue
+				fi
+				case " $I18N_PKGS " in
+				*" $_p "*) continue ;;
+				esac
+				I18N_PKGS="$I18N_PKGS $_p"
+			done
+			for BASE in "$PKG" $I18N_PKGS; do
 				STEP=$((STEP+1))
 				NAME=$(asset_name "$RELJSON" "$BASE" "$EXT")
-				if [ -z "$NAME" ]; then
-					# The ru translation may not exist for this release - only
-					# the main app package is mandatory.
-					[ "$BASE" = "$I18N" ] && continue
+				if [ -z "$NAME" ] && [ "$BASE" != "$PKG" ]; then
+					# Guard only: assets were resolved above.
+					logger -t h5000m-fancontrol "update: translation asset '$BASE' vanished - skipping"
+					continue
+				elif [ -z "$NAME" ]; then
 					# Tag published but CI hasn't built the asset yet.
 					fail "asset_pending"; return
 				fi
@@ -442,8 +554,8 @@ install)
 				if [ "$_rc" != 0 ]; then
 					if [ -n "$_want" ] && [ "$(installed_version "$PM")" = "$_want" ]; then
 						logger -t h5000m-fancontrol "update: $PM returned $_rc, but $BASE $_want is installed - treating as success"
-					elif [ "$BASE" = "$I18N" ]; then
-						logger -t h5000m-fancontrol "update: ru translation install failed (non-fatal): $_rc"
+					elif [ "$BASE" != "$PKG" ]; then
+						logger -t h5000m-fancontrol "update: translation install failed (non-fatal): $_rc"
 					else
 						if [ "$PM" = apk ]; then
 							_wb=$(apk_world_blockers)
@@ -552,7 +664,7 @@ install-5gmodem)
 	;;
 
 *)
-	echo '{"success":false,"error":"usage: update.sh check [beta]|install [stable|beta|current]|status|version"}'
+	echo '{"success":false,"error":"usage: update.sh check [beta]|install [stable|beta|current] [lang...]|status|version"}'
 	exit 1
 	;;
 esac

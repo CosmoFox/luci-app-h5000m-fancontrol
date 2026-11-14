@@ -914,6 +914,69 @@ return view.extend({
 		if (br) br.disabled = busy;
 	},
 
+	/* GitHub timestamps are UTC ("...Z") while the release page shows local
+	   dates, so parse and re-format in the browser zone to keep them equal.
+	   Unparsable values keep the old raw-date behavior as a fallback. */
+	updLocalDate: function(iso) {
+		var s = String(iso || ''), d = new Date(s);
+		if (isNaN(d.getTime()))
+			return s.substring(0, 10);
+		var m = d.getMonth() + 1, day = d.getDate();
+		return d.getFullYear() + '-' + (m < 10 ? '0' + m : m) + '-' + (day < 10 ? '0' + day : day);
+	},
+
+	/* Same folding as norm_lang in update.sh: lowercase, '_' to '-',
+	   zh-hans/zh-hant to the package codes zh-cn/zh-tw. */
+	updNormLang: function(code) {
+		var c = String(code || '').toLowerCase().replace(/_/g, '-');
+		if (c === 'zh-hans' || c.indexOf('zh-hans-') === 0) return 'zh-cn';
+		if (c === 'zh-hant' || c.indexOf('zh-hant-') === 0) return 'zh-tw';
+		return c;
+	},
+
+	/* Fill the translation-language picker of the update dialog with the
+	   languages shipped by the latest release (checkboxes - several packs
+	   can be installed at once). Default checkmarks: the language LuCI runs
+	   in (server-detected, else the browser language - LuCI set to "auto"
+	   follows the browser). Re-checks keep the current choices while they
+	   are still offered. */
+	updFillLangs: function(langs, sysLang) {
+		var box = document.getElementById('h5fan-upd-lang-row');
+		if (!box) return;
+		langs = Array.isArray(langs) ? langs.slice() : [];
+		var prev = {};
+		if (box.__h5filled) {
+			var old = box.querySelectorAll('.h5fan-upd-lang-cb');
+			for (var i = 0; i < old.length; i++)
+				if (old[i].checked) prev[old[i].value] = 1;
+		}
+		box.__h5filled = true;
+		while (box.firstChild) box.removeChild(box.firstChild);
+		box.appendChild(E('span', {}, _('Languages') + ': '));
+		langs.forEach(function(l) {
+			box.appendChild(E('label', { 'class': 'h5fan-update-checkbox', 'style': 'margin-right:8px' }, [
+				E('input', { 'type': 'checkbox', 'class': 'h5fan-upd-lang-cb', 'value': l }), ' ' + l
+			]));
+		}, this);
+		var picks = Object.keys(prev).filter(function(p) { return langs.indexOf(p) >= 0; });
+		if (!box.__h5hadprev && !picks.length) {
+			var n = this.updNormLang(sysLang);
+			if (n && langs.indexOf(n) >= 0) {
+				picks = [n];
+			} else {
+				var nav = this.updNormLang(window.navigator && navigator.language);
+				var cands = [nav, nav.split('-')[0]];
+				for (var j = 0; j < cands.length; j++)
+					if (cands[j] && langs.indexOf(cands[j]) >= 0) { picks = [cands[j]]; break; }
+			}
+		}
+		box.__h5hadprev = true;
+		var cbs = box.querySelectorAll('.h5fan-upd-lang-cb');
+		for (var k = 0; k < cbs.length; k++)
+			cbs[k].checked = picks.indexOf(cbs[k].value) >= 0;
+		box.style.display = langs.length ? '' : 'none';
+	},
+
 	checkUpdate: function() {
 		this.updSet('h5fan-upd-status', _('Checking the latest release…'));
 		this.updShow('h5fan-upd-install', false);
@@ -928,7 +991,18 @@ return view.extend({
 			var latest = String(d.latest || '').replace(/^v/i, '');
 			var betaOn = !!(document.getElementById('h5fan-upd-beta') && document.getElementById('h5fan-upd-beta').checked);
 			if (d.release_url) { var a = document.getElementById('h5fan-upd-release'); if (a) { a.href = d.release_url; a.style.display = ''; } }
-			this.updSet('h5fan-upd-published', d.published ? _('Published: %s').format(String(d.published).substring(0, 10)) : '');
+			// The date belongs to the LATEST GitHub release, not to the
+			// installed package - name it explicitly, or a locally built
+			// version ahead of GitHub looks like it was released that day.
+			var pubTxt = '';
+			if (d.published && d.latest)
+				pubTxt = _('Latest release: %s (published %s)').format(String(d.latest).replace(/^v/i, ''), this.updLocalDate(d.published));
+			this.updSet('h5fan-upd-published', pubTxt);
+			if (d.success) {
+				this.__h5langs = d.i18n || [];
+				this.__h5betalangs = d.beta_i18n || [];
+				this.updFillLangs(betaOn ? ((this.__h5betalangs.length) ? this.__h5betalangs : this.__h5langs) : this.__h5langs, d.lang);
+			}
 			this.updateBeta(d);
 			if (!d.success) {
 				this.updSet('h5fan-upd-status', this.updErrText(d.error, _('Could not check for updates')));
@@ -982,8 +1056,13 @@ return view.extend({
 
 	onBetaToggle: function(ev) {
 		var box = ev && ev.target ? ev.target : document.getElementById('h5fan-upd-beta');
-		this.updateBeta({}, !!(box && box.checked));
-		if (box && box.checked)
+		var on = !!(box && box.checked);
+		this.updateBeta({}, on);
+		// Swap the language list to the beta release's assets (cached from
+		// the last check) - the install passes the checked languages along.
+		var list = on ? ((this.__h5betalangs || []).length ? this.__h5betalangs : this.__h5langs) : this.__h5langs;
+		if (list) this.updFillLangs(list, '');
+		if (on)
 			return this.checkUpdate();
 	},
 
@@ -1095,7 +1174,15 @@ return view.extend({
 		};
 		var args = [ 'install' ];
 		if (stage === 'beta') args.push('beta');
-		if (stage === 'current') args.push('current');
+		else if (stage === 'current') args.push('current');
+		var langArgs = [];
+		var cbs = document.querySelectorAll('.h5fan-upd-lang-cb');
+		for (var i = 0; i < cbs.length; i++)
+			if (cbs[i].checked) langArgs.push(cbs[i].value);
+		if (langArgs.length) {
+			if (args.length === 1) args.push('stable');
+			args = args.concat(langArgs);
+		}
 		return fs.exec(UPDATE_BIN, args).then(function(res) {
 			var d = {}; try { d = JSON.parse((res && res.stdout) || '{}'); } catch (e) {}
 			if (d.started) { self.pollInstall(0); return; }
@@ -1136,6 +1223,7 @@ return view.extend({
 				E('div', { 'id': 'h5fan-upd-published', 'class': 'h5fan-upd-published' }, ''),
 				E('div', { 'id': 'h5fan-upd-status', 'style': 'margin-top:4px' }, '')
 			]),
+			E('div', { 'class': 'h5fan-update-meta', 'id': 'h5fan-upd-lang-row', 'style': 'display:none' }),
 			E('div', { 'class': 'h5fan-update-progress', 'id': 'h5fan-upd-progress' }, [
 				E('div', { 'class': 'h5fan-update-progress-bar', 'id': 'h5fan-upd-progress-bar' })
 			]),

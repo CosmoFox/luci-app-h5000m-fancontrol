@@ -517,5 +517,8 @@ msgstr "下载中：%s KB"
 msgid "Refreshing package lists…"
 msgstr "正在刷新软件包列表…"
 
-msgid "Published: %s"
-msgstr "发布于：%s"
+msgid "Latest release: %s (published %s)"
+msgstr "最新版本：%s（发布于 %s）"
+
+msgid "Languages"
+msgstr "语言"

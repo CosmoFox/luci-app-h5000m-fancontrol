@@ -385,5 +385,8 @@ msgstr "Загрузка: %s КБ"
 msgid "Refreshing package lists…"
 msgstr "Обновление списков пакетов…"
 
-msgid "Published: %s"
-msgstr "Опубликовано: %s"
+msgid "Latest release: %s (published %s)"
+msgstr "Последний релиз: %s (опубликован %s)"
+
+msgid "Languages"
+msgstr "Языки"
