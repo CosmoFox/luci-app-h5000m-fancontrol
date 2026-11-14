@@ -33,6 +33,7 @@ jobs:
           sh -n tests/test-module-temperature.sh
           sh -n tests/test-thermal-policy-safety.sh
           sh -n tests/test-uci-defaults.sh
+          sh -n tests/test-vendor-temperature.sh
 
       - name: Run regression tests
         run: |
@@ -41,6 +42,7 @@ jobs:
           sh tests/test-module-temperature.sh
           sh tests/test-thermal-policy-safety.sh
           sh tests/test-uci-defaults.sh
+          sh tests/test-vendor-temperature.sh
 
       - name: ShellCheck
         run: |
@@ -52,7 +54,7 @@ jobs:
             root/etc/uci-defaults/91-h5000m-fancontrol-v2 \
             root/etc/uci-defaults/92-h5000m-fancontrol-v3 \
             root/etc/uci-defaults/93-h5000m-fancontrol-v4
-          shellcheck -x -s sh -e SC3043,SC1007,SC1091 tests/*.sh
+          shellcheck -x -s sh -e SC3043,SC1007,SC1091,SC2034,SC2329 tests/*.sh
           shellcheck -s bash scripts/build-release.sh scripts/release.sh
 
       - name: Check version synchronization

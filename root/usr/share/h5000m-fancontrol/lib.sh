@@ -68,6 +68,24 @@ calc_curve_pwm() {
 	echo $((prev_p * 255 / 100))
 }
 
+# Vendor mt_wifi drivers may expose the radio temperature only via iwpriv.
+# Bounded and guarded: an unbounded driver ioctl has no place in the control
+# loop, so both helpers must exist and the value must be a sane uint.
+read_vendor_radio_temp() {
+	local iface="$1" output root
+	command -v iwpriv >/dev/null 2>&1 || return 1
+	command -v timeout >/dev/null 2>&1 || return 1
+	root="${RADIO_SYSFS_ROOT:-/sys/class/net}"
+	[ -d "$root/$iface" ] || return 1
+	output="$(timeout 1 iwpriv "$iface" stat 2>/dev/null)" || return 1
+	printf '%s\n' "$output" | awk '
+		/CurrentTemperature[[:space:]]*=/ {
+			split($0, a, "="); gsub(/^[[:space:]]+|[[:space:]]+$/, "", a[2])
+			if (a[2] ~ /^[0-9]+$/ && a[2]+0 <= 125) print a[2]+0
+			exit
+		}'
+}
+
 # Parse the MT5700M module temperature cache ("temperature=...", "updated=...")
 # in a single awk pass. Prints "<rounded temp>|<updated>" when both fields are
 # present and sane; nothing otherwise.
