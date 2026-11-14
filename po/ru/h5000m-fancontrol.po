@@ -356,4 +356,4 @@ msgid "%s s"
 msgstr "%s с"
 
 msgid "Delay before applying"
-msgstr "Задержка до применения"
+msgstr "Задержка применения"
