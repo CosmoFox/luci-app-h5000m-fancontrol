@@ -78,22 +78,19 @@ return view.extend({
 	},
 
 	renderDownDelay: function(leftOverride) {
-		var bar = document.getElementById('h5fan-delaybar'), fill = document.getElementById('h5fan-delaybar-fill'),
-			sec = document.getElementById('h5fan-delaysec'), cap = document.getElementById('h5fan-delaycap');
-		if (!bar || !fill || !sec || !cap) return;
+		var fill = document.getElementById('h5fan-adfill'), sec = document.getElementById('h5fan-adsec');
+		if (!fill || !sec) return;
 		var st = this.downState;
 		if (!st) {
 			fill.style.width = '0';
 			sec.classList.add('idle');
 			sec.textContent = _('%s s').format(this.downDelay || 0);
-			bar.title = '';
 			return;
 		}
 		var left = (leftOverride !== undefined) ? leftOverride : Math.max(0, Math.round((st.until - Date.now()) / 1000));
 		sec.classList.remove('idle');
 		sec.textContent = _('%s s').format(left);
 		fill.style.width = Math.max(0, Math.min(100, left * 100 / st.delay)) + '%';
-		bar.title = _('Waiting before speed down');
 	},
 
 	installModemStack: function() {
@@ -217,9 +214,12 @@ return view.extend({
 			'@media(max-width:750px){.h5fan-curve-layout{grid-template-columns:1fr}.h5fan-side{grid-template-columns:repeat(3,1fr);grid-template-rows:1fr}}',
 			'@media(max-width:520px){.h5fan-hero{display:block}.h5fan-health{margin-top:12px}}',
 			'@media(max-width:520px){.h5fan-grid{grid-template-columns:1fr}.h5fan-card.temperatures{grid-column:span 1}.h5fan-temp-grid{grid-template-columns:repeat(2,minmax(110px,1fr))}.h5fan-side{grid-template-columns:1fr;grid-template-rows:repeat(3,1fr)}.h5fan-slider{align-items:stretch;flex-direction:column}.h5fan-slider input[type=range]{width:100%;min-width:0}}',
-			'.h5fan-delaybar{display:flex;align-items:center;gap:6px;margin-top:7px.h5fan-delaybar-track{flex:1;height:5px;border-radius:3px;background:rgba(130,130,130,.55);overflow:hidden}.h5fan-delaybar-fill{height:100%;width:0;border-radius:2px;background:linear-gradient(90deg,var(--fan-blue),var(--fan-amber));transition:width 1s linear}.h5fan-delaysec{font-size:10px;font-weight:600;color:var(--text-color-medium,#777);white-space:nowrap;min-width:26px;text-align:right}.h5fan-delaysec.idle{opacity:.55;font-weight:400}',
 			'.h5fan-modem-setup{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}.h5fan-modem-setup a{white-space:nowrap}',
-			'.h5fan-delaycap{display:block;font-size:9px;line-height:1.3;color:var(--text-color-low,#888);margin-top:2px}'
+			'.h5fan-adtrack{height:5px;border-radius:3px;background:rgba(130,130,130,.5);overflow:hidden;margin-top:6px}',
+			'.h5fan-adfill{height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,var(--fan-blue),var(--fan-amber));transition:width 1s linear}',
+			'.h5fan-adsec{font-size:10px;font-weight:600;color:var(--text-color-medium,#777);text-align:right;margin-top:2px;min-height:12px}',
+			'.h5fan-adsec.idle{opacity:.55;font-weight:400}',
+			'.h5fan-adcap{font-size:9px;line-height:1.3;color:var(--text-color-low,#888);margin-top:2px}'
 		].join(''));
 	},
 
@@ -673,10 +673,7 @@ return view.extend({
 				]),
 				E('div', { 'class': 'h5fan-side' }, [
 					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Requested output')), E('strong', { id: 'h5fan-requested' }, '-') ]),
-					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Applied output')), E('strong', { id: 'h5fan-applied' }, '-'), E('div', { 'class': 'h5fan-delaybar', id: 'h5fan-delaybar' }, [
-					E('div', { 'class': 'h5fan-delaybar-track' }, E('div', { 'class': 'h5fan-delaybar-fill', id: 'h5fan-delaybar-fill' })),
-					E('span', { 'class': 'h5fan-delaysec', id: 'h5fan-delaysec' }, '')
-				]), E('div', { 'class': 'h5fan-delaycap', id: 'h5fan-delaycap' }, _('Delay before applying the requested speed')) ]),
+					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Applied output')), E('strong', { id: 'h5fan-applied' }, '-'), E('div', { 'class': 'h5fan-adtrack' }, E('div', { 'class': 'h5fan-adfill', id: 'h5fan-adfill' })), E('div', { 'class': 'h5fan-adsec idle', id: 'h5fan-adsec' }, ''), E('div', { 'class': 'h5fan-adcap' }, _('Delay before applying the requested speed')) ]),
 					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Policy reason')), E('strong', { 'class': 'h5fan-reason', id: 'h5fan-reason' }, '-') ])
 				])
 			]),
