@@ -34,6 +34,7 @@ jobs:
           sh -n tests/test-module-temperature.sh
           sh -n tests/test-thermal-policy-safety.sh
           sh -n tests/test-uci-defaults.sh
+          sh -n tests/test-update.sh
           sh -n tests/test-vendor-temperature.sh
 
       - name: Run regression tests
@@ -43,6 +44,7 @@ jobs:
           sh tests/test-module-temperature.sh
           sh tests/test-thermal-policy-safety.sh
           sh tests/test-uci-defaults.sh
+          sh tests/test-update.sh
           sh tests/test-vendor-temperature.sh
 
       - name: ShellCheck

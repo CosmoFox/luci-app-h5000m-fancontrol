@@ -6,7 +6,8 @@ UPD="${ROOT}/root/usr/share/h5000m-fancontrol/update.sh"
 # Sourcing update.sh overwrites TMP/STATUS/LOG with its own paths, so the
 # scratch dir lives in its own variable and the trap expands it right here.
 TDIR="$(mktemp -d)"
-trap "rm -rf '${TDIR}'" EXIT INT TERM
+cleanup() { rm -rf "$TDIR"; }
+trap cleanup EXIT INT TERM
 
 tfail() {
 	echo "FAIL: $1" >&2
