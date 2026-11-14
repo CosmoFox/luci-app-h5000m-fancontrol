@@ -52,10 +52,27 @@ return view.extend({
 
 	updateDownDelay: function(remain, delay) {
 		var active = remain > 0 && delay > 0;
-		var instant = active && !this.downState;
+		var instant = false;
 		this.downDelay = delay;
-		this.downState = active ? { delay: delay, until: Date.now() + remain * 1000 } : null;
+		if (active) {
+			if (!this.downState) {
+				// The daemon may have started the hold seconds before this poll;
+				// run the visual countdown from the full delay and let the
+				// (faster) polls below resync to the server truth.
+				this.downState = { delay: delay, until: Date.now() + delay * 1000 };
+				instant = true;
+			} else {
+				var local = Math.max(0, Math.round((this.downState.until - Date.now()) / 1000));
+				if (Math.abs(local - remain) > 1) {
+					this.downState.until = Date.now() + remain * 1000;
+					instant = true;
+				}
+			}
+		} else {
+			this.downState = null;
+		}
 		this.renderDownDelay(undefined, instant);
+		this.syncPollInterval(active);
 		if (active && !this.downTimer) {
 			var self = this;
 			this.downTimer = window.setInterval(function() { self.tickDownDelay(); }, 1000);
@@ -63,6 +80,18 @@ return view.extend({
 			window.clearInterval(this.downTimer);
 			this.downTimer = null;
 		}
+	},
+
+	syncPollInterval: function(active) {
+		var want = active ? 1 : 3;
+		if (want === this.pollSec) return;
+		this.pollSec = want;
+		if (this._pollFn && poll.remove)
+			poll.remove(this._pollFn);
+		this._pollFn = L.bind(function() {
+			return this.fetchStatus().then(L.bind(function(next) { this.updateStatus(next); }, this));
+		}, this);
+		poll.add(this._pollFn, want);
 	},
 
 	tickDownDelay: function() {
@@ -1165,9 +1194,11 @@ return view.extend({
 				this.updateStatus(data);
 				this.fetchVersion();
 			}, this), 0);
-			poll.add(L.bind(function() {
+			this._pollFn = L.bind(function() {
 				return this.fetchStatus().then(L.bind(function(next) { this.updateStatus(next); }, this));
-			}, this), 3);
+			}, this);
+			this.pollSec = 3;
+			poll.add(this._pollFn, 3);
 			return root;
 		}, this));
 	}
