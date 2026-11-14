@@ -52,6 +52,7 @@ return view.extend({
 
 	updateDownDelay: function(remain, delay) {
 		var active = remain > 0 && delay > 0;
+		this.downDelay = delay;
 		this.downState = active ? { delay: delay, until: Date.now() + remain * 1000 } : null;
 		this.renderDownDelay();
 		if (active && !this.downTimer) {
@@ -82,11 +83,14 @@ return view.extend({
 		if (!bar || !fill || !sec || !cap) return;
 		var st = this.downState;
 		if (!st) {
-			fill.style.width = '0'; sec.textContent = '';
+			fill.style.width = '0';
+			sec.classList.add('idle');
+			sec.textContent = _('%s s').format(this.downDelay || 0);
 			bar.title = '';
 			return;
 		}
 		var left = (leftOverride !== undefined) ? leftOverride : Math.max(0, Math.round((st.until - Date.now()) / 1000));
+		sec.classList.remove('idle');
 		sec.textContent = _('%s s').format(left);
 		fill.style.width = Math.max(0, Math.min(100, left * 100 / st.delay)) + '%';
 		bar.title = _('Waiting before speed down');
@@ -195,8 +199,8 @@ return view.extend({
 			'.h5fan-badge{padding:4px 8px;border-radius:6px;background:rgba(85,168,255,.12);color:var(--fan-blue);font-size:11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
 			'.h5fan-curve-layout{display:grid;grid-template-columns:minmax(260px,1fr) 190px;gap:14px}',
 			'.h5fan-canvas-wrap{position:relative;aspect-ratio:2.9/1;min-height:170px;max-height:330px;border:1px solid rgba(54,201,143,.16);border-radius:12px;overflow:hidden}.h5fan-canvas{width:100%;height:100%;display:block}',
-			'.h5fan-side{display:grid;gap:10px;grid-template-rows:repeat(3,1fr)}',
-			'.h5fan-chip{display:flex;flex-direction:column;justify-content:center;min-height:0;overflow:hidden;padding:11px;border:1px solid var(--border-color-low,#ddd);border-radius:8px;background:rgba(127,127,127,.045)}',
+			'.h5fan-side{display:grid;gap:10px;grid-template-rows:repeat(3,minmax(0,auto))}',
+			'.h5fan-chip{display:flex;flex-direction:column;justify-content:center;min-height:0;overflow:hidden;padding:10px;border:1px solid var(--border-color-low,#ddd);border-radius:8px;background:rgba(127,127,127,.045)}',
 			'.h5fan-chip span{display:block;font-size:11px;color:var(--text-color-medium,#777);margin-bottom:5px}.h5fan-chip strong{font-size:18px}',
 			'.h5fan-chip strong.h5fan-reason{font-size:13px;line-height:1.35;min-height:2.7em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}',
 			'.h5fan-note{margin-top:12px;padding:10px 12px;border-left:3px solid var(--fan-blue);background:rgba(85,168,255,.07);color:var(--text-color-medium,#666);font-size:12px}',
@@ -213,9 +217,9 @@ return view.extend({
 			'@media(max-width:750px){.h5fan-curve-layout{grid-template-columns:1fr}.h5fan-side{grid-template-columns:repeat(3,1fr);grid-template-rows:1fr}}',
 			'@media(max-width:520px){.h5fan-hero{display:block}.h5fan-health{margin-top:12px}}',
 			'@media(max-width:520px){.h5fan-grid{grid-template-columns:1fr}.h5fan-card.temperatures{grid-column:span 1}.h5fan-temp-grid{grid-template-columns:repeat(2,minmax(110px,1fr))}.h5fan-side{grid-template-columns:1fr;grid-template-rows:repeat(3,1fr)}.h5fan-slider{align-items:stretch;flex-direction:column}.h5fan-slider input[type=range]{width:100%;min-width:0}}',
-			'.h5fan-delaybar{display:flex;align-items:center;gap:6px;margin-top:7px.h5fan-delaybar-track{flex:1;height:4px;border-radius:2px;background:rgba(127,127,127,.16);overflow:hidden}.h5fan-delaybar-fill{height:100%;width:0;border-radius:2px;background:linear-gradient(90deg,var(--fan-blue),var(--fan-amber));transition:width 1s linear}.h5fan-delaysec{font-size:10px;font-weight:600;color:var(--text-color-medium,#777);white-space:nowrap;min-width:26px;text-align:right}',
+			'.h5fan-delaybar{display:flex;align-items:center;gap:6px;margin-top:7px.h5fan-delaybar-track{flex:1;height:5px;border-radius:3px;background:var(--border-color-medium,#c8c8c8);overflow:hidden}.h5fan-delaybar-fill{height:100%;width:0;border-radius:2px;background:linear-gradient(90deg,var(--fan-blue),var(--fan-amber));transition:width 1s linear}.h5fan-delaysec{font-size:10px;font-weight:600;color:var(--text-color-medium,#777);white-space:nowrap;min-width:26px;text-align:right}.h5fan-delaysec.idle{opacity:.55;font-weight:400}',
 			'.h5fan-modem-setup{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}.h5fan-modem-setup a{white-space:nowrap}',
-			'.h5fan-delaycap{display:block;font-size:9px;line-height:1.35;color:var(--text-color-low,#888);margin-top:3px}'
+			'.h5fan-delaycap{display:block;font-size:9px;line-height:1.3;color:var(--text-color-low,#888);margin-top:2px}'
 		].join(''));
 	},
 
