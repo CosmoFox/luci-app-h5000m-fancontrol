@@ -487,5 +487,5 @@ msgstr "未知错误"
 msgid "%s s"
 msgstr "%s 秒"
 
-msgid "Delay before applying the requested speed"
-msgstr "应用请求转速前的延迟"
+msgid "Delay before applying"
+msgstr "应用前的延迟"

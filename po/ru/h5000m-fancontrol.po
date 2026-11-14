@@ -355,5 +355,5 @@ msgstr "неизвестная ошибка"
 msgid "%s s"
 msgstr "%s с"
 
-msgid "Delay before applying the requested speed"
-msgstr "Задержка до применения запрошенной скорости"
+msgid "Delay before applying"
+msgstr "Задержка до применения"
