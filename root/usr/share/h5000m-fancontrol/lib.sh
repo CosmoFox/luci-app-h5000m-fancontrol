@@ -20,8 +20,10 @@ clamp() {
 }
 
 read_temp_c() {
-	local value
-	value="$(cat "$1" 2>/dev/null || true)"
+	local value=""
+	if [ -r "$1" ]; then
+		IFS= read -r value < "$1" 2>/dev/null || value="${value:-}"
+	fi
 	case "$value" in ''|*[!0-9-]*) return 1 ;; esac
 	if [ "$value" -gt 1000 ] 2>/dev/null || [ "$value" -lt -1000 ] 2>/dev/null; then
 		value=$((value / 1000))
