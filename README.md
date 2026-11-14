@@ -55,7 +55,7 @@ make menuconfig
 make package/luci-app-h5000m-fancontrol/compile V=s
 ```
 
-Prebuilt `.apk` files in GitHub Releases are compiled by GitHub Actions with the official OpenWrt SNAPSHOT `mediatek/filogic` SDK and target recent SNAPSHOT builds with the same ABI. Each release also ships the build public key and SHA256 checksums. Since the fan safety policy depends on the device tree, integrating this project into your firmware — and evaluating the patch below — is recommended over installing the package alone.
+Prebuilt `.apk` files in GitHub Releases are compiled by GitHub Actions with the official OpenWrt 25.12.6 `mediatek/filogic` SDK and target 25.12.x builds with the same ABI. Each release also ships the build public key and SHA256 checksums. Since the fan safety policy depends on the device tree, integrating this project into your firmware — and evaluating the patch below — is recommended over installing the package alone.
 
 UI translations ship as separate packages: install the matching `luci-i18n-h5000m-fancontrol-ru` / `-zh-cn` package from the release assets alongside the main `.apk` to enable Russian or Simplified Chinese.
 
@@ -172,7 +172,7 @@ make menuconfig
 make package/luci-app-h5000m-fancontrol/compile V=s
 ```
 
-Готовые `.apk` в GitHub Releases собираются GitHub Actions в официальном SDK `mediatek/filogic` от OpenWrt SNAPSHOT и подходят для свежих SNAPSHOT-сборок с тем же ABI. Каждый релиз также содержит публичный ключ сборки и контрольные суммы SHA256. Поскольку безопасная стратегия вентилятора зависит от device tree, проект рекомендуется интегрировать в прошивку и одновременно оценить патч ниже, а не устанавливать только пакет.
+Готовые `.apk` в GitHub Releases собираются GitHub Actions в официальном SDK `mediatek/filogic` от OpenWrt 25.12.6 и подходят для сборок 25.12.x с тем же ABI. Каждый релиз также содержит публичный ключ сборки и контрольные суммы SHA256. Поскольку безопасная стратегия вентилятора зависит от device tree, проект рекомендуется интегрировать в прошивку и одновременно оценить патч ниже, а не устанавливать только пакет.
 
 Пакеты переводов интерфейса выносятся отдельно: установите `luci-i18n-h5000m-fancontrol-ru` или `-zh-cn` из ассетов релиза вместе с основным `.apk`, чтобы включить русский или упрощённый китайский интерфейс.
 
@@ -293,7 +293,7 @@ make menuconfig
 make package/luci-app-h5000m-fancontrol/compile V=s
 ```
 
-GitHub Releases 中的预编译 `.apk` 由 GitHub Actions 使用官方 OpenWrt SNAPSHOT `mediatek/filogic` SDK 构建，适用于同一 ABI 的近期 SNAPSHOT。Release 同时提供构建公钥和 SHA256 校验文件。由于风扇安全策略依赖设备树，建议把本项目集成进固件并同时评估下方补丁，而不是只安装软件包。
+GitHub Releases 中的预编译 `.apk` 由 GitHub Actions 使用官方 OpenWrt 25.12.6 `mediatek/filogic` SDK 构建，适用于同一 ABI 的 25.12.x 版本。Release 同时提供构建公钥和 SHA256 校验文件。由于风扇安全策略依赖设备树，建议把本项目集成进固件并同时评估下方补丁，而不是只安装软件包。
 
 界面语言包以独立软件包发布：从 Release 资源中安装与主 `.apk` 配套的 `luci-i18n-h5000m-fancontrol-ru` / `-zh-cn` 包，即可启用俄语或简体中文界面。
 
