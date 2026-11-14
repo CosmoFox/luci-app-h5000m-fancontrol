@@ -52,9 +52,10 @@ return view.extend({
 
 	updateDownDelay: function(remain, delay) {
 		var active = remain > 0 && delay > 0;
+		var instant = active && !this.downState;
 		this.downDelay = delay;
 		this.downState = active ? { delay: delay, until: Date.now() + remain * 1000 } : null;
-		this.renderDownDelay();
+		this.renderDownDelay(undefined, instant);
 		if (active && !this.downTimer) {
 			var self = this;
 			this.downTimer = window.setInterval(function() { self.tickDownDelay(); }, 1000);
@@ -77,12 +78,22 @@ return view.extend({
 		this.renderDownDelay(left);
 	},
 
-	renderDownDelay: function(leftOverride) {
+	renderDownDelay: function(leftOverride, instant) {
 		var fill = document.getElementById('h5fan-adfill'), sec = document.getElementById('h5fan-adsec');
 		if (!fill || !sec) return;
 		var st = this.downState;
+		var setWidth = function(w) {
+			if (instant) {
+				fill.style.transition = 'none';
+				fill.style.width = w;
+				void fill.offsetWidth;
+				fill.style.transition = '';
+			} else {
+				fill.style.width = w;
+			}
+		};
 		if (!st) {
-			fill.style.width = '0';
+			setWidth('0');
 			sec.classList.add('idle');
 			sec.textContent = _('%s s').format(this.downDelay || 0);
 			return;
@@ -90,7 +101,7 @@ return view.extend({
 		var left = (leftOverride !== undefined) ? leftOverride : Math.max(0, Math.round((st.until - Date.now()) / 1000));
 		sec.classList.remove('idle');
 		sec.textContent = _('%s s').format(left);
-		fill.style.width = Math.max(0, Math.min(100, left * 100 / st.delay)) + '%';
+		setWidth(Math.max(0, Math.min(100, left * 100 / st.delay)) + '%');
 	},
 
 	installModemStack: function() {
@@ -215,7 +226,7 @@ return view.extend({
 			'@media(max-width:520px){.h5fan-hero{display:block}.h5fan-health{margin-top:12px}}',
 			'@media(max-width:520px){.h5fan-grid{grid-template-columns:1fr}.h5fan-card.temperatures{grid-column:span 1}.h5fan-temp-grid{grid-template-columns:repeat(2,minmax(110px,1fr))}.h5fan-side{grid-template-columns:1fr;grid-template-rows:repeat(3,1fr)}.h5fan-slider{align-items:stretch;flex-direction:column}.h5fan-slider input[type=range]{width:100%;min-width:0}}',
 			'.h5fan-modem-setup{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}.h5fan-modem-setup a{white-space:nowrap}',
-			'.h5fan-adtrack{height:5px;border-radius:3px;background:rgba(130,130,130,.5);overflow:hidden;margin-top:6px}',
+			'.h5fan-adtrack{height:5px;border-radius:3px;background:rgba(130,130,130,.5);overflow:hidden;margin-top:3px}',
 			'.h5fan-adfill{height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,var(--fan-blue),var(--fan-amber));transition:width 1s linear}',
 			'.h5fan-adsec{font-size:10px;font-weight:600;color:var(--text-color-medium,#777);text-align:right;margin-top:2px;min-height:12px}',
 			'.h5fan-adsec.idle{opacity:.55;font-weight:400}',
@@ -673,7 +684,7 @@ return view.extend({
 				]),
 				E('div', { 'class': 'h5fan-side' }, [
 					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Requested output')), E('strong', { id: 'h5fan-requested' }, '-') ]),
-					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Applied output')), E('strong', { id: 'h5fan-applied' }, '-'), E('div', { 'class': 'h5fan-adtrack' }, E('div', { 'class': 'h5fan-adfill', id: 'h5fan-adfill' })), E('div', { 'class': 'h5fan-adsec idle', id: 'h5fan-adsec' }, ''), E('div', { 'class': 'h5fan-adcap' }, _('Delay before applying the requested speed')) ]),
+					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Applied output')), E('strong', { id: 'h5fan-applied' }, '-'), E('div', { 'class': 'h5fan-adcap' }, _('Delay before applying the requested speed')), E('div', { 'class': 'h5fan-adsec idle', id: 'h5fan-adsec' }, ''), E('div', { 'class': 'h5fan-adtrack' }, E('div', { 'class': 'h5fan-adfill', id: 'h5fan-adfill' })) ]),
 					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Policy reason')), E('strong', { 'class': 'h5fan-reason', id: 'h5fan-reason' }, '-') ])
 				])
 			]),
