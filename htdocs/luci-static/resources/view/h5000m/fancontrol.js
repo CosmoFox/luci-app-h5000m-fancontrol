@@ -82,12 +82,11 @@ return view.extend({
 		if (!bar || !fill || !sec || !cap) return;
 		var st = this.downState;
 		if (!st) {
-			bar.classList.remove('show');
 			fill.style.width = '0'; sec.textContent = '';
+			bar.title = '';
 			return;
 		}
 		var left = (leftOverride !== undefined) ? leftOverride : Math.max(0, Math.round((st.until - Date.now()) / 1000));
-		bar.classList.add('show');
 		sec.textContent = _('%s s').format(left);
 		fill.style.width = Math.max(0, Math.min(100, left * 100 / st.delay)) + '%';
 		bar.title = _('Waiting before speed down');
@@ -214,7 +213,7 @@ return view.extend({
 			'@media(max-width:750px){.h5fan-curve-layout{grid-template-columns:1fr}.h5fan-side{grid-template-columns:repeat(3,1fr);grid-template-rows:1fr}}',
 			'@media(max-width:520px){.h5fan-hero{display:block}.h5fan-health{margin-top:12px}}',
 			'@media(max-width:520px){.h5fan-grid{grid-template-columns:1fr}.h5fan-card.temperatures{grid-column:span 1}.h5fan-temp-grid{grid-template-columns:repeat(2,minmax(110px,1fr))}.h5fan-side{grid-template-columns:1fr;grid-template-rows:repeat(3,1fr)}.h5fan-slider{align-items:stretch;flex-direction:column}.h5fan-slider input[type=range]{width:100%;min-width:0}}',
-			'.h5fan-delaybar{display:none;align-items:center;gap:6px;margin-top:7px}.h5fan-delaybar.show{display:flex}.h5fan-delaybar-track{flex:1;height:4px;border-radius:2px;background:rgba(127,127,127,.16);overflow:hidden}.h5fan-delaybar-fill{height:100%;width:0;border-radius:2px;background:linear-gradient(90deg,var(--fan-blue),var(--fan-amber));transition:width 1s linear}.h5fan-delaysec{font-size:10px;font-weight:600;color:var(--text-color-medium,#777);white-space:nowrap;min-width:26px;text-align:right}',
+			'.h5fan-delaybar{display:flex;align-items:center;gap:6px;margin-top:7px.h5fan-delaybar-track{flex:1;height:4px;border-radius:2px;background:rgba(127,127,127,.16);overflow:hidden}.h5fan-delaybar-fill{height:100%;width:0;border-radius:2px;background:linear-gradient(90deg,var(--fan-blue),var(--fan-amber));transition:width 1s linear}.h5fan-delaysec{font-size:10px;font-weight:600;color:var(--text-color-medium,#777);white-space:nowrap;min-width:26px;text-align:right}',
 			'.h5fan-modem-setup{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}.h5fan-modem-setup a{white-space:nowrap}',
 			'.h5fan-delaycap{display:block;font-size:9px;line-height:1.35;color:var(--text-color-low,#888);margin-top:3px}'
 		].join(''));
