@@ -584,10 +584,17 @@ return view.extend({
 			ctx.setLineDash([]);
 		}
 
+		// Beyond the last configured point the controller holds the last
+		// value (calc_curve_pwm), so the curve continues flat to the right
+		// edge of the plot instead of stopping at the final point.
+		var lastPct = points[points.length - 1].percent;
+		var holdX = Math.max(X(points[points.length - 1].temp), X(maxT));
+
 		ctx.beginPath();
 		ctx.moveTo(X(points[0].temp), top + plotH);
 		points.forEach(function(p) { ctx.lineTo(X(p.temp), Y(p.percent)); });
-		ctx.lineTo(X(points[points.length - 1].temp), top + plotH);
+		ctx.lineTo(holdX, Y(lastPct));
+		ctx.lineTo(holdX, top + plotH);
 		ctx.closePath();
 		var area = ctx.createLinearGradient(0, top, 0, top + plotH);
 		area.addColorStop(0, R(P.green, P.dark ? 0.20 : 0.26));
@@ -602,6 +609,7 @@ return view.extend({
 		stroke.addColorStop(1, P.red);
 		ctx.beginPath();
 		points.forEach(function(p, index) { if (index) ctx.lineTo(X(p.temp), Y(p.percent)); else ctx.moveTo(X(p.temp), Y(p.percent)); });
+		ctx.lineTo(holdX, Y(lastPct));
 		ctx.save();
 		ctx.strokeStyle = stroke;
 		ctx.lineWidth = narrow ? 2.5 : 3;

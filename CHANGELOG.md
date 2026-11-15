@@ -28,6 +28,9 @@
   without the `jq` dependency via the existing awk parsers, with a new
   `tests/test-modem-pwm.sh`; the CI matrix now also runs the shell suite under
   `busybox ash` and covers the `hexdump` base64 fallback.
+- The fan curve chart continues flat from the last configured point to the
+  right edge, mirroring the controller's hold-last-value behavior beyond
+  that point.
 - The 5gmodem data path is consolidated on the telemetry document
   (`tele.json` supplies the modem temperature, the throttling level and the
   model name); the older metrics/stats/temp-file readers are removed from
@@ -245,6 +248,8 @@
   поверх существующих awk-парсеров, с новым тестом
   `tests/test-modem-pwm.sh`; матрица CI теперь дополнительно гоняет
   шелл-набор под `busybox ash` и покрывает fallback `hexdump` у base64.
+- График кривой продолжается горизонтально от последней заданной точки до
+  правого края — как поведение контроллера, держащего последнее значение.
 - Контур данных 5gmodem консолидирован на документе телеметрии
   (`tele.json` отдаёт температуру модема, уровень троттлинга и имя модели);
   старые читалки metrics/stats/temp-файлов убраны из контура температуры, а
@@ -466,6 +471,7 @@
   降频等级——基于现有 awk 解析器实现，不依赖 `jq`，并新增
   `tests/test-modem-pwm.sh`；CI 矩阵现在还通过 `busybox ash` 运行
   shell 测试套件，并覆盖 base64 的 `hexdump` 回退。
+- 风扇曲线图现在从最后一个配置点水平延伸至绘图右边缘，与控制器保持最后数值的行为一致。
 - 5gmodem 数据通路整合到遥测文档（`tele.json` 同时提供调制解调器温度、降频
   等级和型号）；旧的 metrics/stats/temp 文件读取器已从温度通路中移除，而
   MT5700M 与 QModem 缓存仍作为其他模组堆栈的回退。
@@ -648,6 +654,9 @@
   `tests/test-modem-pwm.sh`; die CI-Matrix läuft jetzt zusätzlich unter
   `busybox ash` über das Shell-Sortiment und deckt den `hexdump`-Fallback von
   base64 ab.
+- Das Lüfterkurvendiagramm läuft ab dem letzten konfigurierten Punkt flach
+  bis zur rechten Kante, entsprechend dem Verhalten des Controllers, der den
+  letzten Wert hält.
 - Der 5gmodem-Datenpfad ist auf das Telemetriedokument konsolidiert
   (`tele.json` liefert Modemtemperatur, Drosselstufe und Modellname); die
   älteren Metrics/Stats/Temp-Datei-Leser sind aus dem Temperaturpfad
