@@ -1,6 +1,6 @@
 # Releasing H5000M Fan Control
 
-us **English** | [🇷🇺 Русский](#ru) | [🇨🇳 简体中文](#zh)
+us **English** | [🇷🇺 Русский](#ru) | [🇨🇳 简体中文](#zh) | [🇩🇪 Deutsch](#de)
 
 *The English text is canonical.*
 
@@ -18,6 +18,18 @@ GitHub Actions enforces three rules on every tag push:
 3. Tags with a `-beta.` suffix automatically get `--prerelease`; a pre-release never becomes "Latest".
 
 `scripts/release.sh` repeats the same checks locally *before* creating the tag (plus a clean tree, `HEAD == origin/<branch>` and no duplicate tag), so a wrong release fails in seconds instead of a red CI run. Tags pushed by hand without the script are still rejected by CI.
+
+## Pipeline overview
+
+![CI and release build pipeline](ci-and-release-build-pipeline-luci-app-h5000m-fancontrol.png)
+
+Every push, pull request and `workflow_call` runs the `static-checks` job
+(syntax + regression tests, ShellCheck, version/i18n sync, file format
+checks). A `v*` tag or a manual run additionally triggers the `build` job,
+which reuses the CI job via `workflow_call`, validates the tag (Makefile
+version, branch ancestry, prerelease flag), builds the packages with the
+OpenWrt SDK and publishes the artifacts to GitHub Releases. See
+`.github/workflows/ci.yml` and `.github/workflows/release.yml`.
 
 ## Cutting a beta release
 
@@ -93,6 +105,18 @@ GitHub Actions при каждом пуше тега проверяет три �
 3. Теги с суффиксом `-beta.` автоматически получают `--prerelease`; пре-релиз никогда не становится "Latest".
 
 `scripts/release.sh` повторяет те же проверки локально *до* создания тега (плюс чистое дерево, `HEAD == origin/<ветка>` и отсутствие дубля) — неверный релиз отсеивается за секунды, а не красным CI. Теги, запушенные вручную без скрипта, по-прежнему отклоняются CI.
+
+## Обзор пайплайна
+
+![CI и сборка релизов](ci-and-release-build-pipeline-luci-app-h5000m-fancontrol.png)
+
+Каждый push, pull request и `workflow_call` запускают job `static-checks`
+(синтаксис + регрессионные тесты, ShellCheck, сверка версий и переводов,
+проверки форматов файлов). Тег `v*` или ручной запуск дополнительно поднимают
+job `build`: он переиспользует CI через `workflow_call`, валидирует тег
+(версия Makefile, принадлежность ветке, флаг prerelease), собирает пакеты в
+OpenWrt SDK и публикует артефакты в GitHub Releases. См.
+`.github/workflows/ci.yml` и `.github/workflows/release.yml`.
 
 ## Выпуск беты
 
@@ -171,6 +195,17 @@ GitHub Actions при каждом пуше тега проверяет три �
 
 `scripts/release.sh` 在创建标签*之前*于本地重复同样的检查（外加工作区干净、`HEAD == origin/<分支>`、标签不重复），错误发布几秒内即被拦截，而不是留下一条红色 CI 记录。绕过脚本手动推送的标签仍会被 CI 拒绝。
 
+## 流水线概览
+
+![CI 与发布构建流水线](ci-and-release-build-pipeline-luci-app-h5000m-fancontrol.png)
+
+每次 push、pull request 与 `workflow_call` 都会运行 `static-checks` 任务
+（语法与回归测试、ShellCheck、版本与翻译同步、文件格式检查）。`v*` 标签或
+手动运行会额外触发 `build` 任务：它通过 `workflow_call` 复用 CI，校验标签
+（Makefile 版本、分支归属、预发布标志），用 OpenWrt SDK 构建软件包，并将
+产物发布到 GitHub Releases。见 `.github/workflows/ci.yml` 与
+`.github/workflows/release.yml`。
+
 ## 发布测试版
 
 1. 在 `beta` 上提升 Makefile 版本：`PKG_VERSION:=2.4.0`、`PKG_RELEASE:=1`，提交并推送。
@@ -223,5 +258,94 @@ GitHub Actions при каждом пуше тега проверяет три �
 - 手动运行 workflow（`workflow_dispatch`）跳过校验与发布，只产出构建工件 —— 适合测试 SDK 构建。
 - CI 要求 `CHANGELOG.md`（合并文件顶部的英文块）顶部的 `## X.Y.Z` 标题与 Makefile 中的 `PKG_VERSION` 一致：请在提升版本的同一提交中更新变更日志。
 - Windows 下请在 Git Bash 或 WSL 中运行 `scripts/release.sh`；脚本已兼容 Makefile 的 CRLF 工作副本。
+
+</details>
+
+<a id="de"></a>
+
+<details>
+<summary><b>🇩🇪 Deutsch</b></summary>
+
+# Freigabe von H5000M Fan Control
+
+## Release-Modell
+
+| Branch | Tags | Veröffentlicht als |
+|---|---|---|
+| `beta` | `vX.Y.Z-beta.N` | GitHub-**Prerelease** (`beta` im Namen, nicht „Latest") |
+| `main` | `vX.Y.Z` | reguläres GitHub-Release, als „Latest" markiert |
+
+GitHub Actions erzwingt bei jedem Tag-Push drei Regeln:
+
+1. Die Basisversion des Tags muss `PKG_VERSION` im Makefile des getaggten Commits entsprechen (`v2.4.0-beta.1` → `2.4.0`).
+2. Der Commit eines `-beta.*`-Tags muss in der Historie des Branches `beta` enthalten sein, der eines stabilen Tags in `main` (`git merge-base --is-ancestor`).
+3. Tags mit dem Suffix `-beta.` erhalten automatisch `--prerelease`; ein Prerelease wird niemals „Latest".
+
+`scripts/release.sh` wiederholt dieselben Prüfungen lokal *vor* dem Erstellen des Tags (plus sauberer Arbeitsbaum, `HEAD == origin/<branch>` und kein doppelter Tag), sodass ein fehlerhaftes Release in Sekunden scheitert statt als roter CI-Lauf. Von Hand ohne Skript gepushte Tags lehnt die CI weiterhin ab.
+
+## Pipeline-Übersicht
+
+![CI- und Release-Build-Pipeline](ci-and-release-build-pipeline-luci-app-h5000m-fancontrol.png)
+
+Jeder Push, Pull Request und `workflow_call` läuft als Job `static-checks`
+(Syntax + Regressionstests, ShellCheck, Versions-/Übersetzungsabgleich,
+Dateiformatprüfungen). Ein `v*`-Tag oder ein manueller Lauf löst zusätzlich den
+Job `build` aus, der die CI über `workflow_call` wiederverwendet, den Tag
+validiert (Makefile-Version, Branch-Abstammung, Prerelease-Flag), mit dem
+OpenWrt-SDK baut und die Artefakte zu GitHub Releases veröffentlicht. Siehe
+`.github/workflows/ci.yml` und `.github/workflows/release.yml`.
+
+## Eine Beta veröffentlichen
+
+1. Im Branch `beta` die Makefile-Version anheben: `PKG_VERSION:=2.4.0`, `PKG_RELEASE:=1`. Committen und pushen.
+2. Sicherstellen, dass der Arbeitsbaum sauber und mit `origin/beta` synchron ist.
+3. Die Beta veröffentlichen:
+
+   ```sh
+   bash scripts/release.sh v2.4.0-beta.1
+   ```
+
+   Das Skript erstellt einen annotierten Tag und pusht ihn; Actions baut die SDK-Pakete und veröffentlicht „H5000M Fan Control v2.4.0-beta.1" mit `.apk`-/.ipk`-Assets, SHA256SUMS und dem Build-Schlüssel.
+4. Gefundene Fehler in der Beta beheben, nach `beta` pushen, dann die nächste Iteration schneiden:
+
+   ```sh
+   bash scripts/release.sh v2.4.0-beta.2
+   ```
+
+   `PKG_VERSION` zwischen `-beta.N`-Iterationen **nicht** ändern — die Tag-Basis muss weiterhin übereinstimmen.
+
+## Ein stabiles Release veröffentlichen
+
+1. Wenn eine `-beta.N` gut genug ist: `beta` in `main` mergen (per PR).
+2. Auf `main`: pull, sauberer Arbeitsbaum, dann:
+
+   ```sh
+   bash scripts/release.sh v2.4.0
+   ```
+
+   Ein reguläres Release wird veröffentlicht und wird zu „Latest"; Beta-Prereleases bleiben verfügbar.
+3. Den nächsten Zyklus beginnen: `PKG_VERSION` auf `beta` anheben (z. B. `2.5.0`).
+
+## Hotfix-Releases (2.4.0 → 2.4.1)
+
+1. Den Fix auf `main` mit `PKG_VERSION:=2.4.1` committen, pushen.
+2. `bash scripts/release.sh v2.4.1`.
+3. `main` zurück in `beta` mergen — sonst behält der Makefile von `beta` eine ältere Basisversion, und der nächste Tag `v2.4.1-beta.N` schlägt die Validierung fehl.
+
+## Hinweise
+
+- OpenWrt-Paketversionen enthalten niemals das Suffix `-beta` (eine Beta von 2.4.0 liefert weiterhin als `2.4.0-r1`); der Prerelease wird über den Git-Tag und den GitHub-Release-Namen identifiziert.
+- Schlägt ein Build für einen bestehenden Tag fehl, den Job einfach erneut ausführen: Der Veröffentlichungsschritt greift auf `gh release upload --clobber` zurück und erzeugt kein Duplikat.
+- Ein falscher Tag, der bereits einen Lauf ausgelöst hat: Tag und Release löschen, dann die nächste `-beta.N` schneiden:
+
+  ```sh
+  git push origin :refs/tags/v2.4.0-beta.1
+  git tag -d v2.4.0-beta.1
+  gh release delete v2.4.0-beta.1 --cleanup-tag
+  ```
+
+- Ein manueller Workflow-Lauf (`workflow_dispatch`) überspringt Validierung und Veröffentlichung: Er erzeugt nur Build-Artefakte — nützlich zum Testen der SDK-Builds.
+- Die CI verlangt, dass die oberste `## X.Y.Z`-Überschrift des `CHANGELOG.md` (der englische Block oben in der zusammengeführten Datei) `PKG_VERSION` im Makefile entspricht: Aktualisieren Sie das Änderungsprotokoll im selben Commit wie die Versionsanhebung.
+- Unter Windows `scripts/release.sh` aus Git Bash oder WSL ausführen; das Skript toleriert CRLF-Auschecken des Makefiles.
 
 </details>
