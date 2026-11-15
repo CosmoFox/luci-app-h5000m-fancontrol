@@ -85,7 +85,7 @@ accepted; top-level numeric integer fields are used: `temp` in -40–150 °C and
 `therm` in 0–3. Strings, booleans, null, fractional or out-of-range values,
 truncated documents and trailing garbage supply no readings; files older than
 90 s or dated in the future are ignored. Temperature priority: MT5700M cache
-→ 5gmodem telemetry → QModem cache → 5gmodem metrics. Throttling levels 1/2/3
+→ 5gmodem telemetry → QModem cache. Throttling levels 1/2/3
 set a minimum PWM of 128/192/255 only while the app controls the fan; the
 kernel cooling floor still wins when it is higher.
 
@@ -234,7 +234,7 @@ git apply package/luci-app-h5000m-fancontrol/openwrt-patches/h5000m-userspace-fa
 null, дробные и вне диапазона значения, оборванные документы и мусор после
 объекта не дают показаний; файлы старше 90 с или с датой в будущем
 игнорируются. Приоритет температуры: кэш MT5700M → телеметрия 5gmodem → кэш
-QModem → метрики 5gmodem. Уровни троттлинга 1/2/3 задают минимум PWM
+QModem. Уровни троттлинга 1/2/3 задают минимум PWM
 128/192/255 только пока приложение управляет вентилятором; более высокий
 порог ядра по-прежнему имеет приоритет.
 
@@ -380,7 +380,7 @@ git apply package/luci-app-h5000m-fancontrol/openwrt-patches/h5000m-userspace-fa
 
 ## 调制解调器遥测校验
 
-可选的 `/tmp/5gmodem/tele.json` 数据源（luci-app-5gmodem 遥测）在没有任何额外依赖的情况下解析。仅接受单个完整的扁平 JSON 对象；仅使用顶层数值整数字段：`temp`（-40–150 °C）与 `therm`（0–3）。字符串、布尔值、null、小数或越界值、截断的文档以及尾随垃圾都不会提供读数；早于 90 秒或日期在未来的文件会被忽略。温度优先级：MT5700M 缓存 → 5gmodem 遥测 → QModem 缓存 → 5gmodem 指标。降频等级 1/2/3 仅在应用控制风扇时将 PWM 下限设为 128/192/255；内核散热下限更高时仍然优先。
+可选的 `/tmp/5gmodem/tele.json` 数据源（luci-app-5gmodem 遥测）在没有任何额外依赖的情况下解析。仅接受单个完整的扁平 JSON 对象；仅使用顶层数值整数字段：`temp`（-40–150 °C）与 `therm`（0–3）。字符串、布尔值、null、小数或越界值、截断的文档以及尾随垃圾都不会提供读数；早于 90 秒或日期在未来的文件会被忽略。温度优先级：MT5700M 缓存 → 5gmodem 遥测 → QModem 缓存。降频等级 1/2/3 仅在应用控制风扇时将 PWM 下限设为 128/192/255；内核散热下限更高时仍然优先。
 
 ## 应用内更新
 
@@ -527,7 +527,7 @@ obersten Ebene: `temp` von -40–150 °C und `therm` von 0–3. Zeichenketten,
 Booleans, null, Bruch- oder außerhalb-des-Bereichs-Werte, abgeschnittene
 Dokumente und nachfolgender Inhalt liefern keine Werte; Dateien älter als
 90 s oder mit zukünftigem Datum werden ignoriert. Temperaturpriorität:
-MT5700M-Cache → 5gmodem-Telemetrie → QModem-Cache → 5gmodem-Metriken.
+MT5700M-Cache → 5gmodem-Telemetrie → QModem-Cache.
 Drosselstufen 1/2/3 setzen den PWM-Mindestwert auf 128/192/255, nur während
 die App den Lüfter steuert; die höhere Kernel-Kühlgrenze hat weiterhin
 Vorrang.

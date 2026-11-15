@@ -190,3 +190,34 @@ parse_5gmodem_telemetry() { # <file> <field> <min> <max>
 		}
 	' "$1" 2>/dev/null
 }
+
+# String companion of parse_5gmodem_telemetry: prints the content of a
+# quoted string field (e.g. "model"); non-string or missing fields yield
+# nothing.
+parse_5gmodem_telemetry_str() { # <file> <field>
+	[ -s "$1" ] || return 1
+	awk -v key="$2" '
+		{ line = (line == "" ? $0 : line " " $0) }
+		END {
+			gsub(/^[ \t]+|[ \t]+$/, "", line)
+			if (substr(line, 1, 1) != "{" || substr(line, length(line), 1) != "}")
+				exit 1
+			needle = "\"" key "\""
+			pos = 1
+			while ((q = index(substr(line, pos), needle)) > 0) {
+				pos = pos + q - 1
+				rest = substr(line, pos + length(needle))
+				sub(/^[ \t]*:[ \t]*/, "", rest)
+				if (substr(rest, 1, 1) != "\"")
+					{ pos = pos + 1; continue }
+				rest = substr(rest, 2)
+				q2 = index(rest, "\"")
+				if (!q2)
+					exit 1
+				print substr(rest, 1, q2 - 1)
+				exit 0
+			}
+			exit 1
+		}
+	' "$1" 2>/dev/null
+}

@@ -121,5 +121,16 @@ echo "case: disabled"
 check 17
 grep -qx 'reason=kernel' "$STATE_FILE"
 
+# The consolidated 5gmodem path: the telemetry document supplies the modem
+# temperature and the model name (MT5700M cache and QModem cache stay as
+# fallbacks for other modem stacks).
+printf '{"temp": 33, "model": "TestModem"}\n' > "$FIVEGMODEM_TELE"
+echo 30000 > "$zone/temp"
+echo "case: tele temp and model name"
+_t="$(find_module_temp 2>/dev/null || true)"
+[ "$_t" = 33 ] || { echo "FAIL: tele temp priority: ${_t}"; exit 1; }
+_n="$(find_5gmodem_name 2>/dev/null || true)"
+[ "$_n" = TestModem ] || { echo "FAIL: tele model name: ${_n}"; exit 1; }
+
 echo "test-modem-pwm: all tests passed"
 rm -rf "$TMP"

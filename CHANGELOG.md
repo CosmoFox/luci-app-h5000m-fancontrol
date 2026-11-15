@@ -28,6 +28,11 @@
   without the `jq` dependency via the existing awk parsers, with a new
   `tests/test-modem-pwm.sh`; the CI matrix now also runs the shell suite under
   `busybox ash` and covers the `hexdump` base64 fallback.
+- The 5gmodem data path is consolidated on the telemetry document
+  (`tele.json` supplies the modem temperature, the throttling level and the
+  model name); the older metrics/stats/temp-file readers are removed from
+  the temperature path, while the MT5700M and QModem caches stay as
+  fallbacks for other modem stacks.
 - The per-language changelogs are merged into a single file with Russian and
   Chinese in collapsible blocks (like the README) and German added.
 
@@ -240,6 +245,10 @@
   поверх существующих awk-парсеров, с новым тестом
   `tests/test-modem-pwm.sh`; матрица CI теперь дополнительно гоняет
   шелл-набор под `busybox ash` и покрывает fallback `hexdump` у base64.
+- Контур данных 5gmodem консолидирован на документе телеметрии
+  (`tele.json` отдаёт температуру модема, уровень троттлинга и имя модели);
+  старые читалки metrics/stats/temp-файлов убраны из контура температуры, а
+  кэши MT5700M и QModem остаются фолбэками для других модемных стеков.
 - Чейнджлоги объединены в один файл по образцу документации: русский и
   китайский — в сворачиваемых блоках, добавлен немецкий.
 
@@ -457,6 +466,9 @@
   降频等级——基于现有 awk 解析器实现，不依赖 `jq`，并新增
   `tests/test-modem-pwm.sh`；CI 矩阵现在还通过 `busybox ash` 运行
   shell 测试套件，并覆盖 base64 的 `hexdump` 回退。
+- 5gmodem 数据通路整合到遥测文档（`tele.json` 同时提供调制解调器温度、降频
+  等级和型号）；旧的 metrics/stats/temp 文件读取器已从温度通路中移除，而
+  MT5700M 与 QModem 缓存仍作为其他模组堆栈的回退。
 - 各语言变更日志合并为单一文件，采用与文档相同的折叠多语言结构，并新增
   德语。
 
@@ -636,6 +648,11 @@
   `tests/test-modem-pwm.sh`; die CI-Matrix läuft jetzt zusätzlich unter
   `busybox ash` über das Shell-Sortiment und deckt den `hexdump`-Fallback von
   base64 ab.
+- Der 5gmodem-Datenpfad ist auf das Telemetriedokument konsolidiert
+  (`tele.json` liefert Modemtemperatur, Drosselstufe und Modellname); die
+  älteren Metrics/Stats/Temp-Datei-Leser sind aus dem Temperaturpfad
+  entfernt, während die MT5700M- und QModem-Caches als Fallbacks für andere
+  Modemstacks bleiben.
 - Die sprachspezifischen Änderungsprotokolle sind zu einer einzigen Datei
   zusammengeführt – Russisch und Chinesisch in aufklappbaren Blöcken (wie im
   README), plus Deutsch.

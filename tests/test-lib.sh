@@ -126,4 +126,15 @@ expect_eq "$(parse_5gmodem_telemetry "${TMP}/t8" therm 0 3)" '' 'telemetry trail
 printf '{"temp":200}\n' > "${TMP}/t9"
 expect_eq "$(parse_5gmodem_telemetry "${TMP}/t9" temp -40 150)" '' 'telemetry temp out of range'
 
+# parse_5gmodem_telemetry_str: quoted string fields (e.g. the modem model).
+printf '{"model":"Fibocom FM350-GL","temp":29}\n' > "${TMP}/s1"
+expect_eq "$(parse_5gmodem_telemetry_str "${TMP}/s1" model)" 'Fibocom FM350-GL' 'telemetry string model'
+expect_eq "$(parse_5gmodem_telemetry_str "${TMP}/s1" temp)" '' 'telemetry string skips numeric'
+printf '{\n  "model": "Quectel RM520N-GL"\n}\n' > "${TMP}/s2"
+expect_eq "$(parse_5gmodem_telemetry_str "${TMP}/s2" model)" 'Quectel RM520N-GL' 'telemetry string multi-line'
+printf '{"model":29}\n' > "${TMP}/s3"
+expect_eq "$(parse_5gmodem_telemetry_str "${TMP}/s3" model)" '' 'telemetry string rejects numeric'
+printf '{"model":"x' > "${TMP}/s4"
+expect_eq "$(parse_5gmodem_telemetry_str "${TMP}/s4" model)" '' 'telemetry string truncated'
+
 echo 'library unit tests passed'
