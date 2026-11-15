@@ -39,7 +39,7 @@ H5FAN_PASS=<LuCI password> node states-test.mjs
 
 Environment variables:
 
-- `H5FAN_BASE` - router URL, default `http://192.168.1.1`;
+- `H5FAN_BASE` - router URL, required (e.g. `http://192.168.1.1`);
 - `H5FAN_USER` - LuCI user, default `root`;
 - `H5FAN_PASS` - LuCI password (required).
 
@@ -144,7 +144,7 @@ H5FAN_PASS=<пароль LuCI> node states-test.mjs
 
 Переменные окружения:
 
-- `H5FAN_BASE` — URL роутера, по умолчанию `http://192.168.1.1`;
+- `H5FAN_BASE` — URL роутера, обязателен (например, `http://192.168.1.1`);
 - `H5FAN_USER` — пользователь LuCI, по умолчанию `root`;
 - `H5FAN_PASS` — пароль LuCI (обязателен).
 
@@ -250,7 +250,7 @@ H5FAN_PASS=<LuCI 密码> node states-test.mjs
 
 环境变量：
 
-- `H5FAN_BASE` —— 路由器 URL，默认 `http://192.168.1.1`；
+- `H5FAN_BASE` —— 路由器 URL，必填（例如 `http://192.168.1.1`）；
 - `H5FAN_USER` —— LuCI 用户，默认 `root`；
 - `H5FAN_PASS` —— LuCI 密码（必填）。
 
@@ -356,7 +356,7 @@ H5FAN_PASS=<LuCI-Passwort> node states-test.mjs
 
 Umgebungsvariablen:
 
-- `H5FAN_BASE` — Router-URL, Vorgabe `http://192.168.1.1`;
+- `H5FAN_BASE` — Router-URL, erforderlich (z. B. `http://192.168.1.1`);
 - `H5FAN_USER` — LuCI-Benutzer, Vorgabe `root`;
 - `H5FAN_PASS` — LuCI-Passwort (Pflicht).
 

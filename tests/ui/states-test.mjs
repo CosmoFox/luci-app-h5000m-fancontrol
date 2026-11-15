@@ -17,7 +17,7 @@
  * Usage:
  *   H5FAN_PASS=<luci password> node states-test.mjs
  *
- * Environment: H5FAN_BASE (http://192.168.1.1), H5FAN_USER (root),
+ * Environment: H5FAN_BASE (http://<router-ip>, required), H5FAN_USER (root),
  * H5FAN_PASS (required), H5FAN_SSH_PORT (22).
  *
  * Output: ../../preview/ui-states/ (screenshots + report.html).
@@ -31,13 +31,18 @@ import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const OUT = resolve(here, '../../preview/ui-states');
-const BASE = (process.env.H5FAN_BASE || 'http://192.168.1.1').replace(/\/+$/, '');
+const BASE = (process.env.H5FAN_BASE || '').replace(/\/+$/, '');
 const USER = process.env.H5FAN_USER || 'root';
 const PASS = process.env.H5FAN_PASS;
 const HOST = BASE.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
 const APP = BASE + '/cgi-bin/luci/admin/system/h5000m_fancontrol';
 const STATUS_BIN = '/usr/sbin/h5000m-fancontrol-status';
 const BACKUP = '/tmp/h5000m-fancontrol-status.real';
+
+if (!BASE) {
+	console.error('error: H5FAN_BASE is required (http://<router-ip>)');
+	process.exit(2);
+}
 
 if (!PASS) {
 	console.error('error: H5FAN_PASS is required (the LuCI password)');
