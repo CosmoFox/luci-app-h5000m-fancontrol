@@ -73,6 +73,9 @@ jobs:
       - name: Check translation coverage
         run: sh scripts/check-i18n.sh
 
+      - name: Check embedded translation catalogs
+        run: sh scripts/check-lmo.sh
+
       - name: Check LuCI JavaScript syntax
         run: node --check htdocs/luci-static/resources/view/h5000m/fancontrol.js
 
