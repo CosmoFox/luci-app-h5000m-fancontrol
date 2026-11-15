@@ -184,7 +184,7 @@ ver_from_name() {
 # (zh-cn/zh-tw). "auto" and empty mean "not configured" and print nothing.
 norm_lang() {
 	[ -n "$1" ] || return 0
-	_l=$(printf '%s' "$1" | tr 'A-Z' 'a-z' | tr '_' '-')
+	_l=$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
 	case "$_l" in
 	auto) return 0 ;;
 	zh-hans) _l=zh-cn ;;
@@ -360,6 +360,8 @@ check)
 	# Languages shipped by the latest release (one translation asset each) -
 	# the page lists them in the update dialog next to the install buttons.
 	LANGS=$(langs_from_release "$J" "$EXT")
+	# Intentional word splitting below: one JSON array element per language.
+	# shellcheck disable=SC2086
 	printf '{"success":true,"pm":"%s","current":"%s","latest":"%s","update_available":%s,"release_url":"%s","published":"%s","notes":"%s","beta_latest":"%s","beta_available":%s,"i18n":%s,"lang":"%s","beta_i18n":%s}\n' \
 		"$PM" "$(json_esc "$CUR_DISP")" "$(json_esc "$LAT")" "$AVAIL" "$PAGE" "$(json_esc "$PUB")" "$(b64 "$NOTES")" \
 		"$(json_esc "$BETA_LAT")" "$BETA_AVAIL" "$(json_str_list $LANGS)" "$(json_esc "$(sys_lang)")" "$(json_str_list $BETA_LANGS)"
