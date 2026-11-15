@@ -390,3 +390,21 @@ msgstr "Последний релиз: %s (опубликован %s)"
 
 msgid "Languages"
 msgstr "Языки"
+
+msgid "%s · modem throttling"
+msgstr "%s · троттлинг модема"
+
+msgid "Normal"
+msgstr "Норма"
+
+msgid "Warm"
+msgstr "Тепло"
+
+msgid "Hot"
+msgstr "Горячо"
+
+msgid "Critical"
+msgstr "Критично"
+
+msgid "Throttling level %s / 3"
+msgstr "Уровень троттлинга %s / 3"

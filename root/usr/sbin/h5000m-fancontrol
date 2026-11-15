@@ -15,10 +15,12 @@ fi
 TAG="h5000m-fancontrol"
 STATE_FILE="/var/run/h5000m-fancontrol.state"
 POLICY_FILE="/var/run/h5000m-fancontrol.policy"
-MAPCACHE="/var/run/h5000m-fancontrol.mapcache"
+MAPCACHE="${H5000M_FAN_MAPCACHE:-/var/run/h5000m-fancontrol.mapcache}"
 LOCK_DIR="/var/lock/h5000m-fancontrol.lock"
 MT5700M_TEMP_CACHE="${H5000M_FAN_MT5700M_TEMP_CACHE:-/var/run/mt5700m/temperature}"
 MT5700M_TEMP_MAX_AGE="${H5000M_FAN_MT5700M_TEMP_MAX_AGE:-300}"
+FIVEGMODEM_TELE="${H5000M_FAN_5GMODEM_TELE:-/tmp/5gmodem/tele.json}"
+FIVEGMODEM_TELE_MAX_AGE="${H5000M_FAN_5GMODEM_TELE_MAX_AGE:-90}"
 SENSOR_SYSFS_ROOT="${H5000M_FAN_SENSOR_SYSFS_ROOT:-/sys}"
 RADIO_SYSFS_ROOT="${H5000M_FAN_RADIO_SYSFS_ROOT:-/sys/class/net}"
 
@@ -197,6 +199,34 @@ find_5gmodem_name() {
 	return 1
 }
 
+# Read one field from the 5gmodem telemetry JSON (a single flat document,
+# e.g. /tmp/5gmodem/tele.json), requiring the file to be fresh. The parser
+# itself lives in lib.sh so it stays unit-testable; this wrapper only checks
+# the freshness window.
+read_5gmodem_telemetry() { # <field> <min> <max>
+	local updated now
+	[ -s "$FIVEGMODEM_TELE" ] || return 1
+	updated="$(date -r "$FIVEGMODEM_TELE" +%s 2>/dev/null || true)"
+	now="$(date +%s)"
+	is_uint "$updated" && is_uint "$now" && is_uint "$FIVEGMODEM_TELE_MAX_AGE" || return 1
+	[ $((now - updated)) -ge 0 ] && [ $((now - updated)) -le "$FIVEGMODEM_TELE_MAX_AGE" ] || return 1
+	parse_5gmodem_telemetry "$FIVEGMODEM_TELE" "$1" "$2" "$3"
+}
+
+find_modem_therm() {
+	read_5gmodem_telemetry therm 0 3
+}
+
+# Modem-reported throttling level (0-3) to its PWM minimum; 0 disables.
+modem_floor() {
+	case "$1" in
+		1) echo 128 ;;
+		2) echo 192 ;;
+		3) echo 255 ;;
+		*) echo 0 ;;
+	esac
+}
+
 find_module_temp() {
 	local file value updated now age parsed
 	if [ -r "$MT5700M_TEMP_CACHE" ] && is_uint "$MT5700M_TEMP_MAX_AGE"; then
@@ -214,6 +244,8 @@ find_module_temp() {
 			fi
 		fi
 	fi
+	value="$(read_5gmodem_telemetry temp -40 150 2>/dev/null || true)"
+	[ -z "$value" ] || { echo "$value"; return 0; }
 	for file in /tmp/cache_base_info_* /tmp/cache_*info*; do
 		[ -f "$file" ] || continue
 		value="$(sed -n 's/.*"key"[[:space:]]*:[[:space:]]*"temperature"[^}]*"value"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$file" 2>/dev/null | head -n 1 | grep -Eo -- '-?[0-9]+' | head -n 1)"
@@ -241,6 +273,8 @@ read_sensors() {
 	CPU_TEMP=""; CPU_LABEL=""; PHY_TEMP=""; PHY_LABEL=""
 	WIFI1_TEMP=""; WIFI1_LABEL=""; WIFI2_TEMP=""; WIFI2_LABEL=""
 	MODULE_TEMP="$(find_module_temp 2>/dev/null || true)"
+	MODULE_THERM="$(find_modem_therm 2>/dev/null || true)"
+	MODEM_FLOOR="$(modem_floor "$MODULE_THERM")"
 	CONTROL_TEMP=""; CONTROL_SENSOR=""
 
 	for zone in "$SENSOR_SYSFS_ROOT"/class/thermal/thermal_zone*; do
@@ -308,15 +342,16 @@ cooling_device_path() {
 	return 1
 }
 
-read_be32() {
-	local file="$1" skip="${2:-0}" hex value
-	hex="$(dd if="$file" bs=4 skip="$skip" count=1 2>/dev/null | hexdump -v -e '1/1 "%02x"')"
-	case "$hex" in
-		????????) value="$(printf '%d' "0x$hex" 2>/dev/null || true)" ;;
-		*) value="" ;;
-	esac
-	is_uint "$value" || return 1
-	echo "$value"
+# Read one big-endian 32-bit cell from a device-tree style binary property.
+# od is POSIX and ships with busybox; reading individual bytes keeps this
+# endian-safe without hexdump (which minimal images and Git Bash lack).
+read_be32() { # <file> [skip-words]
+	local file="$1" skip="${2:-0}" b0 b1 b2 b3
+	set -- $(od -An -tu1 -N4 -j$((skip * 4)) "$file" 2>/dev/null) || return 1
+	[ "$#" -eq 4 ] || return 1
+	b0="$1"; b1="$2"; b2="$3"; b3="$4"
+	is_uint "$b0$b1$b2$b3" || return 1
+	echo $((b0 * 16777216 + b1 * 65536 + b2 * 256 + b3))
 }
 
 cooling_level_for_state() {
@@ -752,6 +787,9 @@ apply_once() {
 		fi
 	fi
 	[ "$EFFECTIVE_FLOOR" -gt "$TARGET_PWM" ] && { TARGET_PWM="$EFFECTIVE_FLOOR"; REASON="${REASON}+kernel-floor"; }
+	# The modem-reported throttling floor applies only while the app controls
+	# the fan; the kernel cooling floor above still wins when it is higher.
+	[ "$MODEM_FLOOR" -gt "$TARGET_PWM" ] && { TARGET_PWM="$MODEM_FLOOR"; REASON="${REASON}+modem-throttle"; }
 
 	read_file current "$PWM_PATH"
 	is_uint "$current" || current=0
@@ -762,6 +800,7 @@ apply_once() {
 		candidate="$(calc_curve_pwm "$((CONTROL_TEMP + HYSTERESIS))" "$CURVE_DATA" 2>/dev/null || echo "$TARGET_PWM")"
 		is_uint "$candidate" || candidate="$TARGET_PWM"
 		[ "$EFFECTIVE_FLOOR" -gt "$candidate" ] && candidate="$EFFECTIVE_FLOOR"
+		[ "$MODEM_FLOOR" -gt "$candidate" ] && candidate="$MODEM_FLOOR"
 		TARGET_PWM="$candidate"
 		DOWN_SINCE="$PREV_DOWN_SINCE"; is_uint "$DOWN_SINCE" || DOWN_SINCE=0
 		[ "$DOWN_SINCE" -gt 0 ] || DOWN_SINCE="$now"
@@ -851,7 +890,9 @@ print_status() {
 	echo "phy_temp=$PHY_TEMP"; echo "phy_label=$PHY_LABEL"
 	echo "wifi1_temp=$WIFI1_TEMP"; echo "wifi1_label=$WIFI1_LABEL"
 	echo "wifi2_temp=$WIFI2_TEMP"; echo "wifi2_label=$WIFI2_LABEL"
-	echo "module_temp=$MODULE_TEMP"; echo "module_label=5G modem"; echo "module_name=$(find_5gmodem_name 2>/dev/null || true)"
+	echo "module_temp=$MODULE_TEMP"; echo "module_label=5G modem"
+	echo "module_therm=$MODULE_THERM"; echo "modem_floor=$MODEM_FLOOR"
+	echo "module_name=$(find_5gmodem_name 2>/dev/null || true)"
 	echo "control_temp=$CONTROL_TEMP"; echo "control_sensor=$CONTROL_SENSOR"
 	echo "thermal_floor=$THERMAL_FLOOR"
 	echo "kernel_floor_levels=${THERMAL_MAP_STEPS:-}"

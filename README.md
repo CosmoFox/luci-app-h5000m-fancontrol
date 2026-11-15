@@ -16,7 +16,7 @@ Versions follow the standard `major.minor.patch-rREVISION` format. GitHub Releas
 
 ## Features
 
-- Aggregates fresh cached temperatures from the CPU, Ethernet PHY, Wi-Fi radios and the MT5700M module manager
+- Aggregates fresh cached temperatures from the CPU, Ethernet PHY, Wi-Fi radios and the MT5700M module manager or luci-app-5gmodem telemetry; modem throttling levels (1/2/3) reported by luci-app-5gmodem raise the fan output to at least 50%/75%/100%
 - Four automatic curves: Silent, Balanced, Performance and Custom
 - Three run modes: automatic, manual PWM and kernel-protection-only
 - Temperature hysteresis and delayed spin-down to reduce frequent fan fluttering
@@ -76,6 +76,18 @@ Without the patch the plugin still runs, but the kernel thermal governor may rai
 Without the device-tree patch the kernel still co-owns the fan. The stock H5000M cooling map holds PWM at 128 (≈50 %) from 40 °C, 192 (≈75 %) from 85 °C and 255 from 115 °C, so every profile — including Quiet — is clamped by the "kernel safety floor". The LuCI page shows the real thresholds read from the device tree.
 
 Recommended: build firmware with `openwrt-patches/h5000m-userspace-fan-control.patch`. Experimental alternative: enable "Ignore firmware fan map" in the plugin settings to let the curve run below the firmware levels. The kernel rewrites its own level whenever a trip boundary is crossed, so expect a brief jump at 40/85/115 °C; hot/critical CPU protection is unaffected.
+
+## Modem telemetry validation
+
+The optional `/tmp/5gmodem/tele.json` source (luci-app-5gmodem telemetry) is
+parsed without extra dependencies. Only a single complete flat JSON object is
+accepted; top-level numeric integer fields are used: `temp` in -40–150 °C and
+`therm` in 0–3. Strings, booleans, null, fractional or out-of-range values,
+truncated documents and trailing garbage supply no readings; files older than
+90 s or dated in the future are ignored. Temperature priority: MT5700M cache
+→ 5gmodem telemetry → QModem cache → 5gmodem metrics. Throttling levels 1/2/3
+set a minimum PWM of 128/192/255 only while the app controls the fan; the
+kernel cooling floor still wins when it is higher.
 
 ## Self-update
 
@@ -152,7 +164,7 @@ Fan control is a device-safety function. Keep an eye on temperatures after chang
 
 ## Возможности
 
-- Агрегация свежих кэшированных температур CPU, Ethernet PHY, радиомодулей Wi-Fi и менеджера модуля MT5700M
+- Агрегация свежих кэшированных температур CPU, Ethernet PHY, радиомодулей Wi-Fi и менеджера модуля MT5700M или телеметрии luci-app-5gmodem; уровни троттлинга модема (1/2/3) из luci-app-5gmodem поднимают выход вентилятора минимум до 50 %/75 %/100 %
 - Четыре автоматические кривые: «Тихая», «Сбалансированная», «Производительная» и произвольная
 - Три режима работы: автоматический, ручной PWM и только защита ядра
 - Температурный гистерезис и задержка остановки — меньше частых перепадов оборотов
@@ -212,6 +224,19 @@ git apply package/luci-app-h5000m-fancontrol/openwrt-patches/h5000m-userspace-fa
 Без патча device tree ядро продолжает делить управление вентилятором с userspace. Штатная cooling map H5000M удерживает PWM на уровне 128 (≈50 %) с 40 °C, 192 (≈75 %) с 85 °C и 255 с 115 °C, поэтому любой профиль — включая «Тихий» — ограничен «ядерным безопасным порогом». Страница LuCI показывает фактические пороги, прочитанные из device tree.
 
 Рекомендуется: собрать прошивку с `openwrt-patches/h5000m-userspace-fan-control.patch`. Экспериментальная альтернатива: включить «Игнорировать карту вентилятора прошивки» в настройках плагина, чтобы кривая могла работать ниже уровней прошивки. Ядро перезаписывает свой уровень при пересечении порога срабатывания, поэтому ожидайте кратковременный скачок при 40/85/115 °C; защита CPU hot/critical не затрагивается.
+
+## Проверка телеметрии модема
+
+Опциональный источник `/tmp/5gmodem/tele.json` (телеметрия luci-app-5gmodem)
+разбирается без дополнительных зависимостей. Принимается только один полный
+плоский JSON-объект; используются числовые целочисленные поля верхнего
+уровня: `temp` в диапазоне −40…150 °C и `therm` 0–3. Строки, булевы значения,
+null, дробные и вне диапазона значения, оборванные документы и мусор после
+объекта не дают показаний; файлы старше 90 с или с датой в будущем
+игнорируются. Приоритет температуры: кэш MT5700M → телеметрия 5gmodem → кэш
+QModem → метрики 5gmodem. Уровни троттлинга 1/2/3 задают минимум PWM
+128/192/255 только пока приложение управляет вентилятором; более высокий
+порог ядра по-прежнему имеет приоритет.
 
 ## Самообновление
 
@@ -292,7 +317,7 @@ git apply package/luci-app-h5000m-fancontrol/openwrt-patches/h5000m-userspace-fa
 
 ## 功能
 
-- 汇总 CPU、以太网 PHY、Wi-Fi 射频及 MT5700M 管理器提供的新鲜缓存温度
+- 汇总 CPU、以太网 PHY、Wi-Fi 射频及 MT5700M 管理器或 luci-app-5gmodem 遥测提供的新鲜缓存温度；luci-app-5gmodem 报告的模组降频等级（1/2/3）会把风扇输出至少提高到 50%/75%/100%
 - 静音、均衡、性能和自定义四种自动曲线
 - 自动、手动和仅内核保护三种运行模式
 - 温度滞回及降速延迟，减少风扇频繁波动
@@ -352,6 +377,10 @@ git apply package/luci-app-h5000m-fancontrol/openwrt-patches/h5000m-userspace-fa
 未应用设备树补丁时，内核仍然与用户空间共同控制风扇。H5000M 出厂 cooling map 会在 40 °C 时保持 PWM 128（≈50 %）、85 °C 时 192（≈75 %）、115 °C 时 255，因此包括静音在内的所有曲线都会被"内核安全下限"钳制。LuCI 页面显示的是从设备树读取的真实阈值。
 
 推荐：使用 `openwrt-patches/h5000m-userspace-fan-control.patch` 编译固件。实验性替代方案：在插件设置中启用"忽略固件风扇映射"，让曲线可以低于固件水平运行。内核会在穿越 trip 阈值时重写自己的输出，因此在 40/85/115 °C 附近可能出现短暂跳变；CPU hot/critical 保护不受影响。
+
+## 调制解调器遥测校验
+
+可选的 `/tmp/5gmodem/tele.json` 数据源（luci-app-5gmodem 遥测）在没有任何额外依赖的情况下解析。仅接受单个完整的扁平 JSON 对象；仅使用顶层数值整数字段：`temp`（-40–150 °C）与 `therm`（0–3）。字符串、布尔值、null、小数或越界值、截断的文档以及尾随垃圾都不会提供读数；早于 90 秒或日期在未来的文件会被忽略。温度优先级：MT5700M 缓存 → 5gmodem 遥测 → QModem 缓存 → 5gmodem 指标。降频等级 1/2/3 仅在应用控制风扇时将 PWM 下限设为 128/192/255；内核散热下限更高时仍然优先。
 
 ## 应用内更新
 
@@ -428,7 +457,7 @@ Die Versionen folgen dem üblichen Format `major.minor.patch-rREVISION`. GitHub-
 
 ## Funktionen
 
-- Bündelt aktuelle Cache-Temperaturen von CPU, Ethernet-PHY, Wi-Fi-Funkmodulen und dem MT5700M-Modul-Manager
+- Bündelt aktuelle Cache-Temperaturen von CPU, Ethernet-PHY, Wi-Fi-Funkmodulen und dem MT5700M-Modul-Manager oder der luci-app-5gmodem-Telemetrie; vom Modem gemeldete Drosselstufen (1/2/3) heben die Lüfterausgabe auf mindestens 50 %/75 %/100 % an
 - Vier automatische Kurven: Leise, Ausgewogen, Leistung und Benutzerdefiniert
 - Drei Betriebsmodi: automatisch, manuelles PWM und nur Kernelschutz
 - Temperaturhysterese und verzögertes Herunterregeln gegen häufiges Lüfterflattern
@@ -488,6 +517,20 @@ Ohne den Patch läuft das Plugin weiter, aber der thermische Kernel-Governor kan
 Ohne den Gerätebaum-Patch ist der Kernel weiterhin Mitbesitzer des Lüfters. Die werkseitige Kühlzuordnung des H5000M hält PWM ab 40 °C bei 128 (≈50 %), ab 85 °C bei 192 (≈75 %) und ab 115 °C bei 255, sodass jedes Profil — einschließlich Leise — durch die „Kernel-Sicherheitsuntergrenze“ begrenzt wird. Die LuCI-Seite zeigt die aus dem Gerätebaum gelesenen echten Schwellenwerte.
 
 Empfohlen: Firmware mit `openwrt-patches/h5000m-userspace-fan-control.patch` bauen. Experimentelle Alternative: „Lüfterkarte der Firmware ignorieren“ in den Plugin-Einstellungen aktivieren, damit die Kurve unter die Firmware-Stufen läuft. Der Kernel schreibt seine eigene Stufe beim Überschreiten einer Schwelle neu, erwarten Sie daher einen kurzen Sprung bei 40/85/115 °C; der Hot/Critical-CPU-Schutz ist nicht betroffen.
+
+## Überprüfung der Modem-Telemetrie
+
+Die optionale Quelle `/tmp/5gmodem/tele.json` (luci-app-5gmodem-Telemetrie)
+wird ohne zusätzliche Abhängigkeiten geparst. Es wird genau ein vollständiges
+flaches JSON-Objekt akzeptiert; verwendet werden numerische Ganzzahlfelder der
+obersten Ebene: `temp` von -40–150 °C und `therm` von 0–3. Zeichenketten,
+Booleans, null, Bruch- oder außerhalb-des-Bereichs-Werte, abgeschnittene
+Dokumente und nachfolgender Inhalt liefern keine Werte; Dateien älter als
+90 s oder mit zukünftigem Datum werden ignoriert. Temperaturpriorität:
+MT5700M-Cache → 5gmodem-Telemetrie → QModem-Cache → 5gmodem-Metriken.
+Drosselstufen 1/2/3 setzen den PWM-Mindestwert auf 128/192/255, nur während
+die App den Lüfter steuert; die höhere Kernel-Kühlgrenze hat weiterhin
+Vorrang.
 
 ## Selbstupdate
 

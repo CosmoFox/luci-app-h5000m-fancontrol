@@ -153,3 +153,40 @@ parse_5gmodem_metrics() {
 		END { printf "%s|%s|%s\n", grab_str("modem", line), grab_num("age", line), grab_str("mtemp", line) }
 	' "$1" 2>/dev/null
 }
+
+# Extract one numeric field from a flat 5gmodem telemetry JSON document (a
+# single object, e.g. /tmp/5gmodem/tele.json). Prints the value only when it
+# is numeric and integral (2.0 normalizes to 2) and within [min, max];
+# strings, booleans, null, fractions, missing fields and documents with
+# trailing content yield nothing. Whitespace and pretty-printed JSON are
+# fine. The document is assumed to be a flat object, so fields are matched
+# anywhere in it.
+parse_5gmodem_telemetry() { # <file> <field> <min> <max>
+	[ -s "$1" ] || return 1
+	awk -v key="$2" -v min="$3" -v max="$4" '
+		{ line = (line == "" ? $0 : line " " $0) }
+		END {
+			gsub(/^[ \t]+|[ \t]+$/, "", line)
+			if (substr(line, 1, 1) != "{" || substr(line, length(line), 1) != "}")
+				exit 1
+			needle = "\"" key "\""
+			pos = 1
+			while ((q = index(substr(line, pos), needle)) > 0) {
+				pos = pos + q - 1
+				rest = substr(line, pos + length(needle))
+				sub(/^[ \t]*:[ \t]*/, "", rest)
+				pos = pos + 1
+				if (substr(rest, 1, 1) == "\"")
+					continue
+				if (match(rest, /^[+-]?[0-9]+([.][0-9]+)?([eE][+-]?[0-9]+)?/)) {
+					value = substr(rest, 1, RLENGTH) + 0
+					if (value == int(value) && value >= min && value <= max) {
+						printf "%d", value
+						exit 0
+					}
+				}
+			}
+			exit 1
+		}
+	' "$1" 2>/dev/null
+}

@@ -21,6 +21,13 @@
   temperature source, an absent modem or Wi-Fi radio, kernel-owned thermal
   policy, failsafe, stale status, active speed-down delay and manual mode;
   documented in the README (now in German as well).
+- Ported the upstream 2.1.3 feature "5gmodem telemetry with throttle-based
+  modem PWM floors" (FAN789#3): `/tmp/5gmodem/tele.json` levels 1/2/3 raise
+  the fan output to at least 128/192/255 while the app controls the fan, the
+  kernel floor still wins, and the UI names the throttling level — implemented
+  without the `jq` dependency via the existing awk parsers, with a new
+  `tests/test-modem-pwm.sh`; the CI matrix now also runs the shell suite under
+  `busybox ash` and covers the `hexdump` base64 fallback.
 - The per-language changelogs are merged into a single file with Russian and
   Chinese in collapsible blocks (like the README) and German added.
 
@@ -225,6 +232,14 @@
   держит ядро, в режиме failsafe, с устаревшим статусом, при активной
   задержке снижения оборотов и в ручном режиме; описан в README (теперь и на
   немецком).
+- Портирована фича апстрима 2.1.3 «телеметрия 5gmodem с порогами PWM по
+  троттлингу модема» (FAN789#3): уровни 1/2/3 из `/tmp/5gmodem/tele.json`
+  поднимают выход вентилятора минимум до 128/192/255, пока приложение
+  управляет вентилятором; более высокий порог ядра по-прежнему в приоритете, а
+  интерфейс показывает уровень троттлинга — реализация без зависимости `jq`
+  поверх существующих awk-парсеров, с новым тестом
+  `tests/test-modem-pwm.sh`; матрица CI теперь дополнительно гоняет
+  шелл-набор под `busybox ash` и покрывает fallback `hexdump` у base64.
 - Чейнджлоги объединены в один файл по образцу документации: русский и
   китайский — в сворачиваемых блоках, добавлен немецкий.
 
@@ -436,6 +451,12 @@
   状态脚本，分别截取无温度源、无调制解调器或无 Wi-Fi 射频、内核持有散热
   策略、failsafe、状态过期、降速延迟生效和手动模式下的页面；README 已补充
   说明（现已提供德语版本）。
+- 移植上游 2.1.3 的“5gmodem 遥测与按模组降频调整风扇 PWM 下限”功能
+  （FAN789#3）：`/tmp/5gmodem/tele.json` 的等级 1/2/3 会在应用控制风扇时
+  将输出至少提高到 128/192/255；内核散热下限更高时仍然优先，界面会显示
+  降频等级——基于现有 awk 解析器实现，不依赖 `jq`，并新增
+  `tests/test-modem-pwm.sh`；CI 矩阵现在还通过 `busybox ash` 运行
+  shell 测试套件，并覆盖 base64 的 `hexdump` 回退。
 - 各语言变更日志合并为单一文件，采用与文档相同的折叠多语言结构，并新增
   德语。
 
@@ -606,6 +627,15 @@
   Temperaturquelle, ohne Modem oder Wi-Fi-Funkmodul, mit Kernel-Richtlinie,
   Failsafe, veraltetem Status, aktiver Herunterregel-Verzögerung und im
   manuellen Modus; im README dokumentiert (jetzt auch auf Deutsch).
+- Die Upstream-Funktion aus 2.1.3 „5gmodem-Telemetrie mit drosselbasierten
+  Modem-PWM-Untergrenzen" (FAN789#3) wurde portiert: Die Stufen 1/2/3 aus
+  `/tmp/5gmodem/tele.json` heben die Lüfterausgabe auf mindestens 128/192/255
+  an, solange die App den Lüfter steuert; die höhere Kernel-Kühlgrenze hat
+  weiterhin Vorrang und die Oberfläche nennt die Drosselstufe — umgesetzt
+  ohne die Abhängigkeit `jq` über die vorhandenen awk-Parser, mit einem neuen
+  `tests/test-modem-pwm.sh`; die CI-Matrix läuft jetzt zusätzlich unter
+  `busybox ash` über das Shell-Sortiment und deckt den `hexdump`-Fallback von
+  base64 ab.
 - Die sprachspezifischen Änderungsprotokolle sind zu einer einzigen Datei
   zusammengeführt – Russisch und Chinesisch in aufklappbaren Blöcken (wie im
   README), plus Deutsch.

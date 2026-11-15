@@ -194,8 +194,9 @@ return view.extend({
 
 	reasonName: function(reason) {
 		var kernelFloor = (reason || '').indexOf('+kernel-floor') > -1;
+		var modemFloor = (reason || '').indexOf('+modem-throttle') > -1;
 		var floorOverride = (reason || '').indexOf('+floor-override') > -1;
-		var base = (reason || '').replace('+kernel-floor', '').replace('+floor-override', '');
+		var base = (reason || '').replace('+kernel-floor', '').replace('+modem-throttle', '').replace('+floor-override', '');
 		var text;
 		if (base === 'auto-down-delay') text = _('Waiting before speed down');
 		else if (base === 'auto') text = _('Automatic curve');
@@ -204,6 +205,7 @@ return view.extend({
 		else if (base === 'sensor-failsafe') text = _('Sensor failsafe');
 		else if (base === 'curve-failsafe') text = _('Curve failsafe');
 		else text = base || '-';
+		if (modemFloor) text = _('%s · modem throttling').format(text);
 		if (floorOverride) return _('%s · ignoring firmware map').format(text);
 		return kernelFloor ? _('%s · kernel safety floor').format(text) : text;
 	},
@@ -785,7 +787,10 @@ return view.extend({
 		this.setText('h5fan-phy-value', this.formatTemp(data.phy_temp)); this.setText('h5fan-phy-hint', data.phy_label || '');
 		this.setText('h5fan-wifi-value', data.wifi1_temp || data.wifi2_temp ? [data.wifi1_temp, data.wifi2_temp].filter(Boolean).join(' / ') + ' °C' : _('Unavailable'));
 		this.setText('h5fan-wifi-hint', [data.wifi1_label, data.wifi2_label].filter(Boolean).join(' · '));
-		this.setText('h5fan-modem-value', this.formatTemp(data.module_temp)); this.setText('h5fan-modem-hint', data.module_name || _('Modem unavailable'));
+		var therm = parseInt(data.module_therm, 10);
+		var thermName = therm >= 0 && therm <= 3 ? [ _('Normal'), _('Warm'), _('Hot'), _('Critical') ][therm] : '';
+		this.setText('h5fan-modem-value', data.module_temp === undefined || data.module_temp === '' ? (thermName || _('Unavailable')) : this.formatTemp(data.module_temp));
+		this.setText('h5fan-modem-hint', thermName ? _('Throttling level %s / 3').format(therm) : (data.module_name || _('Modem unavailable')));
 		this.setText('h5fan-profile', this.modeName(data.mode) + (data.mode === 'auto' ? ' · ' + this.profileName(data.curve) : ''));
 		this.syncTitle('h5fan-profile');
 		this.setText('h5fan-requested', isNaN(requested) ? '-' : Math.round(requested * 100 / 255) + '%');

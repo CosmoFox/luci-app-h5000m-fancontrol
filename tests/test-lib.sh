@@ -103,4 +103,27 @@ expect_eq "$(parse_5gmodem_metrics "${TMP}/g5")" '||' 'metrics garbage'
 printf '{"path":"2-1","iface":"modem","conn_time":"0d, 00:07:17","modem":"Fibocom FM350-GL","mtemp":"28.0 &deg;C"}\n' > "${TMP}/g6"
 expect_eq "$(parse_5gmodem_metrics "${TMP}/g6")" 'Fibocom FM350-GL||28.0 &deg;C' 'metrics iface-value must not match the modem key'
 
+# parse_5gmodem_telemetry: single flat JSON document, numeric integral field
+# within [min, max]; strings, fractions, truncated documents and trailing
+# garbage supply nothing.
+printf '{"therm":2}\n' > "${TMP}/t1"
+expect_eq "$(parse_5gmodem_telemetry "${TMP}/t1" therm 0 3)" '2' 'telemetry flat'
+printf '{"therm": 2.0}\n' > "${TMP}/t2"
+expect_eq "$(parse_5gmodem_telemetry "${TMP}/t2" therm 0 3)" '2' 'telemetry 2.0 normalizes'
+printf '{\n  "temp": 45,\n  "therm": 1\n}\n' > "${TMP}/t3"
+expect_eq "$(parse_5gmodem_telemetry "${TMP}/t3" therm 0 3)" '1' 'telemetry pretty-printed'
+expect_eq "$(parse_5gmodem_telemetry "${TMP}/t3" temp -40 150)" '45' 'telemetry temp field'
+printf '{"therm":"3"}\n' > "${TMP}/t4"
+expect_eq "$(parse_5gmodem_telemetry "${TMP}/t4" therm 0 3)" '' 'telemetry string rejected'
+printf '{"therm":2.5}\n' > "${TMP}/t5"
+expect_eq "$(parse_5gmodem_telemetry "${TMP}/t5" therm 0 3)" '' 'telemetry fraction rejected'
+printf '{"therm":4}\n' > "${TMP}/t6"
+expect_eq "$(parse_5gmodem_telemetry "${TMP}/t6" therm 0 3)" '' 'telemetry out of range'
+printf '{"therm":3' > "${TMP}/t7"
+expect_eq "$(parse_5gmodem_telemetry "${TMP}/t7" therm 0 3)" '' 'telemetry truncated rejected'
+printf '{"therm":3} garbage\n' > "${TMP}/t8"
+expect_eq "$(parse_5gmodem_telemetry "${TMP}/t8" therm 0 3)" '' 'telemetry trailing garbage rejected'
+printf '{"temp":200}\n' > "${TMP}/t9"
+expect_eq "$(parse_5gmodem_telemetry "${TMP}/t9" temp -40 150)" '' 'telemetry temp out of range'
+
 echo 'library unit tests passed'

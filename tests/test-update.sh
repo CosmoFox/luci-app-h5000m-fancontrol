@@ -125,6 +125,18 @@ _out=$(sh "${UPD}" version)
 echo "${_out}" | grep -q '"installed":""' || tfail "version: unexpected output: ${_out}"
 echo "${_out}" | grep -q '"pm":""' || tfail "version: pm field missing: ${_out}"
 
+# b64 falls back to hexdump+awk when neither base64 nor openssl exists
+# (minimal OpenWrt images) - covered here via bsdextrautils in CI.
+mkdir -p "${TDIR}/hexbin"
+_hexdump_path=$(command -v hexdump 2>/dev/null || true)
+_awk_path=$(command -v awk 2>/dev/null || true)
+if [ -n "${_hexdump_path}" ] && [ -n "${_awk_path}" ]; then
+	ln -sf "${_hexdump_path}" "${TDIR}/hexbin/hexdump"
+	ln -sf "${_awk_path}" "${TDIR}/hexbin/awk"
+	_out=$(PATH="${TDIR}/hexbin" b64 'hello')
+	expect_eq "${_out}" "aGVsbG8=" 'b64 hexdump fallback'
+fi
+
 # CLI smoke: unknown command exits non-zero with the usage error
 if sh "${UPD}" bogus > "${TDIR}/bogus.out" 2>&1; then
 	tfail 'bogus command should exit non-zero'
