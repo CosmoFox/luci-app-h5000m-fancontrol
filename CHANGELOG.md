@@ -1,8 +1,28 @@
 # Changelog
 
-🇬🇧 **English** | [🇷🇺 Русский](CHANGELOG.ru.md) | [🇨🇳 简体中文](CHANGELOG.zh-CN.md)
+🇬🇧 **English** | [🇷🇺 Русский](#ru) | [🇨🇳 简体中文](#zh) | [🇩🇪 Deutsch](#de)
+
+*The English changelog is canonical; the other languages are translations kept in sync manually.*
 
 ## 2.3.2
+
+- Update dialog translation selection: the update check lists the languages
+  shipped by the release; checkboxes (several allowed, system language
+  preselected) choose which `luci-i18n-*` packs are installed along with the
+  app, and beta releases offer the languages of their own assets.
+- The release date is now labeled with the release it belongs to ("Latest
+  release: vX.Y.Z (published …)") and shown in the browser's local time zone
+  instead of raw UTC.
+- The "Policy reason" chip is renamed to "Current status" (ru/zh/de).
+- Added a German translation of the interface (`po/de`); CI builds the
+  `luci-i18n-h5000m-fancontrol-de` package automatically.
+- New visual test of failure states (`tests/ui/states-test.mjs`): it stubs
+  the status script on the router and screenshots the page with no
+  temperature source, an absent modem or Wi-Fi radio, kernel-owned thermal
+  policy, failsafe, stale status, active speed-down delay and manual mode;
+  documented in the README (now in German as well).
+- The per-language changelogs are merged into a single file with Russian and
+  Chinese in collapsible blocks (like the README) and German added.
 
 - In-app updates are more robust and transparent, backporting the improvements
   from the luci-app-5gmodem updater:
@@ -180,4 +200,614 @@
 
 ---
 
-*The English changelog is canonical; other languages are translations kept in sync manually.*
+<a id="ru"></a>
+
+<details>
+<summary><b>🇷🇺 Русский</b></summary>
+
+# История изменений
+
+## 2.3.2
+
+- Выбор переводов в диалоге обновления: проверка возвращает языки, которые
+  поставляет релиз; чекбоксы (можно несколько, по умолчанию отмечен язык
+  системы) определяют, какие пакеты `luci-i18n-*` установятся вместе с
+  приложением, а бета-релизы предлагают языки из собственных ассетов.
+- Дата публикации теперь подписана релизом, которому принадлежит
+  («Последний релиз: vX.Y.Z (опубликован …)»), и показывается в локальной
+  зоне браузера вместо сырого UTC.
+- Чип «Причина политики» переименован в «Текущий статус» (ru/zh/de).
+- Добавлен немецкий перевод интерфейса (`po/de`); CI автоматически собирает
+  пакет `luci-i18n-h5000m-fancontrol-de`.
+- Новый визуальный тест состояний отказа (`tests/ui/states-test.mjs`):
+  подменяет статус-скрипт на роутере и снимает страницу без источника
+  температуры, при отсутствии модема или радиомодуля Wi-Fi, когда политику
+  держит ядро, в режиме failsafe, с устаревшим статусом, при активной
+  задержке снижения оборотов и в ручном режиме; описан в README (теперь и на
+  немецком).
+- Чейнджлоги объединены в один файл по образцу документации: русский и
+  китайский — в сворачиваемых блоках, добавлен немецкий.
+
+- Обновление изнутри приложения стало надёжнее и прозрачнее — перенесены
+  улучшения из апстрима luci-app-5gmodem:
+  - Файлы релизов скачиваются через API-URL ассета с заголовком
+    `Accept: application/octet-stream` — старый `browser_download_url` ведёт на
+    github.com, который отдаёт заголовок Content-Security-Policy длиной более
+    4 КБ, и uclient-fetch (wget в OpenWrt) зависает до таймаута, так что
+    загрузка могла остановиться.
+  - Метаданные релизов разбираются через `jsonfilter` вместо хрупких
+    sed-однострочников, а ответ `/releases/latest` кэшируется на 5 минут.
+  - Прогресс-бар показывает реальные байты («Загрузка: X из Y КБ»), скачанный
+    файл сверяется по размеру с ассетом, а перед загрузкой проверяется
+    свободное место в /tmp.
+  - Ошибки сопровождаются полем `detail` с хвостом лога пакетного менеджера —
+    он показывается на странице; apk повторяет попытку после обновления
+    устаревших списков пакетов, а битые записи в `/etc/apk/world` сообщаются
+    по именам.
+  - Проверка обновлений возвращает дату публикации и заметки релиза, которые
+    показываются на странице перед установкой.
+
+## 2.3.1
+
+- Демон теперь читает температуру модема, публикуемую штатным стеком 5gmodem
+  (`/tmp/5gmodem_metrics_*.json`, `/tmp/5gmodem_stats/temp.*`, `/tmp/5gmodem_temp_*`, а также раскладку
+  `/tmp/5gmodem/metrics_*.json`, `/tmp/5gmodem/stats/temp.*` и `/tmp/5gmodem/temp_*` из актуальных сборок
+  5gmodem), и больше не полагается
+  только на устаревший кэш MTK (/var/run/mt5700m/temperature), которого нет на устройствах вроде H5000M с
+  модемом Fibocom FM350-GL.
+- На карточке модема в LuCI теперь показывается модель модема (например, "Fibocom FM350-GL") рядом с
+  температурой.
+
+- Показания со стека 5gmodem дополнительно проверяются по времени обновления файла-снимка, а снимки, где модем
+  помечен как «-» (ответа нет), игнорируются — отключённый модем больше не оставляет на странице устаревшие
+  температуру и модель, а карточка модема показывает фолбэк «Модем недоступен».
+
+- Переработана страница кривой вентилятора в LuCI: в редактор добавлен
+  интерактивный график на canvas, который показывает кривую вентилятора и
+  карту порогов прошивки относительно температуры, маркер текущей
+  температуры с запрошенным и реально применённым PWM, полосу гистерезиса и
+  цветовую легенду. График плавно анимируется, подстраивается под светлую и
+  тёмную темы LuCI и на узких экранах переходит в вертикальную раскладку.
+- На карточке температур датчик, который в данный момент управляет скоростью
+  вентилятора, помечается бейджем «Приоритет».
+- В заголовке страницы рядом с названием теперь показывается установленная
+  версия приложения (например, «Управление охлаждением v2.3.1»).
+- Исправлено сохранение ручного режима: значение ползунка теперь всегда
+  передаётся при сохранении формы.
+- Демон теперь сообщает аварийные пороги ядра как ступени карты порогов даже
+  когда карты охлаждения прошивки отсутствуют (пропатченный device tree) или
+  недоступны (урезанный busybox), а `kernel_floor_levels` собирается без
+  хвостовых запятых в краевых случаях.
+- Автоматизация релизов: `scripts/release.sh` создаёт теги стабильных
+  (`vX.Y.Z` из `main`) и бета-версий (`vX.Y.Z-beta.N` из `beta`); workflow
+  релиза сверяет тег с `PKG_VERSION`, публикует теги `-beta.N` как пре-релизы
+  GitHub и отклоняет теги, чей коммит отсутствует в нужной ветке. Полное
+  руководство: `docs/RELEASING.md`.
+- Сборки релизов в GitHub Actions теперь кэшируют архив OpenWrt SDK (ключ —
+  его sha256), поэтому SDK на сотни мегабайт больше не скачивается при каждом
+  запуске.
+- Встроенное самообновление со страницы LuCI: новая вкладка «Обновление»
+  проверяет последний стабильный релиз на GitHub и устанавливает его прямо
+  на роутере (`.apk`/`.ipk` выбираются по пакетному менеджеру). Скачивание и
+  установка выполняются в фоне с индикатором прогресса; вместе с приложением
+  ставится и русский перевод (`luci-i18n-h5000m-fancontrol-ru`), если он
+  опубликован.
+- Обновление обращается к GitHub через штатное интернет-соединение роутера
+  (без прокси). По умолчанию
+  предлагаются только стабильные релизы; включить пре-релизы `-beta.N` можно
+  флажком «Предлагать бета-релизы» — с предупреждением, что такие сборки могут
+  быть нестабильны и не рекомендуются для повседневного использования.
+- Ошибки проверки обновлений теперь показываются на языке интерфейса: когда
+  обновлению не удаётся связаться с GitHub, страница сообщает, что не удалось
+  проверить обновления, и просит проверить доступ роутера в интернет.
+- Проверка версий теперь корректно работает для репозиториев без стабильного
+  релиза: при наличии только пре-релизов больше не выводится «Could not reach
+  GitHub», а новый пре-релиз того же базового версии (например, v2.3.1-beta.6
+  после beta.5) предлагается — теги пре-релизов сравниваются с последним
+  установленным тегом, а не с версией пакета. Определение пре-релизов также
+  учитывает компактный JSON GitHub (`"prerelease":true`).
+- Кнопка «Переустановить текущую версию» переустанавливает именно тот релиз,
+  который числится установленным (локальный файл тега) — удобно после
+  повреждённой или незавершённой установки. Работает и для стабильных, и для
+  бета-релизов.
+- Версия в заголовке страницы и на вкладке «Обновление» теперь учитывает
+  суффикс беты, когда установлен пре-релиз (например, «v2.3.1-beta.7»): пакетный
+  менеджер не отличает стабильную сборку от бета-сборки той же версии пакета.
+- После успешного обновления браузер принудительно перезагружает новые
+  скрипты страницы, а сессия завершается один раз (один повторный вход),
+  чтобы обновлённый интерфейс и новые RPC-права применились сразу.
+- Логика обновления — в `/usr/share/h5000m-fancontrol/update.sh`
+  (`check`, `install`, `status`, `version`); запуск из LuCI разрешён через
+  RPC ACL приложения.
+- Документация (README и журнал изменений) ведётся на английском, русском и
+  упрощённом китайском, а китайский перевод интерфейса обновлён под новые
+  строки.
+- Датчики, которые не отдают температуру, теперь показываются на странице
+  LuCI как недоступные: карточка затемняется, а бейдж «Приоритет» заменяется
+  на «Недоступен».
+- Вкладка обновления переименована в «Настройки», опция «Игнорировать карту
+  вентилятора из прошивки» перенесена туда из «Реакции и защиты».
+- Встроенный обновлятор теперь показывает прогресс установки в реальном
+  времени: панель заполняется по мере работы обновления в фоне, а текущая
+  стадия («Загрузка обновления…», «Установка пакетов…», «Завершение
+  обновления…») заменяет общий текст «Установка обновления…».
+- Производительность контроллера: конфигурация теперь читается одним проходом
+  `uci show`, файлы sysfs и состояния — встроенными средствами shell вместо
+  конвейеров cat/sed/head, а карты охлаждения device tree разбираются один раз
+  за загрузку и кэшируются в /var/run — опрос статуса со страницы LuCI больше
+  не перечитывает дерево устройств каждые несколько секунд. Число внешних
+  процессов на итерацию сократилось со ~150+ до нескольких.
+- Общие helpers вынесены в /usr/share/h5000m-fancontrol/lib.sh и покрыты
+  юнит-тестами; для миграций uci-defaults добавлены тесты на фикстурах; CI
+  теперь дополнительно гоняет ShellCheck, проверку синхронизации версии
+  Makefile с чейнджлогами и проверку покрытия переводов. RPC ACL больше не
+  выдаёт неиспользуемое право exec на бинарник контроллера.
+- Новое в LuCI: пока контроллер удерживает повышенные обороты в задержке
+  снижения скорости, в блоке фактической мощности показывается полоса
+  прогресса с оставшимися секундами; когда источник температуры модема не
+  найден, карточка температур предлагает пакет 5gmodem (ссылка на проект и
+  установка последнего релиза с GitHub в один клик).
+
+## 2.3.0
+
+- Вывод статуса теперь сообщает карту вентилятора прошивки
+  (`kernel_floor_levels`, напр. `40=128,85=192,115=255`), а страница LuCI
+  показывает точные пороги вместо общей заметки о «безопасном пороге ядра».
+- Добавлена экспериментальная опция `override_floor` (схема v4, по умолчанию
+  выключена), позволяющая автоматическому и ручному режимам работать ниже
+  штатной карты вентилятора прошивки; принудительные пороги ядра и аварийная
+  защита сохранены.
+- Задокументированы штатные пороги 40/85/115 °C и их решение через патч.
+- Версии пакетов переводов теперь привязаны к версии приложения, а не к
+  po-mtime/git revision, которые выводит `luci.mk` при SDK-сборках.
+- `build-release.sh` автоматически находит языки в `po/` и собирает все
+  пакеты `luci-app-*` / `luci-i18n-h5000m-fancontrol-*` — добавление
+  перевода больше не требует правки скрипта.
+
+## 2.2.1
+
+- Исправлена сборка релиза: сборка в GitHub Actions теперь компилирует и
+  публикует пакет перевода `luci-i18n-h5000m-fancontrol-ru` (каталоги `.lmo`
+  не входят в основной пакет приложения) и добавлена документация по его
+  установке для русского интерфейса.
+
+## 2.2.0
+
+- Перенастроена тихая кривая вентилятора: `20:0,35:0,40:20,50:20,60:40,70:50,85:100,95:100`.
+- Добавлена миграция схемы v3, заменяющая только нетронутую заводскую тихую кривую.
+- Добавлен русский перевод интерфейса LuCI.
+- CI проверяет все каталоги переводов и запускает регрессионный тест
+  безопасности тепловой политики.
+
+## 2.1.0
+
+- Контроллер вентилятора больше не переводит всю thermal-зону CPU в `user_space`.
+- Автоматически восстанавливается thermal policy, оставленная старыми
+  версиями, с сохранением троттлинга CPU и защиты от перегрева.
+- Чтение статуса и запись параметров используют отдельные RPC-полномочия.
+- Конфигурация UCI объявлена conffile (сохраняется при обновлении).
+
+## 2.0.2
+
+- Чтение кэша температур с метками времени от менеджера MT5700M.
+- Устаревшие температуры модулей старше 60 с игнорируются; совместимость со
+  старым кэшем QModem сохранена.
+
+## 2.0.1
+
+- Единые правила версий GitHub Release и пакетов OpenWrt.
+- Исправления совместимости сборок и поставки, накопленные после 2.0.0.
+
+## 2.0.0
+
+- Переработана страница управления охлаждением в LuCI для конечных пользователей.
+- Добавлена сводка температур CPU, Ethernet PHY, Wi-Fi и 5G-модуля.
+- Добавлены кривые «Тихая», «Сбалансированная», «Производительная» и произвольная.
+- Добавлены температурный гистерезис, задержка остановки и стартовый буст.
+- Добавлены аварийная защита при отказе датчика и нижний пользовательский
+  порог безопасности при высоких температурах.
+- Добавлен опциональный патч device tree H5000M, чтобы ядро и userspace не
+  конкурировали за PWM.
+
+---
+
+*Канонической является английская версия журнала изменений; переводы
+синхронизируются вручную.*
+
+</details>
+
+<a id="zh"></a>
+
+<details>
+<summary><b>🇨🇳 简体中文</b></summary>
+
+# 更新日志
+
+## 2.3.2
+
+- 更新对话框新增翻译语言选择：更新检查会列出该发布内置的语言；通过复选框
+  （可多选，默认勾选系统语言）选择随应用一并安装的 `luci-i18n-*` 语言包；
+  测试版发布提供其自身资产中的语言。
+- 发布日期现在标注其所属版本（“最新版本：vX.Y.Z（发布于 …）”），并按浏览器
+  本地时区显示，而非原始 UTC。
+- “策略原因”卡片更名为“当前状态”（ru/zh/de）。
+- 新增界面德语翻译（`po/de`）；CI 自动构建 `luci-i18n-h5000m-fancontrol-de` 包。
+- 新增故障状态可视化测试（`tests/ui/states-test.mjs`）：通过替换路由器上的
+  状态脚本，分别截取无温度源、无调制解调器或无 Wi-Fi 射频、内核持有散热
+  策略、failsafe、状态过期、降速延迟生效和手动模式下的页面；README 已补充
+  说明（现已提供德语版本）。
+- 各语言变更日志合并为单一文件，采用与文档相同的折叠多语言结构，并新增
+  德语。
+
+- 应用内更新更加可靠、透明——移植了 luci-app-5gmodem 更新器的改进：
+  - 发布资产改经由 GitHub API 资产地址并附带 `Accept: application/octet-stream`
+    头下载——旧的 `browser_download_url` 指向 github.com，其返回的
+    Content-Security-Policy 头超过 4 KB，会导致 uclient-fetch（OpenWrt 上的
+    wget）一直等待直至超时，下载可能因此卡住。
+  - 发布元数据改用 `jsonfilter` 解析（替代脆弱的 sed 单行脚本），
+    `/releases/latest` 的响应缓存 5 分钟。
+  - 进度条显示实际字节数（“下载中：X / Y KB”），下载完成后与资产大小校验，
+    并在下载前检查 /tmp 剩余空间。
+  - 错误信息附带 `detail` 字段（软件包管理器日志末尾），会在页面上显示；
+    apk 在软件包列表过期时刷新后重试一次；`/etc/apk/world` 中的损坏条目
+    会按名称报告。
+  - 更新检查还会返回发布日期和更新说明，并在安装前展示在页面上。
+
+## 2.3.1
+
+- 守护进程现在读取固件标配 5gmodem 软件栈发布的 5G 调制解调器温度（/tmp/5gmodem_metrics_*.json、
+  /tmp/5gmodem_stats/temp.*、/tmp/5gmodem_temp_*，以及现行 5gmodem 构建使用的
+  /tmp/5gmodem/metrics_*.json、/tmp/5gmodem/stats/temp.*、/tmp/5gmodem/temp_* 路径），不再只依赖旧版 MTK 温度缓存（/var/run/mt5700m/temperature），
+  该缓存不存在于 H5000M + Fibocom FM350-GL 这类设备上。
+- LuCI 中的调制解调器温度卡片现在会在温度旁显示调制解调器型号（例如“Fibocom FM350-GL”）。
+
+- 5gmodem 软件栈的每个快照还会按其文件修改时间检查新鲜度，并且报告调制解调器缺失（"modem":"-"）的快照会被忽略，
+  因此调制解调器断开后页面不会再显示过期的温度或型号，调制解调器卡片会显示“调制解调器不可用”的回退文案。
+
+- 重新设计 LuCI 风扇曲线页面：曲线编辑器现在带有交互式 canvas 图表，同时
+  绘制风扇曲线与固件下限映射，并显示当前温度标记（含请求与实际 PWM 值）、
+  迟滞条带和颜色图例。图表平滑动画，自适应 LuCI 深色/浅色主题，在窄屏上
+  自动切换为竖向布局。
+- 温度卡片现在会为当前控制风扇转速的传感器打上「优先」徽标。
+- 页面标题旁现在会显示已安装的应用版本（如「冷却管理 v2.3.1」）。
+- 修复手动模式的保存：提交表单时滑块值现在总能被正确读取。
+- 守护进程现在即使在固件散热映射缺失（已修补的设备树）或不可读（精简版
+  busybox）时，也会把内核紧急下限报告为下限映射阶梯，并且在边缘情况下
+  生成的 `kernel_floor_levels` 不再带有末尾逗号。
+- 发布自动化：`scripts/release.sh` 可从 `main` 打稳定版标签（`vX.Y.Z`）、
+  从 `beta` 打测试版标签（`vX.Y.Z-beta.N`）；发布工作流会将标签与
+  `PKG_VERSION` 比对，把 `-beta.N` 标签发布为 GitHub 预发布版本，并拒绝
+  不在对应分支上的标签。完整指南见 `docs/RELEASING.md`。
+- GitHub Actions 发布构建现在缓存 OpenWrt SDK 归档（以 sha256 为键），
+  数百 MB 的 SDK 不再每次重新下载。
+- 新增 LuCI 页面内置自更新功能：“更新”标签页会检查 GitHub Release 中最新
+  的稳定版本（按包管理器选择 `.apk`/`.ipk`）并直接在路由器上安装。下载与
+  安装在后台上完成并显示进度；除应用本身外，还会一并安装已发布的俄语界面
+  包（`luci-i18n-h5000m-fancontrol-ru`）。
+- 更新程序通过路由器的常规网络连接访问 GitHub（不使用代理）。默认只提供
+  稳定版；勾选「提供测试版发布」即可列出
+  `-beta.N` 预发布版本，并会提示测试版可能不稳定、不建议日常使用。
+- 检查更新失败时现在会以界面语言显示原因：当更新程序无法访问 GitHub 时，
+  页面会提示无法检查更新，并请用户检查路由器的互联网连接。
+- 版本轮询现在可正确处理没有稳定版的仓库：当 GitHub 仅有预发布版本时不再
+  显示「Could not reach GitHub」，且同一基础版本的新预发布（如 beta.5 之后
+  发布 v2.3.1-beta.6）会被正常提示——预发布标签会与上次安装的标签比较，
+  而非与包版本比较。预发布识别也已适配 GitHub 的紧凑 JSON
+  （`"prerelease":true`）。
+- 新增「重新安装当前版本」按钮：可重新安装本地标签记录中已安装的那个发布
+  版本（对损坏或不完整的安装很有用），稳定版与测试版均适用。
+- 页面标题与「更新」选项卡中显示的版本现在会带上测试版后缀（例如
+  「v2.3.1-beta.7」）：包管理器无法区分同一包版本的稳定版与测试版构建。
+- 更新成功后浏览器会强制重新拉取新的页面脚本，并结束一次会话（需要重新
+  登录一次），以便刷新后的界面与新的 RPC 权限立即生效。
+- 更新逻辑位于 `/usr/share/h5000m-fancontrol/update.sh`
+  （`check`、`install`、`status`、`version`）；LuCI 用户通过应用自身的
+  RPC ACL 获得执行权限。
+- 文档（README 与更新日志）以英文、俄文和简体中文维护，中文界面翻译已
+  与新字符串同步。
+- 没有上报温度的传感器现在在 LuCI 页面显示为离线：卡片变灰，徽标由
+  “优先”改为“离线”。
+- “更新”标签页更名为“设置”，并将“忽略固件风扇映射”选项从“响应与安全”
+  移入该标签页。
+- 内置更新程序现在实时显示安装进度：随后台更新进度填充进度条，并用
+  当前的阶段提示（“正在下载更新…”、“正在安装软件包…”、“正在完成更新…”）
+  替换通用文本“正在安装更新…”。
+- 控制器性能：配置改为单次 `uci show` 读取，sysfs 与状态文件改用 shell
+  内建命令读取（不再依赖 cat/sed/head 管道），设备树散热映射每个启动周期
+  只解析一次并缓存到 /var/run —— LuCI 页面的状态轮询不再每隔几秒重复读取
+  设备树。每次控制迭代的外部进程派生次数从 150 余个降至数个。
+- 公共辅助函数移至 /usr/share/h5000m-fancontrol/lib.sh 并配有单元测试；
+  uci-defaults 迁移脚本新增基于测试桩的测试；CI 新增 ShellCheck、
+  Makefile 与变更日志版本一致性检查以及翻译覆盖检查。RPC ACL 不再授予
+  控制器二进制文件未使用的 exec 权限。
+- LuCI 新增：当控制器在降速延迟期间保持较高转速时，「实际输出」块会显示
+  剩余秒数的进度条；当找不到调制解调器温度来源时，温度卡片会推荐安装
+  5gmodem 软件包（项目页面及一键安装 GitHub 最新发布）。
+
+## 2.3.0
+
+- 状态输出现在会报告固件风扇映射（`kernel_floor_levels`，例如
+  `40=128,85=192,115=255`），LuCI 页面同时显示具体阈值，而不再只是笼统的
+  “内核安全下限”提示。
+- 新增实验性 `override_floor` 选项（schema v4，默认关闭），允许自动与手动
+  输出低于出厂固件风扇映射；内核 trip 强制机制和故障保护行为保持不变。
+- 文档补充了出厂 40/85/115 °C 风扇映射及基于补丁的解决方案。
+- 翻译包版本改为与应用版本一致，而不再使用 `luci.mk` 在 SDK 构建中从
+  po-mtime/git 修订推导的版本。
+- `build-release.sh` 现在自动发现 `po/` 中的语言并收集所有构建出的
+  `luci-app-*` / `luci-i18n-h5000m-fancontrol-*` 包，新增翻译无需修改脚本。
+
+## 2.2.1
+
+- 修复发布打包：GitHub Actions 构建现在会编译并发布
+  `luci-i18n-h5000m-fancontrol-ru` 翻译包（`.lmo` 目录不属于主应用包），
+  并在文档中说明如何安装它以启用俄语界面。
+
+## 2.2.0
+
+- 将静音风扇曲线重新调校为 `20:0,35:0,40:20,50:20,60:40,70:50,85:100,95:100`。
+- 新增 schema v3 迁移，仅替换未被修改的默认静音曲线。
+- 新增俄语 LuCI 界面翻译。
+- CI 现在校验所有翻译目录并运行热策略安全回归测试。
+
+## 2.1.0
+
+- 风扇控制器不再把完整 CPU thermal zone 切换到 `user_space`。
+- 自动恢复旧版本遗留的 thermal policy，并保留 CPU 降频和高温保护。
+- 状态读取与控制写入使用独立 RPC 权限。
+- 将 UCI 配置声明为升级保留文件。
+
+## 2.0.2
+
+- 读取 MT5700M 管理器提供的带时间戳温度缓存。
+- 忽略超过 60 秒的陈旧模组温度，并兼容旧 QModem 缓存。
+
+## 2.0.1
+
+- 统一 GitHub Release 与 OpenWrt 软件包版本规则。
+- 汇总 2.0.0 后的构建兼容性与交付修订。
+
+## 2.0.0
+
+- 重新设计面向最终用户的 LuCI 散热管理界面。
+- 增加 CPU、以太网 PHY、Wi-Fi 和 5G 模块温度汇总。
+- 增加静音、均衡、性能及自定义风扇曲线。
+- 增加温度滞回、降速延迟和启动助推。
+- 增加传感器故障保护及高温用户空间安全下限。
+- 增加可选 H5000M 设备树补丁，避免内核与用户空间争用 PWM。
+
+---
+
+*更新日志以英文版本为准；其他语言为人工同步的译文。*
+
+</details>
+
+<a id="de"></a>
+
+<details>
+<summary><b>🇩🇪 Deutsch</b></summary>
+
+# Änderungsprotokoll
+
+## 2.3.2
+
+- Übersetzungsauswahl im Update-Dialog: Die Update-Prüfung listet die
+  Sprachen des Releases; Kontrollkästchen (mehrere erlaubt, Systemsprache
+  vorausgewählt) wählen, welche `luci-i18n-*`-Pakete zusammen mit der App
+  installiert werden; Beta-Releases bieten die Sprachen ihrer eigenen Assets an.
+- Das Veröffentlichungsdatum ist jetzt mit dem Release beschriftet, zu dem es
+  gehört („Neuestes Release: vX.Y.Z (veröffentlicht …)"), und wird in der
+  lokalen Zeitzone des Browsers statt als rohes UTC angezeigt.
+- Der Chip „Richtlinien-Grund" wurde in „Aktueller Status" umbenannt (ru/zh/de).
+- Deutsche Oberflächenübersetzung hinzugefügt (`po/de`); die CI baut das Paket
+  `luci-i18n-h5000m-fancontrol-de` automatisch.
+- Neuer Visualisierungstest für Fehlerzustände (`tests/ui/states-test.mjs`):
+  Ersetzt das Status-Skript auf dem Router und fotografiert die Seite ohne
+  Temperaturquelle, ohne Modem oder Wi-Fi-Funkmodul, mit Kernel-Richtlinie,
+  Failsafe, veraltetem Status, aktiver Herunterregel-Verzögerung und im
+  manuellen Modus; im README dokumentiert (jetzt auch auf Deutsch).
+- Die sprachspezifischen Änderungsprotokolle sind zu einer einzigen Datei
+  zusammengeführt – Russisch und Chinesisch in aufklappbaren Blöcken (wie im
+  README), plus Deutsch.
+
+- In-App-Updates sind robuster und transparenter geworden, mit Verbesserungen
+  aus dem Updater von luci-app-5gmodem:
+  - Assets werden über die GitHub-API-Asset-URL mit einem
+    `Accept: application/octet-stream`-Header heruntergeladen – der alte
+    `browser_download_url`-Host antwortet mit einem über 4 KB langen
+    Content-Security-Policy-Header, der uclient-fetch (wget unter OpenWrt)
+    bis zum Timeout blockiert; Downloads konnten hängen bleiben.
+  - Release-Metadaten werden mit `jsonfilter` statt brüchiger
+    sed-Einzeiler geparst, und die Antwort von `/releases/latest` wird
+    5 Minuten lang gecacht.
+  - Der Fortschrittsbalken zeigt echte Bytes („Lade herunter: X von Y KB"),
+    die heruntergeladene Datei wird gegen die Asset-Größe geprüft, und vor
+    dem Download wird der freie Platz in /tmp geprüft.
+  - Fehler liefern ein `detail`-Feld mit dem Ende des Paketmanager-Logs, das
+    auf der Seite angezeigt wird; apk wiederholt den Versuch einmal nach dem
+    Aktualisieren veralteter Paketlisten; defekte Einträge in
+    `/etc/apk/world` werden namentlich gemeldet.
+  - Die Update-Prüfung liefert außerdem das Veröffentlichungsdatum und die
+    Release-Notes, die vor der Installation auf der Seite gerendert werden.
+
+## 2.3.1
+
+- Der Daemon liest jetzt die vom 5gmodem-Stack bereitgestellte
+  5G-Modemtemperatur (`/tmp/5gmodem_metrics_*.json`,
+  `/tmp/5gmodem_stats/temp.*`, `/tmp/5gmodem_temp_*` sowie die Pfade
+  `/tmp/5gmodem/metrics_*.json`, `/tmp/5gmodem/stats/temp.*` und
+  `/tmp/5gmodem/temp_*` aktueller 5gmodem-Builds) und verlässt sich nicht
+  mehr nur auf den veralteten MTK-Temperatur-Cache
+  (/var/run/mt5700m/temperature), der auf Geräten wie dem H5000M mit
+  Fibocom FM350-GL fehlt.
+- Die Modemtemperatur-Karte in LuCI zeigt jetzt das Modell (z. B.
+  „Fibocom FM350-GL") neben der Temperatur.
+
+- Von 5gmodem aktualisierte Snapshots werden zusätzlich anhand der
+  Datei-mtime geprüft; Snapshots, die das Modem als fehlend melden
+  ("modem":"-"), werden ignoriert – ein getrenntes Modem hinterlässt keine
+  veraltete Temperatur oder Modellbezeichnung; die Karte zeigt dann
+  „Modem nicht verfügbar".
+
+- Die LuCI-Kurvenseite wurde neu gestaltet: Der Kurveneditor hat jetzt ein
+  interaktives Canvas-Diagramm, das Lüfterkurve und
+  Firmware-Untergrenzen-Karte über der Temperatur zeigt, plus einen Marker
+  für die aktuelle Temperatur mit angefordertem und angewendetem PWM, das
+  Hystereseband und eine Farblegende. Das Diagramm animiert weich, folgt dem
+  hellen/dunklen LuCI-Theme und stapelt sich auf schmalen Bildschirmen.
+- Die Temperaturkarte markiert den Sensor, der die Lüftergeschwindigkeit
+  gerade steuert, mit einem „Priorität"-Badge.
+- Der Seitentitel zeigt jetzt inline die installierte App-Version (z. B.
+  „Kühlungsverwaltung v2.3.1").
+- Speichern im manuellen Modus korrigiert: Der Schiebereglerwert wird beim
+  Absenden immer übernommen.
+- Der Daemon meldet die Notfall-Untergrenzen des Kernels jetzt auch dann als
+  Stufen der Grenzenkarte, wenn die Firmware-Cooling-Maps fehlen (gepatchter
+  Gerätebaum) oder unlesbar sind (minimaler busybox); `kernel_floor_levels`
+  wird in Randfällen ohne abschließende Kommas gebildet.
+- Release-Automatisierung: `scripts/release.sh` schneidet Stabil-Tags
+  (`vX.Y.Z` von `main`) und Beta-Tags (`vX.Y.Z-beta.N` von `beta`); der
+  Release-Workflow prüft den Tag gegen `PKG_VERSION`, veröffentlicht
+  `-beta.N`-Tags als GitHub-Prereleases und lehnt Tags ab, deren Commit nicht
+  im passenden Branch liegt. Anleitung: `docs/RELEASING.md`.
+- GitHub-Actions-Release-Builds cachen das OpenWrt-SDK-Archiv (Schlüssel: sein
+  sha256); das mehrere hundert MB große SDK wird nicht mehr bei jedem Lauf
+  heruntergeladen.
+- Eingebautes Selbstupdate von der LuCI-Seite: Der neue Tab „Update" prüft
+  GitHub Releases auf die neueste stabile Version und installiert sie auf dem
+  Router (`.apk`/`.ipk` je nach Paketmanager). Download und Installation
+  laufen im Hintergrund mit Fortschrittsanzeige; das Anwendungspaket und –
+  sofern veröffentlicht – die russische Übersetzung
+  (`luci-i18n-h5000m-fancontrol-ru`) werden zusammen installiert.
+- Der Updater prüft GitHub-Releases über die normale Internetverbindung des
+  Routers (kein Proxy). Standardmäßig werden nur stabile Releases angeboten;
+  `-beta.N`-Prereleases lassen sich per Kontrollkästchen „Beta-Releases
+  anbieten" aktivieren, mit Warnung, dass Beta-Builds instabil sein können
+  und für den täglichen Gebrauch nicht empfohlen werden.
+- Fehler bei der Update-Prüfung werden jetzt in der Oberflächensprache
+  erklärt: Wenn GitHub nicht erreichbar ist, sagt die Seite, dass keine
+  Update-Prüfung möglich war, und bittet, die Internetverbindung des Routers
+  zu prüfen.
+- Die Versionsabfrage funktioniert jetzt auch für Repositories ohne stabiles
+  Release: Sie meldet nicht mehr „Could not reach GitHub", wenn GitHub nur
+  Prereleases hostet, und ein neuer Prerelease derselben Basisversion
+  (z. B. v2.3.1-beta.6 nach beta.5) wird angeboten, da Prerelease-Tags mit dem
+  zuletzt installierten Tag statt mit der Paketversion verglichen werden. Die
+  Prerelease-Erkennung versteht auch GitHubs kompaktes JSON
+  (`"prerelease":true`).
+- Ein Button „Aktuelle Version erneut installieren" installiert genau das
+  Release, das als installiert vermerkt ist (lokale Tag-Datei) – praktisch
+  nach einer abgebrochenen oder partiellen Installation. Funktioniert für
+  stabile und Beta-Releases.
+- Die Version im Seitenkopf und auf dem Tab „Update" enthält jetzt das
+  Beta-Suffix, wenn ein Prerelease installiert ist (z. B. „v2.3.1-beta.7"),
+  da der Paketmanager stabile und Prerelease-Builds derselben Paketversion
+  nicht unterscheiden kann.
+- Nach einem erfolgreichen Update holt der Browser die neuen Skripte erneut
+  und die Sitzung wird einmal beendet (eine erneute Anmeldung), damit
+  aktualisierte Oberfläche und RPC-Rechte sofort greifen.
+- Die Update-Logik liegt in `/usr/share/h5000m-fancontrol/update.sh`
+  (`check`, `install`, `status`, `version`); der LuCI-Benutzer kann sie über
+  die RPC-ACL der App ausführen.
+- Dokumentation (README und Änderungsprotokoll) wird auf Englisch, Russisch
+  und Vereinfachtem Chinesisch gepflegt, und die chinesische UI-Übersetzung
+  ist mit den neuen Strings synchron.
+- Sensoren ohne Temperatur werden jetzt auf der LuCI-Seite als offline
+  gezeigt: Die Karte ist ausgegraut und trägt statt „Priorität" ein
+  „Offline"-Badge.
+- Der Update-Tab wurde in „Einstellungen" umbenannt, die Option „Lüfterkarte
+  der Firmware ignorieren" dorthin aus „Reaktion & Sicherheit" verschoben.
+- Der eingebaute Updater zeigt jetzt Live-Installationsfortschritt: Ein
+  Fortschrittsbalken auf der Seite füllt sich, während das Update im
+  Hintergrund läuft; die aktuelle Stufe („Update wird heruntergeladen…",
+  „Pakete werden installiert…", „Update wird abgeschlossen…") ersetzt den
+  generischen Text „Update wird installiert…".
+- Controller-Performance: Der Daemon liest seine Konfiguration jetzt in einem
+  einzigen `uci show`-Durchlauf, liest sysfs- und Statusdateien mit
+  Shell-Builtins statt cat/sed/head-Pipelines und parst die Cooling-Maps des
+  Gerätebaums einmal pro Boot in einen /var/run-Cache, den die
+  LuCI-Statusabfrage wiederverwendet, statt den Gerätebaum alle paar
+  Sekunden neu zu lesen. Die Zahl externer Prozess-Starts pro Iteration
+  sinkt von weit über hundert auf eine Handvoll.
+- Gemeinsame Helfer sind nach /usr/share/h5000m-fancontrol/lib.sh ausgelagert
+  und durch Unit-Tests abgedeckt; die uci-defaults-Migrationen erhielten
+  Fixture-Tests, und die CI führt jetzt auch ShellCheck, eine
+  Makefile/Änderungsprotokoll-Versionsprüfung und eine
+  Übersetzungsabdeckungsprüfung aus. Die RPC-ACL gewährt kein ungenutztes
+  exec-Recht auf die Controller-Binärdatei mehr.
+- LuCI-Neuerungen: Während der Controller während der
+  Herunterregel-Verzögerung eine höhere Ausgabe hält, zeigt der Chip
+  „Tatsächliche Ausgabe" einen Live-Fortschrittsbalken mit den verbleibenden
+  Sekunden; wenn keine Modemtemperaturquelle verfügbar ist, bietet die
+  Temperaturkarte das 5gmodem-Paket an (Projektseite plus Ein-Klick-
+  Installation des neuesten Releases von GitHub).
+
+## 2.3.0
+
+- Die Statusausgabe meldet jetzt die Firmware-Lüfterkarte
+  (`kernel_floor_levels`, z. B. `40=128,85=192,115=255`), und die LuCI-Seite
+  zeigt die exakten Schwellen statt nur einer generischen Notiz zur
+  „Kernel-Sicherheitsuntergrenze".
+- Neue experimentelle Option `override_floor` (Schema v4, standardmäßig aus),
+  die automatische und manuelle Ausgabe unter die
+  Werkseinstellungen-Firmware-Lüfterkarte laufen lässt; Kernel-Trip-Durchsetzung
+  und Failsafe-Verhalten bleiben erhalten.
+- Die werkseitige 40/85/115-°C-Lüfterkarte und die Patch-basierte Lösung
+  dokumentiert.
+- Übersetzungspakete sind an die Anwendungsversion statt an den von `luci.mk`
+  in SDK-Builds abgeleiteten po-mtime/git-Revisionen gebunden.
+- `build-release.sh` erkennt die Sprachen in `po/` jetzt automatisch und
+  sammelt jedes gebaute `luci-app-*`- / `luci-i18n-h5000m-fancontrol-*`-Paket;
+  zum Hinzufügen einer Übersetzung sind keine Skriptänderungen nötig.
+
+## 2.2.1
+
+- Release-Paketierung korrigiert: Der GitHub-Actions-Build kompiliert und
+  liefert jetzt das Übersetzungspaket `luci-i18n-h5000m-fancontrol-ru`
+  (`.lmo`-Kataloge gehören nicht zum Hauptpaket) und dokumentiert dessen
+  Installation für die russische Oberfläche.
+
+## 2.2.0
+
+- Leise Lüfterkurve neu abgestimmt auf `20:0,35:0,40:20,50:20,60:40,70:50,85:100,95:100`.
+- Schema-v3-Migration hinzugefügt, die nur die unveränderte werkseitige leise Kurve ersetzt.
+- Russische LuCI-Übersetzung hinzugefügt.
+- Die CI validiert jetzt alle Übersetzungskataloge und führt den
+  Regressionstest zur Sicherheit der Thermorichtlinie aus.
+
+## 2.1.0
+
+- Der Lüfter-Controller versetzt die gesamte CPU-Thermalzone nicht mehr in `user_space`.
+- Stellt die von älteren Versionen hinterlassene Thermorichtlinie automatisch
+  wieder her, mit Erhalt von CPU-Throttling und Überhitzungsschutz.
+- Statuslesezugriff und Steuerschreibzugriff nutzen getrennte RPC-Rechte.
+- Die UCI-Konfiguration wurde als conffile deklariert (bleibt bei Upgrades erhalten).
+
+## 2.0.2
+
+- Liest den mit Zeitstempel versehenen Temperatur-Cache des MT5700M-Managers.
+- Ignoriert veraltete Modultemperaturen älter als 60 s und bleibt kompatibel
+  zum Legacy-QModem-Cache.
+
+## 2.0.1
+
+- Vereinheitlichte Versionsregeln für GitHub-Releases und OpenWrt-Pakete.
+- Nach 2.0.0 angesammelte Build-Kompatibilitäts- und Auslieferungsrevisionen.
+
+## 2.0.0
+
+- Die Endanwender-LuCI-Seite zur Thermoverwaltung wurde neu gestaltet.
+- Temperaturaggregation für CPU, Ethernet-PHY, Wi-Fi und das 5G-Modul hinzugefügt.
+- Leise, ausgewogene, Leistungs- und benutzerdefinierte Lüfterkurven hinzugefügt.
+- Temperaturhysterese, verzögertes Herunterregeln und Start-Boost hinzugefügt.
+- Sensor-Ausfallschutz und eine Userspace-Sicherheitsuntergrenze bei hohen
+  Temperaturen hinzugefügt.
+- Optionaler H5000M-Gerätebaum-Patch, damit Kernel und Userspace nicht um
+  PWM konkurrieren.
+
+---
+
+*Das englische Änderungsprotokoll ist maßgeblich; die übrigen Sprachen werden
+manuell synchron gehalten.*
+
+</details>
