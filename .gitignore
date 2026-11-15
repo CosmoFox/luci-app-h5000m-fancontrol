@@ -9,4 +9,5 @@
 /dist/
 /dist-release/
 /preview/
+node_modules/
 /__pycache__

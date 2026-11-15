@@ -1,0 +1,392 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Fan Control"
+msgstr "Lüftersteuerung"
+
+msgid "%s / 255 · %s%%"
+msgstr "%s / 255 · %s%%"
+
+msgid "%s °C"
+msgstr "%s °C"
+
+msgid "%s · kernel safety floor"
+msgstr "%s · Kernel-Sicherheitsuntergrenze"
+
+msgid "5G modem"
+msgstr "5G-Modem"
+
+msgid "A short boost helps a stopped fan start reliably. Set 0 to disable."
+msgstr "Ein kurzer Boost hilft einem stehenden Lüfter, zuverlässig anzulaufen. 0 deaktiviert die Funktion."
+
+msgid "Application update"
+msgstr "Anwendungsupdate"
+
+msgid "Applied output"
+msgstr "Tatsächliche Ausgabe"
+
+msgid "Automatic"
+msgstr "Automatisch"
+
+msgid "Automatic curve"
+msgstr "Automatische Kurve"
+
+msgid "Automatically balances cooling and noise based on device temperatures."
+msgstr "Gleicht Kühlung und Geräuschentwicklung automatisch anhand der Gerätetemperaturen aus."
+
+msgid "Balanced"
+msgstr "Ausgewogen"
+
+msgid "Beta"
+msgstr "Beta"
+
+msgid "Beta update available: %s"
+msgstr "Beta-Update verfügbar: %s"
+
+msgid "Beta versions may be unstable and are provided for testing. They are not recommended for daily use."
+msgstr "Beta-Versionen können instabil sein und dienen der Erprobung. Für den täglichen Gebrauch nicht empfohlen."
+
+msgid "Check for updates"
+msgstr "Nach Updates suchen"
+
+msgid "Checking the latest release…"
+msgstr "Prüfe das neueste Release…"
+
+msgid "Checking…"
+msgstr "Prüfe…"
+
+msgid "Choose a cooling profile or set a manual output. Safety limits remain active in every mode."
+msgstr "Wählen Sie ein Kühlprofil oder legen Sie eine manuelle Ausgabe fest. Sicherheitsgrenzen bleiben in jedem Modus aktiv."
+
+msgid "Comma-separated temperature:percent points. The controller interpolates between points."
+msgstr "Durch Kommas getrennte Temperatur:Prozent-Punkte. Der Controller interpoliert zwischen den Punkten."
+
+msgid "Control interval"
+msgstr "Steuerintervall"
+
+msgid "Control temperature"
+msgstr "Temperatur für die Steuerung"
+
+msgid "Cooling management"
+msgstr "Kühlungsverwaltung"
+
+msgid "Cooling policy"
+msgstr "Kühlungsrichtlinie"
+
+msgid "Cooling policy applied successfully."
+msgstr "Kühlungsrichtlinie erfolgreich angewendet."
+
+msgid "Cooling profile"
+msgstr "Kühlprofil"
+
+msgid "CPU"
+msgstr "CPU"
+
+msgid "CPU only"
+msgstr "Nur CPU"
+
+msgid "Could not check for updates"
+msgstr "Update-Prüfung nicht möglich"
+
+msgid "Could not check for updates. Please check the router's internet access."
+msgstr "Update-Prüfung nicht möglich. Bitte prüfen Sie die Internetverbindung des Routers."
+
+msgid "Current input: %s"
+msgstr "Aktueller Eingang: %s"
+
+msgid "Current version"
+msgstr "Aktuelle Version"
+
+msgid "Curve failsafe"
+msgstr "Kurven-Ausfallschutz"
+
+msgid "Custom"
+msgstr "Benutzerdefiniert"
+
+msgid "Custom curve"
+msgstr "Benutzerdefinierte Kurve"
+
+msgid "Download and install the latest beta version now?"
+msgstr "Die neueste Beta-Version jetzt herunterladen und installieren?"
+
+msgid "Download and install the latest version now?"
+msgstr "Die neueste Version jetzt herunterladen und installieren?"
+
+msgid "Download and reinstall the currently installed version now?"
+msgstr "Die aktuell installierte Version jetzt erneut herunterladen und installieren?"
+
+msgid "Effective fan policy"
+msgstr "Effektive Lüfterrichtlinie"
+
+msgid "Enable enhanced controller"
+msgstr "Erweiterten Controller aktivieren"
+
+msgid "Ethernet PHY"
+msgstr "Ethernet-PHY"
+
+msgid "Failed to apply cooling policy:"
+msgstr "Kühlungsrichtlinie konnte nicht angewendet werden:"
+
+msgid "Failed to install the update"
+msgstr "Update konnte nicht installiert werden"
+
+msgid "Failsafe cooling"
+msgstr "Failsafe-Kühlung"
+
+msgid "Fan curve"
+msgstr "Lüfterkurve"
+
+msgid "Modem unavailable"
+msgstr "Modem nicht verfügbar"
+
+msgid "Hottest available sensor"
+msgstr "Heißester verfügbarer Sensor"
+
+msgid "Hysteresis window"
+msgstr "Hysteresebereich"
+
+msgid "Kernel protection"
+msgstr "Kernelschutz"
+
+msgid "Kernel protection only"
+msgstr "Nur Kernelschutz"
+
+msgid "Kernel safety floor"
+msgstr "Kernel-Sicherheitsuntergrenze"
+
+msgid "Kernel thermal protection is always retained. Requested output may be raised automatically when the kernel requires more cooling."
+msgstr "Der thermische Kernelschutz bleibt immer erhalten. Die angeforderte Ausgabe kann automatisch erhöht werden, wenn der Kernel mehr Kühlung benötigt."
+
+msgid "Loading…"
+msgstr "Lade…"
+
+msgid "Manual"
+msgstr "Manuell"
+
+msgid "Manual PWM output"
+msgstr "Manuelle PWM-Ausgabe"
+
+msgid "Manual request"
+msgstr "Manuelle Anforderung"
+
+msgid "No beta releases found"
+msgstr "Keine Beta-Releases gefunden"
+
+msgid "No stable release published yet."
+msgstr "Noch kein stabiles Release veröffentlicht."
+
+msgid "No valid sensor"
+msgstr "Kein gültiger Sensor"
+
+msgid "Offer beta releases"
+msgstr "Beta-Releases anbieten"
+
+msgid "Operating mode"
+msgstr "Betriebsmodus"
+
+msgid "Performance"
+msgstr "Leistung"
+
+msgid "Policy"
+msgstr "Richtlinie"
+
+msgid "Current status"
+msgstr "Aktueller Status"
+
+msgid "Prevents repeated speed changes around a curve point."
+msgstr "Verhindert wiederholte Drehzahlwechsel um einen Kurvenpunkt."
+
+msgid "Priority"
+msgstr "Priorität"
+
+msgid "Quiet"
+msgstr "Leise"
+
+msgid "Reinstall current version"
+msgstr "Aktuelle Version erneut installieren"
+
+msgid "Release page"
+msgstr "Release-Seite"
+
+msgid "Requested output"
+msgstr "Angeforderte Ausgabe"
+
+msgid "Response & safety"
+msgstr "Reaktion & Sicherheit"
+
+msgid "Running normally"
+msgstr "Läuft normal"
+
+msgid "Seconds between control decisions. The dashboard refreshes independently."
+msgstr "Sekunden zwischen Steuerungsentscheidungen; das Dashboard aktualisiert sich unabhängig."
+
+msgid "Sensor failsafe"
+msgstr "Sensor-Ausfallschutz"
+
+msgid "Speed-down delay"
+msgstr "Verzögerung beim Herunterregeln"
+
+msgid "Startup boost duration"
+msgstr "Dauer des Start-Boosts"
+
+msgid "Startup boost PWM"
+msgstr "PWM des Start-Boosts"
+
+msgid "Status delayed"
+msgstr "Status verzögert"
+
+msgid "Temperature"
+msgstr "Temperatur"
+
+msgid "Temperature hysteresis"
+msgstr "Temperaturhysterese"
+
+msgid "Temperatures must increase from 0–150 °C and percentages must be 0–100."
+msgstr "Temperaturen müssen von 0–150 °C ansteigen, Prozentwerte von 0–100."
+
+msgid "The fan manager has exclusive fan policy control. Kernel CPU throttling and hot/critical over-temperature protection remain active."
+msgstr "Der Lüfter-Manager hat die exklusive Kontrolle über die Lüfterrichtlinie. CPU-Throttling und Hot/Critical-Übertemperaturschutz des Kernels bleiben aktiv."
+
+msgid "The hottest-sensor option considers CPU, Ethernet PHY, Wi-Fi and the available 5G modem cache."
+msgstr "Die Option „Heißester Sensor“ berücksichtigt CPU, Ethernet-PHY, Wi-Fi und den verfügbaren 5G-Modem-Cache."
+
+msgid "The installed release was not identified. Install a version through the Settings tab first."
+msgstr "Das installierte Release wurde nicht identifiziert. Installieren Sie zuerst eine Version über den Tab „Einstellungen“."
+
+msgid "The kernel safety floor may raise the effective output above this value."
+msgstr "Die Kernel-Sicherheitsuntergrenze kann die effektive Ausgabe über diesen Wert anheben."
+
+msgid "The update is still building on the server. Please wait about 15-20 minutes and try again."
+msgstr "Das Update wird noch auf dem Server erstellt. Bitte warten Sie etwa 15–20 Minuten und versuchen Sie es erneut."
+
+msgid "Unavailable"
+msgstr "Nicht verfügbar"
+
+msgid "Update"
+msgstr "Update"
+
+msgid "Update available"
+msgstr "Update verfügbar"
+
+msgid "Update installed. Refreshing…"
+msgstr "Update installiert. Aktualisiere…"
+
+msgid "Update is taking too long. Check the connection and try again."
+msgstr "Das Update dauert zu lange. Prüfen Sie die Verbindung und versuchen Sie es erneut."
+
+msgid "Use comma-separated temperature:percent points, for example 35:0,45:50,70:80,90:100."
+msgstr "Verwenden Sie durch Kommas getrennte Temperatur:Prozent-Punkte, z. B. 35:0,45:50,70:80,90:100."
+
+msgid "Wait this many seconds before lowering fan output; temperature increases are applied immediately."
+msgstr "Warte diese Sekunden vor dem Absenken der Lüfterausgabe; Temperaturerhöhungen werden sofort angewendet."
+
+msgid "Waiting before speed down"
+msgstr "Warte vor dem Herunterregeln"
+
+msgid "When disabled, the fan follows the kernel thermal protection level only."
+msgstr "Wenn deaktiviert, folgt der Lüfter nur der thermischen Kernel-Schutzstufe."
+
+msgid "Wi-Fi radios"
+msgstr "Wi-Fi-Funkmodule"
+
+msgid "You have the latest beta"
+msgstr "Sie haben die neueste Beta-Version"
+
+msgid "You have the latest version"
+msgstr "Sie haben die neueste Version"
+
+msgid "Ignore firmware fan map"
+msgstr "Lüfterkarte der Firmware ignorieren"
+
+msgid "Install beta"
+msgstr "Beta installieren"
+
+msgid "Install update"
+msgstr "Update installieren"
+
+msgid "Installing the update…"
+msgstr "Update wird installiert…"
+
+msgid "Advanced. Lets automatic and manual output run below the levels the stock firmware enforces at 40, 85 and 115 °C. The kernel still raises the fan when those trip points are crossed; install patched firmware for full control."
+msgstr "Erweitert. Erlaubt, dass automatische und manuelle Ausgabe unter den Stufen laufen, die die Werkseitige Firmware bei 40, 85 und 115 °C erzwingt. Der Kernel erhöht die Lüfterdrehzahl weiterhin beim Überschreiten dieser Grenzwerte; für volle Kontrolle installieren Sie gepatchte Firmware."
+
+msgid "%s · ignoring firmware map"
+msgstr "%s · ignoriere Firmware-Karte"
+
+msgid "Firmware fan map: %s. Install patched firmware for full curve control."
+msgstr "Firmware-Lüfterkarte: %s. Installieren Sie gepatchte Firmware für volle Kurvenkontrolle."
+
+msgid "Settings"
+msgstr "Einstellungen"
+
+msgid "Offline"
+msgstr "Offline"
+
+msgid "Downloading the update…"
+msgstr "Update wird heruntergeladen…"
+
+msgid "Installing packages…"
+msgstr "Pakete werden installiert…"
+
+msgid "Finishing the update…"
+msgstr "Update wird abgeschlossen…"
+
+msgid "Modem temperature monitoring requires the 5gmodem package."
+msgstr "Die Modemtemperaturüberwachung benötigt das 5gmodem-Paket."
+
+msgid "Project page"
+msgstr "Projektseite"
+
+msgid "Install 5gmodem"
+msgstr "5gmodem installieren"
+
+msgid "Install the 5gmodem package now? It is downloaded from the official GitHub releases of the luci-app-5gmodem project."
+msgstr "Das 5gmodem-Paket jetzt installieren? Es wird von den offiziellen GitHub-Releases des Projekts luci-app-5gmodem heruntergeladen."
+
+msgid "5gmodem %s installed successfully. Reloading…"
+msgstr "5gmodem %s erfolgreich installiert. Lade neu…"
+
+msgid "Could not install 5gmodem:"
+msgstr "5gmodem konnte nicht installiert werden:"
+
+msgid "unknown error"
+msgstr "Unbekannter Fehler"
+
+msgid "%s s"
+msgstr "%s s"
+
+msgid "Delay before applying"
+msgstr "Verzögerung vor dem Anwenden"
+
+msgid "Not enough free space in /tmp to download the update."
+msgstr "Nicht genügend freier Speicher in /tmp, um das Update herunterzuladen."
+
+msgid "Could not download the update from GitHub. Check the internet connection and try again."
+msgstr "Das Update konnte nicht von GitHub heruntergeladen werden. Prüfen Sie die Internetverbindung und versuchen Sie es erneut."
+
+msgid "The download was interrupted: the file is incomplete. Try again."
+msgstr "Der Download wurde unterbrochen: Die Datei ist unvollständig. Versuchen Sie es erneut."
+
+msgid "The package manager refuses to install anything: /etc/apk/world lists %s, which apk cannot find (usually a package previously installed from a file). Remove its line from /etc/apk/world or reinstall it from its file, then try the update again."
+msgstr "Der Paketmanager verweigert jede Installation: /etc/apk/world enthält %s, das apk nicht finden kann (üblicherweise ein Paket, das zuvor aus einer Datei installiert wurde). Entfernen Sie dessen Zeile aus /etc/apk/world oder installieren Sie es erneut aus der Datei, und wiederholen Sie dann das Update."
+
+msgid "The package manager could not install the update."
+msgstr "Der Paketmanager konnte das Update nicht installieren."
+
+msgid "The package was installed, but the version did not change. The release file looks broken."
+msgstr "Das Paket wurde installiert, aber die Version hat sich nicht geändert. Die Release-Datei scheint beschädigt zu sein."
+
+msgid "Downloading: %s of %s KB"
+msgstr "Lade herunter: %s von %s KB"
+
+msgid "Downloading: %s KB"
+msgstr "Lade herunter: %s KB"
+
+msgid "Refreshing package lists…"
+msgstr "Aktualisiere Paketlisten…"
+
+msgid "Latest release: %s (published %s)"
+msgstr "Neuestes Release: %s (veröffentlicht %s)"
+
+msgid "Languages"
+msgstr "Sprachen"

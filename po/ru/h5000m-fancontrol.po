@@ -190,8 +190,8 @@ msgstr "Производительный"
 msgid "Policy"
 msgstr "Политика"
 
-msgid "Policy reason"
-msgstr "Причина политики"
+msgid "Current status"
+msgstr "Текущий статус"
 
 msgid "Prevents repeated speed changes around a curve point."
 msgstr "Предотвращает повторяющиеся изменения скорости возле точки кривой."

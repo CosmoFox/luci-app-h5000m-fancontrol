@@ -1,0 +1,12 @@
+{
+	"name": "h5fan-ui-state-tests",
+	"private": true,
+	"type": "module",
+	"description": "Failure-state visual tests for the H5000M fan control LuCI page",
+	"scripts": {
+		"test": "node states-test.mjs"
+	},
+	"dependencies": {
+		"playwright-core": "^1.48.0"
+	}
+}

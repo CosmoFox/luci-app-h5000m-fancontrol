@@ -313,8 +313,8 @@ msgstr "性能"
 msgid "Policy"
 msgstr "策略"
 
-msgid "Policy reason"
-msgstr "策略原因"
+msgid "Current status"
+msgstr "当前状态"
 
 msgid "Prevents repeated speed changes around a curve point."
 msgstr "避免温度在曲线控制点附近波动时反复改变转速。"

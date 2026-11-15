@@ -4,7 +4,7 @@
 [![Build Release](https://github.com/CosmoFox/luci-app-h5000m-fancontrol/actions/workflows/release.yml/badge.svg)](https://github.com/CosmoFox/luci-app-h5000m-fancontrol/actions/workflows/release.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-us **English** | [🇷🇺 Русский](#ru) | [🇨🇳 简体中文](#zh)
+us **English** | [🇷🇺 Русский](#ru) | [🇨🇳 简体中文](#zh) | [🇩🇪 Deutsch](#de)
 
 *The English text is canonical; the Russian and Chinese versions are collapsed below.*
 
@@ -12,7 +12,7 @@ An OpenWrt LuCI fan manager for the Hiveton H5000M: temperature monitoring, auto
 
 Versions follow the standard `major.minor.patch-rREVISION` format. GitHub Release tags use the semantic version only (currently `v2.3.0`); the OpenWrt package version is `2.3.1-r1`.
 
-![Fan control UI](docs/fan-control-ui.jpg)
+![Fan control UI](docs/fan-control-ui.png)
 
 ## Features
 
@@ -22,7 +22,7 @@ Versions follow the standard `major.minor.patch-rREVISION` format. GitHub Releas
 - Temperature hysteresis and delayed spin-down to reduce frequent fan fluttering
 - Start boost after the fan has stopped
 - Automatic high-output failsafe mode on sensor or curve faults
-- Simplified Chinese and Russian LuCI interface (language follows LuCI settings automatically)
+- Simplified Chinese, German and Russian LuCI interface (language follows LuCI settings automatically)
 - In-app self-update: offers the latest stable GitHub release from the LuCI page (optional `-beta.N` prereleases with a beta warning; the Russian interface package is installed along with the app)
 - No cloud dependency; no device data is collected or uploaded
 
@@ -57,7 +57,7 @@ make package/luci-app-h5000m-fancontrol/compile V=s
 
 Prebuilt `.apk` files in GitHub Releases are compiled by GitHub Actions with the official OpenWrt 25.12.6 `mediatek/filogic` SDK and target 25.12.x builds with the same ABI. Each release also ships the build public key and SHA256 checksums. Since the fan safety policy depends on the device tree, integrating this project into your firmware — and evaluating the patch below — is recommended over installing the package alone.
 
-UI translations ship as separate packages: install the matching `luci-i18n-h5000m-fancontrol-ru` / `-zh-cn` package from the release assets alongside the main `.apk` to enable Russian or Simplified Chinese.
+UI translations ship as separate packages: install the matching `luci-i18n-h5000m-fancontrol-ru` / `-de` / `-zh-cn` package from the release assets alongside the main `.apk` to enable Russian, German or Simplified Chinese.
 
 ## Exclusive fan control
 
@@ -110,6 +110,25 @@ Common commands:
 /etc/init.d/h5000m-fancontrol restart
 ```
 
+## Testing
+
+- `tests/test-*.sh` — POSIX shell regression tests for the controller, updater and helpers; run all with `for t in tests/test-*.sh; do sh "$t"; done` (the CI `static-checks` job runs the same set plus ShellCheck):
+  - `test-lib.sh` — unit tests for the `lib.sh` helpers (curve math, temperature parsing, cache/metrics parsers);
+  - `test-config-load.sh` — config load and sanitization in the controller (with a stub `uci`);
+  - `test-module-temperature.sh` — MT5700M modem temperature from the file cache;
+  - `test-vendor-temperature.sh` — vendor radio temperature via `iwpriv` (functions only, never touches the fan);
+  - `test-thermal-policy-safety.sh` — safety invariants: the controller must not move the CPU thermal zone to `user_space` and must release control;
+  - `test-uci-defaults.sh` — the `uci-defaults` migration scripts (91/92/93) on an isolated store;
+  - `test-update.sh` — unit tests for the `update.sh` helpers (versions, assets, languages, JSON escaping, apk error parsing) plus CLI smoke.
+- `tests/ui/states-test.mjs` — visual test of the LuCI page in failure states: no temperature source, modem absent, no Wi-Fi radio, kernel-owned thermal policy, failsafe, stale status, active speed-down delay, manual mode. It temporarily swaps the router's status script (`/usr/sbin/h5000m-fancontrol-status`) for a stub printing the crafted `key=value` payload, waits for the expected state, screenshots the rendered page and restores the original binary (md5-verified); the daemon keeps controlling the fan for real throughout. Output: `preview/ui-states/report.html`. Run:
+
+  ```sh
+  cd tests/ui && npm install
+  H5FAN_PASS=<LuCI password> node states-test.mjs
+  ```
+
+  Details and scenario format: `tests/ui/README.md`.
+
 ## Safety notes
 
 Fan control is a device-safety function. Keep an eye on temperatures after changing a custom curve or manual PWM. The controller only manages fan PWM and never switches the entire CPU thermal zone to `user_space`; regardless of whether the exclusive fan patch is applied, the CPU throttling, hot and critical protections in the device tree must not be removed.
@@ -129,7 +148,7 @@ Fan control is a device-safety function. Keep an eye on temperatures after chang
 
 Версии следуют формату `мажор.минор.патч-rРЕВИЗИЯ`. Теги GitHub Release используют только семантическую версию (сейчас `v2.3.0`), версия пакета OpenWrt — `2.3.1-r1`.
 
-![Страница управления вентилятором](docs/fan-control-ui.jpg)
+![Страница управления вентилятором](docs/fan-control-ui.png)
 
 ## Возможности
 
@@ -139,7 +158,7 @@ Fan control is a device-safety function. Keep an eye on temperatures after chang
 - Температурный гистерезис и задержка остановки — меньше частых перепадов оборотов
 - Стартовый буст после полной остановки вентилятора
 - Автоматический переход в режим высокой мощности при неисправности датчика или кривой
-- Интерфейс LuCI на русском и упрощённом китайском (язык следует настройкам LuCI)
+- Интерфейс LuCI на русском, немецком и упрощённом китайском (язык следует настройкам LuCI)
 - Встроенное самообновление: вкладка LuCI предлагает последний стабильный релиз на GitHub (опционально пре-релизы `-beta.N` с предупреждением; вместе с приложением ставится русский интерфейс)
 - Без облачных сервисов; данные устройства не собираются и никуда не отправляются
 
@@ -174,7 +193,7 @@ make package/luci-app-h5000m-fancontrol/compile V=s
 
 Готовые `.apk` в GitHub Releases собираются GitHub Actions в официальном SDK `mediatek/filogic` от OpenWrt 25.12.6 и подходят для сборок 25.12.x с тем же ABI. Каждый релиз также содержит публичный ключ сборки и контрольные суммы SHA256. Поскольку безопасная стратегия вентилятора зависит от device tree, проект рекомендуется интегрировать в прошивку и одновременно оценить патч ниже, а не устанавливать только пакет.
 
-Пакеты переводов интерфейса выносятся отдельно: установите `luci-i18n-h5000m-fancontrol-ru` или `-zh-cn` из ассетов релиза вместе с основным `.apk`, чтобы включить русский или упрощённый китайский интерфейс.
+Пакеты переводов интерфейса выносятся отдельно: установите `luci-i18n-h5000m-fancontrol-ru`, `-de` или `-zh-cn` из ассетов релиза вместе с основным `.apk`, чтобы включить русский, немецкий или упрощённый китайский интерфейс.
 
 ## Исключительный контроль вентилятора
 
@@ -229,6 +248,25 @@ git apply package/luci-app-h5000m-fancontrol/openwrt-patches/h5000m-userspace-fa
 /etc/init.d/h5000m-fancontrol restart
 ```
 
+## Тестирование
+
+- `tests/test-*.sh` — регрессионные shell-тесты контроллера, апдейтера и хелперов; весь набор: `for t in tests/test-*.sh; do sh "$t"; done` (в CI job `static-checks` прогоняется тот же набор плюс ShellCheck):
+  - `test-lib.sh` — юнит-тесты хелперов `lib.sh` (математика кривой, парсинг температур, парсеры кеша и метрик);
+  - `test-config-load.sh` — загрузка и санитизация конфигурации контроллером (с подменным `uci`);
+  - `test-module-temperature.sh` — температура модуля MT5700M из файлового кеша;
+  - `test-vendor-temperature.sh` — температура радио через `iwpriv` (только функции, вентилятор не трогает);
+  - `test-thermal-policy-safety.sh` — инварианты безопасности: контроллер не переводит thermal-зону CPU в `user_space` и обязан отпускать управление;
+  - `test-uci-defaults.sh` — миграционные скрипты `uci-defaults` (91/92/93) на изолированном сторе;
+  - `test-update.sh` — юнит-тесты хелперов `update.sh` (версии, ассеты, языки, экранирование JSON, разбор ошибок apk) плюс CLI-smoke.
+- `tests/ui/states-test.mjs` — визуальная проверка страницы LuCI в состояниях отказа: нет источника температуры, модем отсутствует, нет модуля Wi-Fi, политику держит ядро, failsafe, устаревший статус, активная задержка снижения оборотов, ручной режим. Скрипт временно подменяет статус-скрипт на роутере (`/usr/sbin/h5000m-fancontrol-status`) заглушкой с нужным набором `key=value`, дожидается ожидаемого состояния, снимает скриншоты страницы и восстанавливает оригинал (сверка md5); демон при этом продолжает реально управлять вентилятором. Результат: `preview/ui-states/report.html`. Запуск:
+
+  ```sh
+  cd tests/ui && npm install
+  H5FAN_PASS=<пароль LuCI> node states-test.mjs
+  ```
+
+  Подробности и формат сценариев: `tests/ui/README.md`.
+
 ## Примечания по безопасности
 
 Управление вентилятором — функция безопасности устройства. После изменения произвольной кривой или ручного PWM постоянно контролируйте температуры. Контроллер управляет только PWM вентилятора и никогда не переводит всю thermal-зону CPU в `user_space`; независимо от применения патча из device tree нельзя удалять троттлинг CPU и защиты hot и critical.
@@ -250,7 +288,7 @@ git apply package/luci-app-h5000m-fancontrol/openwrt-patches/h5000m-userspace-fa
 
 版本采用标准的 `主版本.次版本.修订版本-r打包修订` 格式。GitHub Release 仅使用语义版本标签（当前为 `v2.3.0`），OpenWrt 安装包版本为 `2.3.1-r1`。
 
-![散热管理界面](docs/fan-control-ui.jpg)
+![散热管理界面](docs/fan-control-ui.png)
 
 ## 功能
 
@@ -260,7 +298,7 @@ git apply package/luci-app-h5000m-fancontrol/openwrt-patches/h5000m-userspace-fa
 - 温度滞回及降速延迟，减少风扇频繁波动
 - 风扇停转后的启动助推
 - 传感器或曲线异常时自动进入高输出安全模式
-- 简体中文和俄语 LuCI 界面（语言跟随 LuCI 设置自动切换）
+- 简体中文、德语和俄语 LuCI 界面（语言跟随 LuCI 设置自动切换）
 - 应用内自更新：通过 LuCI 页面提供 GitHub 最新稳定版（可选 `-beta.N` 预发布版并显示测试版警告；俄语界面包随应用一并安装）
 - 不依赖云服务，不收集或上传设备数据
 
@@ -295,7 +333,7 @@ make package/luci-app-h5000m-fancontrol/compile V=s
 
 GitHub Releases 中的预编译 `.apk` 由 GitHub Actions 使用官方 OpenWrt 25.12.6 `mediatek/filogic` SDK 构建，适用于同一 ABI 的 25.12.x 版本。Release 同时提供构建公钥和 SHA256 校验文件。由于风扇安全策略依赖设备树，建议把本项目集成进固件并同时评估下方补丁，而不是只安装软件包。
 
-界面语言包以独立软件包发布：从 Release 资源中安装与主 `.apk` 配套的 `luci-i18n-h5000m-fancontrol-ru` / `-zh-cn` 包，即可启用俄语或简体中文界面。
+界面语言包以独立软件包发布：从 Release 资源中安装与主 `.apk` 配套的 `luci-i18n-h5000m-fancontrol-ru` / `-de` / `-zh-cn` 包，即可启用俄语、德语或简体中文界面。
 
 ## 独占风扇策略控制
 
@@ -346,11 +384,166 @@ git apply package/luci-app-h5000m-fancontrol/openwrt-patches/h5000m-userspace-fa
 /etc/init.d/h5000m-fancontrol restart
 ```
 
+## 测试
+
+- `tests/test-*.sh`：控制器、更新器和辅助函数的 POSIX shell 回归测试；全部运行：`for t in tests/test-*.sh; do sh "$t"; done`（CI 的 `static-checks` 任务运行同一组测试并附加 ShellCheck）：
+  - `test-lib.sh` —— `lib.sh` 辅助函数的单元测试（曲线计算、温度解析、缓存/指标解析器）；
+  - `test-config-load.sh` —— 控制器加载与净化配置（使用桩 `uci`）；
+  - `test-module-temperature.sh` —— 从文件缓存读取 MT5700M 模块温度；
+  - `test-vendor-temperature.sh` —— 通过 `iwpriv` 获取厂商射频温度（仅函数，不触碰风扇）；
+  - `test-thermal-policy-safety.sh` —— 安全不变量：控制器不得将 CPU thermal zone 切换为 `user_space`，且必须释放控制；
+  - `test-uci-defaults.sh` —— 在隔离存储上测试 `uci-defaults` 迁移脚本（91/92/93）；
+  - `test-update.sh` —— `update.sh` 辅助函数的单元测试（版本、资产、语言、JSON 转义、apk 错误解析）及 CLI 冒烟测试。
+- `tests/ui/states-test.mjs`：LuCI 页面故障状态的可视化测试：无温度源、无调制解调器、无 Wi-Fi 射频、内核持有散热策略、failsafe、状态过期、降速延迟生效、手动模式。脚本会临时把路由器上的状态脚本（`/usr/sbin/h5000m-fancontrol-status`）替换为输出指定 `key=value` 数据的桩脚本，等待预期状态出现，截取页面截图，并恢复原始脚本（校验 md5）；期间守护进程仍实际控制风扇。输出：`preview/ui-states/report.html`。运行：
+
+  ```sh
+  cd tests/ui && npm install
+  H5FAN_PASS=<LuCI 密码> node states-test.mjs
+  ```
+
+  详见 `tests/ui/README.md`。
+
 ## 安全说明
 
 风扇控制属于设备安全功能。修改自定义曲线或手动 PWM 后应持续观察温度。控制器只管理风扇 PWM，从不把整个 CPU thermal zone 切换到 `user_space`；无论是否应用独占风扇补丁，都不应删除设备树中的 CPU 降频、hot 或 critical 保护。
 
 ## 许可证
+
+[Apache License 2.0](LICENSE)
+
+</details>
+
+<a id="de"></a>
+
+<details>
+<summary><b>🇩🇪 Deutsch</b></summary>
+
+# H5000M Lüftersteuerung
+
+Ein OpenWrt-LuCI-Lüfter-Manager für das Hiveton H5000M: Temperaturüberwachung, automatische Lüfterkurven, manuelles PWM, Start-Boost, Temperaturhysterese, verzögertes Herunterregeln und Sensor-Ausfallschutz — während CPU-Throttling sowie die Hot- und Critical-Überhitzungsschutzmechanismen des Kernels erhalten bleiben.
+
+Die Versionen folgen dem üblichen Format `major.minor.patch-rREVISION`. GitHub-Release-Tags verwenden nur die semantische Version (aktuell `v2.3.0`); die OpenWrt-Paketversion ist `2.3.1-r1`.
+
+![Lüftersteuerungs-Oberfläche](docs/fan-control-ui.png)
+
+## Funktionen
+
+- Bündelt aktuelle Cache-Temperaturen von CPU, Ethernet-PHY, Wi-Fi-Funkmodulen und dem MT5700M-Modul-Manager
+- Vier automatische Kurven: Leise, Ausgewogen, Leistung und Benutzerdefiniert
+- Drei Betriebsmodi: automatisch, manuelles PWM und nur Kernelschutz
+- Temperaturhysterese und verzögertes Herunterregeln gegen häufiges Lüfterflattern
+- Start-Boost, nachdem der Lüfter gestoppt wurde
+- Automatischer Failsafe-Modus mit hoher Ausgabe bei Sensor- oder Kurvenfehlern
+- Vereinfachtes Chinesisch, Deutsch und Russisch als LuCI-Oberfläche (Sprache folgt den LuCI-Einstellungen automatisch)
+- In-App-Selbstupdate: bietet das neueste stabile GitHub-Release auf der LuCI-Seite an (optionale `-beta.N`-Vorabversionen mit Beta-Warnung; das russische Sprachpaket wird zusammen mit der App installiert)
+- Keine Cloud-Abhängigkeit; es werden keine Gerätedaten erhoben oder hochgeladen
+
+## Kompatibilität
+
+- Hiveton H5000M
+- OpenWrt SNAPSHOT (LuCI-JavaScript-Ansichten)
+- `pwm-fan`-Treiber und Steuerknoten `/sys/class/hwmon/*/pwm1`
+
+Dieses Projekt ist auf den Gerätebaum und das Sensorlayout des H5000M ausgelegt. Auch wenn das Paket auf anderen Geräten installierbar ist, werden diese nicht unterstützt.
+
+## Release-Kanäle
+
+- Stabil: Tag `vX.Y.Z` auf `main` → reguläres GitHub-Release.
+- Beta: Tag `vX.Y.Z-beta.N` auf `beta` → GitHub-Vorabrelease mit `beta` im Namen.
+
+Die CI prüft den Tag gegen `PKG_VERSION` im Makefile und ob der getaggte Commit im passenden Branch enthalten ist. Mit `scripts/release.sh v2.4.0-beta.1` erstellen Sie ein Release aus einem sauberen, aktuellen Branch. Vollständige Anleitung: [docs/RELEASING.md](docs/RELEASING.md).
+
+## Einbindung in OpenWrt-Quellen
+
+Vom OpenWrt-Quellverzeichnis ausführen:
+
+```sh
+git clone https://github.com/FAN789/luci-app-h5000m-fancontrol.git \
+  package/luci-app-h5000m-fancontrol
+
+make menuconfig
+# LuCI -> Applications -> luci-app-h5000m-fancontrol
+
+make package/luci-app-h5000m-fancontrol/compile V=s
+```
+
+Vorkompilierte `.apk`-Dateien in den GitHub-Releases werden von GitHub Actions mit dem offiziellen OpenWrt-25.12.6-SDK für `mediatek/filogic` erstellt und zielen auf 25.12.x-Builds mit derselben ABI. Jedes Release enthält außerdem den öffentlichen Build-Schlüssel und SHA256-Prüfsummen. Da die Lüftersicherheitsrichtlinie vom Gerätebaum abhängt, wird die Einbindung dieses Projekts in Ihre Firmware — einschließlich der Bewertung des folgenden Patches — empfohlen, statt nur das Paket zu installieren.
+
+Oberflächenübersetzungen werden als eigene Pakete ausgeliefert: Installieren Sie das passende Paket `luci-i18n-h5000m-fancontrol-ru` / `-de` / `-zh-cn` aus den Release-Assets zusammen mit dem Haupt-`.apk`, um Russisch, Deutsch oder Vereinfachtes Chinesisch zu aktivieren.
+
+## Exklusive Lüftersteuerung
+
+Die aktive Kühlzuordnung im Werkseinstellungs-Gerätebaum des H5000M ändert PWM parallel zum Userspace-Controller. Damit die automatischen Kurven den Lüfter vollständig steuern können, wenden Sie den enthaltenen Patch vor dem Bau der Firmware an:
+
+```sh
+git apply package/luci-app-h5000m-fancontrol/openwrt-patches/h5000m-userspace-fan-control.patch
+```
+
+Der Patch entfernt nur die drei Lüfter-Cooling-Maps des H5000M; CPU-Throttling sowie die Hot- und Critical-Schwellen bleiben erhalten. Der Controller erzwingt außerdem eine höhere Lüfterausgabe, wenn die CPU ihren Hochtemperaturschwellwert erreicht.
+
+Ohne den Patch läuft das Plugin weiter, aber der thermische Kernel-Governor kann die tatsächliche PWM anheben, sodass sich angeforderte und im UI angezeigte reale Lüfterausgabe unterscheiden können.
+
+## Lüfterkarte der Werkseinstellungen (warum der Lüfter ≥ 50 % hält)
+
+Ohne den Gerätebaum-Patch ist der Kernel weiterhin Mitbesitzer des Lüfters. Die werkseitige Kühlzuordnung des H5000M hält PWM ab 40 °C bei 128 (≈50 %), ab 85 °C bei 192 (≈75 %) und ab 115 °C bei 255, sodass jedes Profil — einschließlich Leise — durch die „Kernel-Sicherheitsuntergrenze“ begrenzt wird. Die LuCI-Seite zeigt die aus dem Gerätebaum gelesenen echten Schwellenwerte.
+
+Empfohlen: Firmware mit `openwrt-patches/h5000m-userspace-fan-control.patch` bauen. Experimentelle Alternative: „Lüfterkarte der Firmware ignorieren“ in den Plugin-Einstellungen aktivieren, damit die Kurve unter die Firmware-Stufen läuft. Der Kernel schreibt seine eigene Stufe beim Überschreiten einer Schwelle neu, erwarten Sie daher einen kurzen Sprung bei 40/85/115 °C; der Hot/Critical-CPU-Schutz ist nicht betroffen.
+
+## Selbstupdate
+
+Die Verwaltungsseite hat einen Tab „Update“, der das neueste **stabile**
+GitHub-Release dieser App anbietet (`releases/latest`). Ein optionales
+Kontrollkästchen „Beta-Releases anbieten“ listet `-beta.N`-Vorabversionen mit
+einem Button „Beta installieren“ und einer Warnung, dass Beta-Builds instabil
+sein können und für den täglichen Gebrauch nicht empfohlen werden. „Nach
+Updates suchen“ vergleicht die installierte Version mit dem neuesten Release;
+„Update installieren“ lädt das Anwendungspaket und — sofern veröffentlicht —
+die russische Oberfläche (`luci-i18n-h5000m-fancontrol-ru`) für den
+Paketmanager des Routers (`.apk` auf SNAPSHOT/apk, `.ipk` auf opkg) herunter
+und installiert sie im Hintergrund mit Fortschrittsanzeige.
+
+Der Updater prüft GitHub-Releases über die normale Internetverbindung des Routers (ohne Proxy). Nach einem erfolgreichen Update lädt die Seite neu und Sie melden sich erneut an, damit die aktualisierte Oberfläche und die RPC-Rechte sofort greifen. Es werden nur Release-Assets dieses Repositories heruntergeladen — es werden keine Gerätedaten hochgeladen.
+
+## Konfiguration & Dienste
+
+- UCI-Konfiguration: `/etc/config/h5000m_fancontrol`
+- procd-Dienst: `/etc/init.d/h5000m-fancontrol`
+- Controller: `/usr/sbin/h5000m-fancontrol`
+- Updater-Skript: `/usr/share/h5000m-fancontrol/update.sh`
+- LuCI-Seite: System → Lüftersteuerung
+
+Häufige Befehle:
+
+```sh
+/usr/sbin/h5000m-fancontrol status
+/usr/sbin/h5000m-fancontrol apply
+/etc/init.d/h5000m-fancontrol restart
+```
+
+## Tests
+
+- `tests/test-*.sh` — POSIX-Shell-Regressionstests für Controller, Updater und Helfer; alle ausführen mit `for t in tests/test-*.sh; do sh "$t"; done` (der CI-Job `static-checks` läuft über denselben Satz plus ShellCheck):
+  - `test-lib.sh` — Unit-Tests für die `lib.sh`-Helfer (Kurvenberechnung, Temperaturparser, Cache/Metrik-Parser);
+  - `test-config-load.sh` — Laden und Säubern der Konfiguration im Controller (mit Stub-`uci`);
+  - `test-module-temperature.sh` — MT5700M-Modemtemperatur aus dem Datei-Cache;
+  - `test-vendor-temperature.sh` — Hersteller-Radiotemperatur via `iwpriv` (nur Funktionen, berührt den Lüfter nie);
+  - `test-thermal-policy-safety.sh` — Sicherheitsinvarianten: Der Controller darf die CPU-Thermalzone nicht nach `user_space` versetzen und muss die Kontrolle freigeben;
+  - `test-uci-defaults.sh` — die `uci-defaults`-Migrationsskripte (91/92/93) auf einem isolierten Speicher;
+  - `test-update.sh` — Unit-Tests für die `update.sh`-Helfer (Versionen, Assets, Sprachen, JSON-Escaping, apk-Fehleranalyse) plus CLI-Smoke.
+- `tests/ui/states-test.mjs` — visueller Test der LuCI-Seite in Fehlerzuständen: keine Temperaturquelle, Modem abwesend, kein Wi-Fi-Funkmodul, Kernel hält die Richtlinie, Failsafe, veralteter Status, aktive Herunterregel-Verzögerung, manueller Modus. Er tauscht das Status-Skript des Routers (`/usr/sbin/h5000m-fancontrol-status`) vorübergehend gegen einen Stub mit vorbereitetem `key=value`-Payload, wartet den erwarteten Zustand ab, screenshotet die gerenderte Seite und stellt das Original wieder her (per MD5 verifiziert); der Daemon steuert den Lüfter währenddessen weiterhin real. Ausgabe: `preview/ui-states/report.html`. Aufruf:
+
+  ```sh
+  cd tests/ui && npm install
+  H5FAN_PASS=<LuCI-Passwort> node states-test.mjs
+  ```
+
+  Details und Szenarioformat: `tests/ui/README.md`.
+
+## Sicherheitshinweise
+
+Die Lüftersteuerung ist eine gerätesicherheitsrelevante Funktion. Beobachten Sie die Temperaturen nach dem Ändern einer benutzerdefinierten Kurve oder des manuellen PWM genau. Der Controller verwaltet nur die Lüfter-PWM und versetzt niemals die gesamte CPU-Thermalzone in `user_space`; unabhängig davon, ob der exklusive Lüfter-Patch angewendet wurde, dürfen CPU-Throttling sowie die Hot- und Critical-Schutzeinträge im Gerätebaum nicht entfernt werden.
+
+## Lizenz
 
 [Apache License 2.0](LICENSE)
 

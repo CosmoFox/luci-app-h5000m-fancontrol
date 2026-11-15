@@ -245,7 +245,7 @@ return view.extend({
 			'.h5fan-legend .sw{display:inline-block;vertical-align:middle;margin-right:6px}.h5fan-legend .sw-curve{width:16px;height:0;border-top:3px solid var(--fan-green);border-radius:2px}.h5fan-legend .sw-floor{width:16px;height:0;border-top:2px dashed var(--fan-amber)}',
 			'.h5fan-legend .sw-applied{width:9px;height:9px;border-radius:50%;background:var(--fan-blue);box-shadow:0 0 0 3px rgba(85,168,255,.22)}.h5fan-legend .sw-hyst{width:14px;height:10px;border-radius:3px;background:rgba(85,168,255,.14);box-shadow:inset 0 0 0 1px rgba(85,168,255,.35)}',
 			'.h5fan-slider{display:flex;align-items:center;gap:10px;max-width:480px}.h5fan-slider input[type=range]{flex:1;min-width:190px}.h5fan-slider input[type=number]{width:84px}',
-			'.h5fan-update{display:grid;gap:10px}.h5fan-update-buttons{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.h5fan-update a.cbi-button{color:var(--text-color-high,#222);text-decoration:none}.h5fan-update-meta{font-size:12px;color:var(--text-color-medium,#666)}.h5fan-update-meta strong{color:var(--text-color-high,#222)}.h5fan-update-beta{margin-top:6px;padding-top:10px;border-top:1px dashed var(--border-color-low,#ddd)}.h5fan-update-checkbox{display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}.h5fan-update-warn{margin:8px 0;padding:8px 10px;border-left:3px solid var(--fan-amber);background:rgba(240,170,70,.1);color:var(--text-color-medium,#666);font-size:12px}',
+			'.h5fan-update{display:grid;gap:10px}.h5fan-update-buttons{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.h5fan-update a.cbi-button{color:var(--text-color-high,#222);text-decoration:none}.h5fan-update-meta{font-size:12px;color:var(--text-color-medium,#666)}.h5fan-update-meta strong{color:var(--text-color-high,#222)}.h5fan-upd-langs{display:flex;flex-wrap:wrap;align-items:center;column-gap:12px;row-gap:6px}.h5fan-update-beta{margin-top:6px;padding-top:10px;border-top:1px dashed var(--border-color-low,#ddd)}.h5fan-update-checkbox{display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}.h5fan-update-warn{margin:8px 0;padding:8px 10px;border-left:3px solid var(--fan-amber);background:rgba(240,170,70,.1);color:var(--text-color-medium,#666);font-size:12px}',
 			'.h5fan-temp-item.off{opacity:.55}.h5fan-temp-item.off .h5fan-temp-value{color:var(--text-color-low,#888)}',
 			'.h5fan-temp-badge.off{display:inline-block;background:rgba(239,98,98,.16);color:var(--fan-red)}',
 			'.h5fan-update-progress{display:none;height:8px;margin-top:8px;border-radius:4px;background:var(--background-color-high,#f2f2f2);overflow:hidden}.h5fan-update-progress.show{display:block}',
@@ -718,7 +718,7 @@ return view.extend({
 				E('div', { 'class': 'h5fan-side' }, [
 					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Requested output')), E('strong', { id: 'h5fan-requested' }, '-') ]),
 					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Applied output')), E('strong', { id: 'h5fan-applied' }, '-'), E('div', { 'class': 'h5fan-adrow' }, [ E('span', { 'class': 'h5fan-adcap' }, _('Delay before applying')), E('span', { 'class': 'h5fan-adsec idle', id: 'h5fan-adsec' }, '') ]), E('div', { 'class': 'h5fan-adtrack' }, E('div', { 'class': 'h5fan-adfill', id: 'h5fan-adfill' })) ]),
-					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Policy reason')), E('strong', { 'class': 'h5fan-reason', id: 'h5fan-reason' }, '-') ])
+					E('div', { 'class': 'h5fan-chip' }, [ E('span', _('Current status')), E('strong', { 'class': 'h5fan-reason', id: 'h5fan-reason' }, '-') ])
 				])
 			]),
 			E('div', { 'class': 'h5fan-legend' }, [
@@ -954,7 +954,7 @@ return view.extend({
 		while (box.firstChild) box.removeChild(box.firstChild);
 		box.appendChild(E('span', {}, _('Languages') + ': '));
 		langs.forEach(function(l) {
-			box.appendChild(E('label', { 'class': 'h5fan-update-checkbox', 'style': 'margin-right:8px' }, [
+			box.appendChild(E('label', { 'class': 'h5fan-update-checkbox' }, [
 				E('input', { 'type': 'checkbox', 'class': 'h5fan-upd-lang-cb', 'value': l }), ' ' + l
 			]));
 		}, this);
@@ -1223,7 +1223,7 @@ return view.extend({
 				E('div', { 'id': 'h5fan-upd-published', 'class': 'h5fan-upd-published' }, ''),
 				E('div', { 'id': 'h5fan-upd-status', 'style': 'margin-top:4px' }, '')
 			]),
-			E('div', { 'class': 'h5fan-update-meta', 'id': 'h5fan-upd-lang-row', 'style': 'display:none' }),
+			E('div', { 'class': 'h5fan-update-meta h5fan-upd-langs', 'id': 'h5fan-upd-lang-row', 'style': 'display:none' }),
 			E('div', { 'class': 'h5fan-update-progress', 'id': 'h5fan-upd-progress' }, [
 				E('div', { 'class': 'h5fan-update-progress-bar', 'id': 'h5fan-upd-progress-bar' })
 			]),
