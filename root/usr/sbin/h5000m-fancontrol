@@ -307,17 +307,25 @@ cooling_device_path() {
 }
 
 # Read one big-endian 32-bit cell from a device-tree style binary property.
-# od is POSIX and ships with busybox; reading individual bytes keeps this
-# endian-safe without hexdump (which minimal images and Git Bash lack).
+# od/hexdump are NOT in the stock busybox (and minimal images lack both), so
+# bytes are read one at a time with dd and converted with the POSIX
+# printf '%d' "'c" form; a NUL byte arrives as an empty string and counts
+# as 0, and the two bytes the quoting form cannot carry are handled
+# explicitly. Runs only while scanning the cooling maps (once per boot,
+# cached in /var/run), so the extra forks do not matter.
 read_be32() { # <file> [skip-words]
-	local file="$1" skip="${2:-0}" b0 b1 b2 b3
-	# Intentional word splitting: the four byte values become positional args.
-	# shellcheck disable=SC2046
-	set -- $(od -An -tu1 -N4 -j$((skip * 4)) "$file" 2>/dev/null) || return 1
-	[ "$#" -eq 4 ] || return 1
-	b0="$1"; b1="$2"; b2="$3"; b3="$4"
-	is_uint "$b0$b1$b2$b3" || return 1
-	echo $((b0 * 16777216 + b1 * 65536 + b2 * 256 + b3))
+	local file="$1" skip="${2:-0}" i off c v=0
+	off=$((skip * 4))
+	for i in 0 1 2 3; do
+		c=$(dd if="$file" bs=1 count=1 skip=$((off + i)) 2>/dev/null | head -c 1)
+		case "$c" in
+		"") : ;;                                  # NUL byte or EOF: 0
+		"'") v=$((v * 256 + 39)) ;;
+		"\\") v=$((v * 256 + 92)) ;;
+		*) v=$((v * 256 + $(LC_ALL=C printf '%d' "'$c"))) ;;
+		esac
+	done
+	echo "$v"
 }
 
 cooling_level_for_state() {

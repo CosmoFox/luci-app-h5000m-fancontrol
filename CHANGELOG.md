@@ -36,6 +36,12 @@
   the application package only (older pages passing language arguments are
   tolerated), and the update dialog lost the language picker: translations
   are always in place and follow the LuCI language setting.
+- read_be32 no longer relies on od (absent from the stock busybox): the
+  device-tree cells are read byte-wise with dd/head/printf, so the kernel
+  floor keeps its real values instead of degrading to 255 on the device.
+- The package dependencies gained jsonfilter, uclient-fetch and ca-bundle
+  (the updater needs them on minimal images); the unused PKG_PO_VERSION is
+  removed.
 - The fan curve chart continues flat from the last configured point to the
   right edge, mirroring the controller's hold-last-value behavior beyond
   that point.
@@ -264,6 +270,12 @@
   только основной пакет (страницы постарше, передающие аргументы языков,
   просто игнорируют их), а чекбоксы языков из диалога обновления убраны:
   переводы всегда на месте и следуют настройке языка LuCI.
+- read_be32 больше не полагается на od (которого нет в штатном busybox):
+  ячейки device tree читаются побайтово через dd/head/printf, поэтому на
+  устройстве порог ядра сохраняет реальные значения вместо деградации до 255.
+- В зависимости пакета добавлены jsonfilter, uclient-fetch и ca-bundle
+  (обновлятору они нужны на минимальных образах); неиспользуемая
+  PKG_PO_VERSION удалена.
 - График кривой продолжается горизонтально от последней заданной точки до
   правого края — как поведение контроллера, держащего последнее значение.
 - Контур данных 5gmodem консолидирован на документе телеметрии
@@ -493,6 +505,10 @@
 - 内置更新程序不再下载语言包——只安装主软件包（旧页面传入的语言参数会被
   忽略），更新对话框中的语言选择复选框也已移除：翻译始终就位，并跟随 LuCI
   语言设置。
+- read_be32 不再依赖 od（busybox 中没有该命令）：设备树单元通过
+  dd/head/printf 逐字节读取，内核散热下限在设备上保持真实值，而不是退化到 255。
+- 软件包依赖新增 jsonfilter、uclient-fetch 和 ca-bundle（更新程序在最小化
+  镜像中需要它们）；未使用的 PKG_PO_VERSION 已删除。
 - 风扇曲线图现在从最后一个配置点水平延伸至绘图右边缘，与控制器保持最后数值的行为一致。
 - 5gmodem 数据通路整合到遥测文档（`tele.json` 同时提供调制解调器温度、降频
   等级和型号）；旧的 metrics/stats/temp 文件读取器已从温度通路中移除，而
@@ -684,6 +700,13 @@
   das Anwendungspaket (ältere Seiten, die Sprachargumente übergeben, werden
   toleriert), und die Sprachauswahl im Update-Dialog entfällt: Übersetzungen
   sind immer vorhanden und folgen der LuCI-Spracheinstellung.
+- read_be32 setzt nicht mehr auf od (im werkseitigen busybox nicht vorhanden):
+  Device-Tree-Zellen werden byteweise mit dd/head/printf gelesen, sodass die
+  Kernel-Kühlgrenze auf dem Gerät ihre echten Werte behält statt auf 255
+  zu degradieren.
+- Die Paketabhängigkeiten ergänzen jsonfilter, uclient-fetch und ca-bundle
+  (der Updater braucht sie auf Minimalimages); die ungenutzte PKG_PO_VERSION
+  wurde entfernt.
 - Das Lüfterkurvendiagramm läuft ab dem letzten konfigurierten Punkt flach
   bis zur rechten Kante, entsprechend dem Verhalten des Controllers, der den
   letzten Wert hält.
