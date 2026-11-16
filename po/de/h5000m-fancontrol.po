@@ -388,9 +388,6 @@ msgstr "Aktualisiere Paketlisten…"
 msgid "Latest release: %s (published %s)"
 msgstr "Neuestes Release: %s (veröffentlicht %s)"
 
-msgid "Languages"
-msgstr "Sprachen"
-
 msgid "%s · modem throttling"
 msgstr "%s · Modem-Throttling"
 

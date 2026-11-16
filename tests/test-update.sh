@@ -46,35 +46,6 @@ expect_eq "$(ver_from_name luci-i18n-h5000m-fancontrol-ru-2.3.1-r1.apk)" "2.3.1"
 expect_eq "$(ver_from_name luci-i18n-h5000m-fancontrol-ru_2.3.1-r1_all.ipk)" "2.3.1" 'ver i18n ipk'
 expect_eq "$(ver_from_name nonsense.apk)" "" 'ver garbage'
 
-# norm_lang: case/underscore folding, Chinese aliases, auto/empty -> empty
-expect_eq "$(norm_lang RU)" "ru" 'norm_lang upper'
-expect_eq "$(norm_lang ru)" "ru" 'norm_lang plain'
-expect_eq "$(norm_lang zh_CN)" "zh-cn" 'norm_lang underscore'
-expect_eq "$(norm_lang zh-CN)" "zh-cn" 'norm_lang dash case'
-expect_eq "$(norm_lang zh_Hans)" "zh-cn" 'norm_lang zh-Hans alias'
-expect_eq "$(norm_lang zh-Hant)" "zh-tw" 'norm_lang zh-Hant alias'
-expect_eq "$(norm_lang pt-br)" "pt-br" 'norm_lang region kept'
-expect_eq "$(norm_lang auto)" "" 'norm_lang auto'
-expect_eq "$(norm_lang "")" "" 'norm_lang empty'
-
-# i18n_lang_from_name: apk/ipk spellings, multi-part codes, others -> empty
-expect_eq "$(i18n_lang_from_name luci-i18n-h5000m-fancontrol-ru-2.3.1-r1.apk)" "ru" 'i18n lang apk'
-expect_eq "$(i18n_lang_from_name luci-i18n-h5000m-fancontrol-zh-cn-2.3.1-r1.apk)" "zh-cn" 'i18n lang apk multi'
-expect_eq "$(i18n_lang_from_name luci-i18n-h5000m-fancontrol-ru_2.3.1-r1_all.ipk)" "ru" 'i18n lang ipk'
-expect_eq "$(i18n_lang_from_name luci-i18n-h5000m-fancontrol-zh-cn_2.3.1-r1_all.ipk)" "zh-cn" 'i18n lang ipk multi'
-expect_eq "$(i18n_lang_from_name luci-app-h5000m-fancontrol-2.3.1-r1.apk)" "" 'i18n lang app asset'
-expect_eq "$(i18n_lang_from_name nonsense.apk)" "" 'i18n lang garbage'
-
-# collect_langs: normalize, drop empties, dedupe (case/underscore variants
-# fold to the same code; region subtags stay distinct - the package
-# resolution dedupes them later, e.g. ru + ru-ru -> one ru package)
-expect_eq "$(collect_langs ru zh-cn)" "ru zh-cn" 'collect_langs two'
-expect_eq "$(collect_langs RU ru zh_CN)" "ru zh-cn" 'collect_langs dedupe'
-expect_eq "$(collect_langs ru-RU ru)" "ru-ru ru" 'collect_langs region distinct'
-expect_eq "$(collect_langs "" auto ru)" "ru" 'collect_langs skips empty/auto'
-expect_eq "$(collect_langs)" "" 'collect_langs none'
-expect_eq "$(collect_langs zz)" "zz" 'collect_langs unknown kept'
-
 # json_esc: quotes and backslashes escaped, CR dropped, LF/TAB folded to spaces
 expect_eq "$(json_esc 'a"b\c')" 'a\"b\\c' 'json_esc quote/backslash'
 expect_eq "$(json_esc "$(printf 'a\nb\tc\rd')")" 'a b cd' 'json_esc control chars'

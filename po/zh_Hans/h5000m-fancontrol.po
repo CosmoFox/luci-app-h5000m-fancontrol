@@ -520,9 +520,6 @@ msgstr "正在刷新软件包列表…"
 msgid "Latest release: %s (published %s)"
 msgstr "最新版本：%s（发布于 %s）"
 
-msgid "Languages"
-msgstr "语言"
-
 msgid "%s · modem throttling"
 msgstr "%s · 模块降频"
 

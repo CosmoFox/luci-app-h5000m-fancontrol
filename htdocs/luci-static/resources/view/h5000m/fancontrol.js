@@ -247,7 +247,7 @@ return view.extend({
 			'.h5fan-legend .sw{display:inline-block;vertical-align:middle;margin-right:6px}.h5fan-legend .sw-curve{width:16px;height:0;border-top:3px solid var(--fan-green);border-radius:2px}.h5fan-legend .sw-floor{width:16px;height:0;border-top:2px dashed var(--fan-amber)}',
 			'.h5fan-legend .sw-applied{width:9px;height:9px;border-radius:50%;background:var(--fan-blue);box-shadow:0 0 0 3px rgba(85,168,255,.22)}.h5fan-legend .sw-hyst{width:14px;height:10px;border-radius:3px;background:rgba(85,168,255,.14);box-shadow:inset 0 0 0 1px rgba(85,168,255,.35)}',
 			'.h5fan-slider{display:flex;align-items:center;gap:10px;max-width:480px}.h5fan-slider input[type=range]{flex:1;min-width:190px}.h5fan-slider input[type=number]{width:84px}',
-			'.h5fan-update{display:grid;gap:10px}.h5fan-update-buttons{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.h5fan-update a.cbi-button{color:var(--text-color-high,#222);text-decoration:none}.h5fan-update-meta{font-size:12px;color:var(--text-color-medium,#666)}.h5fan-update-meta strong{color:var(--text-color-high,#222)}.h5fan-upd-langs{display:flex;flex-wrap:wrap;align-items:center;column-gap:12px;row-gap:6px}.h5fan-update-beta{margin-top:6px;padding-top:10px;border-top:1px dashed var(--border-color-low,#ddd)}.h5fan-update-checkbox{display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}.h5fan-update-warn{margin:8px 0;padding:8px 10px;border-left:3px solid var(--fan-amber);background:rgba(240,170,70,.1);color:var(--text-color-medium,#666);font-size:12px}',
+			'.h5fan-update{display:grid;gap:10px}.h5fan-update-buttons{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.h5fan-update a.cbi-button{color:var(--text-color-high,#222);text-decoration:none}.h5fan-update-meta{font-size:12px;color:var(--text-color-medium,#666)}.h5fan-update-meta strong{color:var(--text-color-high,#222)}.h5fan-update-beta{margin-top:6px;padding-top:10px;border-top:1px dashed var(--border-color-low,#ddd)}.h5fan-update-checkbox{display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}.h5fan-update-warn{margin:8px 0;padding:8px 10px;border-left:3px solid var(--fan-amber);background:rgba(240,170,70,.1);color:var(--text-color-medium,#666);font-size:12px}',
 			'.h5fan-temp-item.off{opacity:.55}.h5fan-temp-item.off .h5fan-temp-value{color:var(--text-color-low,#888)}',
 			'.h5fan-temp-badge.off{display:inline-block;background:rgba(239,98,98,.16);color:var(--fan-red)}',
 			'.h5fan-update-progress{display:none;height:8px;margin-top:8px;border-radius:4px;background:var(--background-color-high,#f2f2f2);overflow:hidden}.h5fan-update-progress.show{display:block}',
@@ -938,58 +938,6 @@ return view.extend({
 		return d.getFullYear() + '-' + (m < 10 ? '0' + m : m) + '-' + (day < 10 ? '0' + day : day);
 	},
 
-	/* Same folding as norm_lang in update.sh: lowercase, '_' to '-',
-	   zh-hans/zh-hant to the package codes zh-cn/zh-tw. */
-	updNormLang: function(code) {
-		var c = String(code || '').toLowerCase().replace(/_/g, '-');
-		if (c === 'zh-hans' || c.indexOf('zh-hans-') === 0) return 'zh-cn';
-		if (c === 'zh-hant' || c.indexOf('zh-hant-') === 0) return 'zh-tw';
-		return c;
-	},
-
-	/* Fill the translation-language picker of the update dialog with the
-	   languages shipped by the latest release (checkboxes - several packs
-	   can be installed at once). Default checkmarks: the language LuCI runs
-	   in (server-detected, else the browser language - LuCI set to "auto"
-	   follows the browser). Re-checks keep the current choices while they
-	   are still offered. */
-	updFillLangs: function(langs, sysLang) {
-		var box = document.getElementById('h5fan-upd-lang-row');
-		if (!box) return;
-		langs = Array.isArray(langs) ? langs.slice() : [];
-		var prev = {};
-		if (box.__h5filled) {
-			var old = box.querySelectorAll('.h5fan-upd-lang-cb');
-			for (var i = 0; i < old.length; i++)
-				if (old[i].checked) prev[old[i].value] = 1;
-		}
-		box.__h5filled = true;
-		while (box.firstChild) box.removeChild(box.firstChild);
-		box.appendChild(E('span', {}, _('Languages') + ': '));
-		langs.forEach(function(l) {
-			box.appendChild(E('label', { 'class': 'h5fan-update-checkbox' }, [
-				E('input', { 'type': 'checkbox', 'class': 'h5fan-upd-lang-cb', 'value': l }), ' ' + l
-			]));
-		}, this);
-		var picks = Object.keys(prev).filter(function(p) { return langs.indexOf(p) >= 0; });
-		if (!box.__h5hadprev && !picks.length) {
-			var n = this.updNormLang(sysLang);
-			if (n && langs.indexOf(n) >= 0) {
-				picks = [n];
-			} else {
-				var nav = this.updNormLang(window.navigator && navigator.language);
-				var cands = [nav, nav.split('-')[0]];
-				for (var j = 0; j < cands.length; j++)
-					if (cands[j] && langs.indexOf(cands[j]) >= 0) { picks = [cands[j]]; break; }
-			}
-		}
-		box.__h5hadprev = true;
-		var cbs = box.querySelectorAll('.h5fan-upd-lang-cb');
-		for (var k = 0; k < cbs.length; k++)
-			cbs[k].checked = picks.indexOf(cbs[k].value) >= 0;
-		box.style.display = langs.length ? '' : 'none';
-	},
-
 	checkUpdate: function() {
 		this.updSet('h5fan-upd-status', _('Checking the latest release…'));
 		this.updShow('h5fan-upd-install', false);
@@ -1011,11 +959,6 @@ return view.extend({
 			if (d.published && d.latest)
 				pubTxt = _('Latest release: %s (published %s)').format(String(d.latest).replace(/^v/i, ''), this.updLocalDate(d.published));
 			this.updSet('h5fan-upd-published', pubTxt);
-			if (d.success) {
-				this.__h5langs = d.i18n || [];
-				this.__h5betalangs = d.beta_i18n || [];
-				this.updFillLangs(betaOn ? ((this.__h5betalangs.length) ? this.__h5betalangs : this.__h5langs) : this.__h5langs, d.lang);
-			}
 			this.updateBeta(d);
 			if (!d.success) {
 				this.updSet('h5fan-upd-status', this.updErrText(d.error, _('Could not check for updates')));
@@ -1069,13 +1012,8 @@ return view.extend({
 
 	onBetaToggle: function(ev) {
 		var box = ev && ev.target ? ev.target : document.getElementById('h5fan-upd-beta');
-		var on = !!(box && box.checked);
-		this.updateBeta({}, on);
-		// Swap the language list to the beta release's assets (cached from
-		// the last check) - the install passes the checked languages along.
-		var list = on ? ((this.__h5betalangs || []).length ? this.__h5betalangs : this.__h5langs) : this.__h5langs;
-		if (list) this.updFillLangs(list, '');
-		if (on)
+		this.updateBeta({}, !!(box && box.checked));
+		if (box && box.checked)
 			return this.checkUpdate();
 	},
 
@@ -1188,14 +1126,6 @@ return view.extend({
 		var args = [ 'install' ];
 		if (stage === 'beta') args.push('beta');
 		else if (stage === 'current') args.push('current');
-		var langArgs = [];
-		var cbs = document.querySelectorAll('.h5fan-upd-lang-cb');
-		for (var i = 0; i < cbs.length; i++)
-			if (cbs[i].checked) langArgs.push(cbs[i].value);
-		if (langArgs.length) {
-			if (args.length === 1) args.push('stable');
-			args = args.concat(langArgs);
-		}
 		return fs.exec(UPDATE_BIN, args).then(function(res) {
 			var d = {}; try { d = JSON.parse((res && res.stdout) || '{}'); } catch (e) {}
 			if (d.started) { self.pollInstall(0); return; }
@@ -1236,7 +1166,6 @@ return view.extend({
 				E('div', { 'id': 'h5fan-upd-published', 'class': 'h5fan-upd-published' }, ''),
 				E('div', { 'id': 'h5fan-upd-status', 'style': 'margin-top:4px' }, '')
 			]),
-			E('div', { 'class': 'h5fan-update-meta h5fan-upd-langs', 'id': 'h5fan-upd-lang-row', 'style': 'display:none' }),
 			E('div', { 'class': 'h5fan-update-progress', 'id': 'h5fan-upd-progress' }, [
 				E('div', { 'class': 'h5fan-update-progress-bar', 'id': 'h5fan-upd-progress-bar' })
 			]),

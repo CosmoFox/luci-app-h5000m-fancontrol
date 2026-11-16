@@ -23,7 +23,7 @@ Versions follow the standard `major.minor.patch-rREVISION` format. GitHub Releas
 - Start boost after the fan has stopped
 - Automatic high-output failsafe mode on sensor or curve faults
 - Simplified Chinese, German and Russian LuCI interface (language follows LuCI settings automatically)
-- In-app self-update: offers the latest stable GitHub release from the LuCI page (optional `-beta.N` prereleases with a beta warning; the Russian interface package is installed along with the app)
+- In-app self-update: offers the latest stable GitHub release from the LuCI page (optional `-beta.N` prereleases with a beta warning; translations are embedded in the package)
 - No cloud dependency; no device data is collected or uploaded
 
 ## Compatibility
@@ -57,7 +57,7 @@ make package/luci-app-h5000m-fancontrol/compile V=s
 
 Prebuilt `.apk` files in GitHub Releases are compiled by GitHub Actions with the official OpenWrt 25.12.6 `mediatek/filogic` SDK and target 25.12.x builds with the same ABI. Each release also ships the build public key and SHA256 checksums. Since the fan safety policy depends on the device tree, integrating this project into your firmware — and evaluating the patch below — is recommended over installing the package alone.
 
-UI translations ship as separate packages: install the matching `luci-i18n-h5000m-fancontrol-ru` / `-de` / `-zh-cn` package from the release assets alongside the main `.apk` to enable Russian, German or Simplified Chinese.
+UI translations (Simplified Chinese, German and Russian) are embedded in the main package and follow the LuCI language setting automatically - no separate language packages are needed.
 
 ## Exclusive fan control
 
@@ -96,10 +96,10 @@ GitHub release of this app (`releases/latest`). An optional "Offer beta
 releases" checkbox lists `-beta.N` prereleases with an "Install beta" button
 and a warning that beta builds may be unstable and are not recommended for
 daily use. "Check for updates" compares the installed version with the latest
-release; "Install update" downloads the application package and, when
-published, the Russian interface (`luci-i18n-h5000m-fancontrol-ru`) for the
+release; "Install update" downloads the application package (with the Chinese,
+German and Russian translations embedded) for the
 router's package manager (`.apk` on SNAPSHOT/apk, `.ipk` on opkg) and installs
-them in the background with a progress indicator.
+it in the background with a progress indicator.
 
 The updater checks GitHub releases over the router's regular internet
 connection (no proxy). After a successful update the page reloads and you sign in again, so the updated interface and RPC permissions
@@ -171,7 +171,7 @@ Fan control is a device-safety function. Keep an eye on temperatures after chang
 - Стартовый буст после полной остановки вентилятора
 - Автоматический переход в режим высокой мощности при неисправности датчика или кривой
 - Интерфейс LuCI на русском, немецком и упрощённом китайском (язык следует настройкам LuCI)
-- Встроенное самообновление: вкладка LuCI предлагает последний стабильный релиз на GitHub (опционально пре-релизы `-beta.N` с предупреждением; вместе с приложением ставится русский интерфейс)
+- Встроенное самообновление: вкладка LuCI предлагает последний стабильный релиз на GitHub (опционально пре-релизы `-beta.N` с предупреждением; переводы встроены в пакет)
 - Без облачных сервисов; данные устройства не собираются и никуда не отправляются
 
 ## Совместимость
@@ -205,7 +205,7 @@ make package/luci-app-h5000m-fancontrol/compile V=s
 
 Готовые `.apk` в GitHub Releases собираются GitHub Actions в официальном SDK `mediatek/filogic` от OpenWrt 25.12.6 и подходят для сборок 25.12.x с тем же ABI. Каждый релиз также содержит публичный ключ сборки и контрольные суммы SHA256. Поскольку безопасная стратегия вентилятора зависит от device tree, проект рекомендуется интегрировать в прошивку и одновременно оценить патч ниже, а не устанавливать только пакет.
 
-Пакеты переводов интерфейса выносятся отдельно: установите `luci-i18n-h5000m-fancontrol-ru`, `-de` или `-zh-cn` из ассетов релиза вместе с основным `.apk`, чтобы включить русский, немецкий или упрощённый китайский интерфейс.
+Переводы интерфейса (упрощённый китайский, немецкий и русский) встроены в основной пакет и автоматически следуют настройке языка LuCI — отдельные языковые пакеты не нужны.
 
 ## Исключительный контроль вентилятора
 
@@ -247,9 +247,9 @@ QModem. Уровни троттлинга 1/2/3 задают минимум PWM
 сборки могут быть нестабильны и не рекомендуются для повседневного
 использования. «Проверить обновления» сравнивает установленную версию с
 последним релизом;
-«Установить обновление» скачивает пакет приложения и, если он опубликован,
-русский интерфейс (`luci-i18n-h5000m-fancontrol-ru`) под пакетный менеджер
-роутера (`.apk` на SNAPSHOT/apk, `.ipk` на opkg) и устанавливает их в фоне
+«Установить обновление» скачивает пакет приложения (со встроенными
+китайским, немецким и русским переводами) под пакетный менеджер
+роутера (`.apk` на SNAPSHOT/apk, `.ipk` на opkg) и устанавливает его в фоне
 с индикатором прогресса.
 
 Обновление обращается к GitHub через штатное интернет-соединение роутера
@@ -324,7 +324,7 @@ QModem. Уровни троттлинга 1/2/3 задают минимум PWM
 - 风扇停转后的启动助推
 - 传感器或曲线异常时自动进入高输出安全模式
 - 简体中文、德语和俄语 LuCI 界面（语言跟随 LuCI 设置自动切换）
-- 应用内自更新：通过 LuCI 页面提供 GitHub 最新稳定版（可选 `-beta.N` 预发布版并显示测试版警告；俄语界面包随应用一并安装）
+- 应用内自更新：通过 LuCI 页面提供 GitHub 最新稳定版（可选 `-beta.N` 预发布版并显示测试版警告；翻译已内置在软件包中）
 - 不依赖云服务，不收集或上传设备数据
 
 ## 兼容性
@@ -358,7 +358,7 @@ make package/luci-app-h5000m-fancontrol/compile V=s
 
 GitHub Releases 中的预编译 `.apk` 由 GitHub Actions 使用官方 OpenWrt 25.12.6 `mediatek/filogic` SDK 构建，适用于同一 ABI 的 25.12.x 版本。Release 同时提供构建公钥和 SHA256 校验文件。由于风扇安全策略依赖设备树，建议把本项目集成进固件并同时评估下方补丁，而不是只安装软件包。
 
-界面语言包以独立软件包发布：从 Release 资源中安装与主 `.apk` 配套的 `luci-i18n-h5000m-fancontrol-ru` / `-de` / `-zh-cn` 包，即可启用俄语、德语或简体中文界面。
+界面翻译（简体中文、德语和俄语）已内置在主软件包中，并自动跟随 LuCI 语言设置——无需单独安装语言包。
 
 ## 独占风扇策略控制
 
@@ -389,9 +389,8 @@ git apply package/luci-app-h5000m-fancontrol/openwrt-patches/h5000m-userspace-fa
 预发布版本，显示“安装测试版”按钮并给出警告——测试版可能不稳定，不建议
 日常使用。点击“检查更新”
 可将已安装版本与最新发布比对；当存在新版本时，“安装更新”会按路由器的
-包管理器（SNAPSHOT/apk 使用 `.apk`，opkg 使用 `.ipk`）下载应用包，并在
-已发布时一并下载俄语界面包（`luci-i18n-h5000m-fancontrol-ru`），随后在
-后台安装并显示进度。
+包管理器（SNAPSHOT/apk 使用 `.apk`，opkg 使用 `.ipk`）下载应用包（内置
+简体中文、德语和俄语翻译），随后在后台安装并显示进度。
 
 更新程序通过路由器的常规网络连接访问 GitHub（不使用代理）。更新成功后页面会刷新并需要
 重新登录一次，以便新界面和 RPC 权限立即生效。仅下载本仓库的发布资源，
@@ -464,7 +463,7 @@ Die Versionen folgen dem üblichen Format `major.minor.patch-rREVISION`. GitHub-
 - Start-Boost, nachdem der Lüfter gestoppt wurde
 - Automatischer Failsafe-Modus mit hoher Ausgabe bei Sensor- oder Kurvenfehlern
 - Vereinfachtes Chinesisch, Deutsch und Russisch als LuCI-Oberfläche (Sprache folgt den LuCI-Einstellungen automatisch)
-- In-App-Selbstupdate: bietet das neueste stabile GitHub-Release auf der LuCI-Seite an (optionale `-beta.N`-Vorabversionen mit Beta-Warnung; das russische Sprachpaket wird zusammen mit der App installiert)
+- In-App-Selbstupdate: bietet das neueste stabile GitHub-Release auf der LuCI-Seite an (optionale `-beta.N`-Vorabversionen mit Beta-Warnung; Übersetzungen sind im Paket eingebettet)
 - Keine Cloud-Abhängigkeit; es werden keine Gerätedaten erhoben oder hochgeladen
 
 ## Kompatibilität
@@ -498,7 +497,7 @@ make package/luci-app-h5000m-fancontrol/compile V=s
 
 Vorkompilierte `.apk`-Dateien in den GitHub-Releases werden von GitHub Actions mit dem offiziellen OpenWrt-25.12.6-SDK für `mediatek/filogic` erstellt und zielen auf 25.12.x-Builds mit derselben ABI. Jedes Release enthält außerdem den öffentlichen Build-Schlüssel und SHA256-Prüfsummen. Da die Lüftersicherheitsrichtlinie vom Gerätebaum abhängt, wird die Einbindung dieses Projekts in Ihre Firmware — einschließlich der Bewertung des folgenden Patches — empfohlen, statt nur das Paket zu installieren.
 
-Oberflächenübersetzungen werden als eigene Pakete ausgeliefert: Installieren Sie das passende Paket `luci-i18n-h5000m-fancontrol-ru` / `-de` / `-zh-cn` aus den Release-Assets zusammen mit dem Haupt-`.apk`, um Russisch, Deutsch oder Vereinfachtes Chinesisch zu aktivieren.
+Oberflächenübersetzungen (Vereinfachtes Chinesisch, Deutsch und Russisch) sind im Hauptpaket eingebettet und folgen automatisch der LuCI-Spracheinstellung - separate Sprachpakete sind nicht nötig.
 
 ## Exklusive Lüftersteuerung
 
@@ -540,10 +539,10 @@ Kontrollkästchen „Beta-Releases anbieten“ listet `-beta.N`-Vorabversionen m
 einem Button „Beta installieren“ und einer Warnung, dass Beta-Builds instabil
 sein können und für den täglichen Gebrauch nicht empfohlen werden. „Nach
 Updates suchen“ vergleicht die installierte Version mit dem neuesten Release;
-„Update installieren“ lädt das Anwendungspaket und — sofern veröffentlicht —
-die russische Oberfläche (`luci-i18n-h5000m-fancontrol-ru`) für den
+„Update installieren“ lädt das Anwendungspaket (mit den eingebetteten
+Übersetzungen für Chinesisch, Deutsch und Russisch) für den
 Paketmanager des Routers (`.apk` auf SNAPSHOT/apk, `.ipk` auf opkg) herunter
-und installiert sie im Hintergrund mit Fortschrittsanzeige.
+und installiert es im Hintergrund mit Fortschrittsanzeige.
 
 Der Updater prüft GitHub-Releases über die normale Internetverbindung des Routers (ohne Proxy). Nach einem erfolgreichen Update lädt die Seite neu und Sie melden sich erneut an, damit die aktualisierte Oberfläche und die RPC-Rechte sofort greifen. Es werden nur Release-Assets dieses Repositories heruntergeladen — es werden keine Gerätedaten hochgeladen.
 
