@@ -4,7 +4,7 @@
 
 *The English changelog is canonical; the other languages are translations kept in sync manually.*
 
-## 2.3.2
+## 2.2.0
 
 - Update dialog translation selection: the update check lists the languages
   shipped by the release; checkboxes (several allowed, system language
@@ -236,7 +236,7 @@
 
 # История изменений
 
-## 2.3.2
+## 2.2.0
 
 - Выбор переводов в диалоге обновления: проверка возвращает языки, которые
   поставляет релиз; чекбоксы (можно несколько, по умолчанию отмечен язык
@@ -480,7 +480,7 @@
 
 # 更新日志
 
-## 2.3.2
+## 2.2.0
 
 - 更新对话框新增翻译语言选择：更新检查会列出该发布内置的语言；通过复选框
   （可多选，默认勾选系统语言）选择随应用一并安装的 `luci-i18n-*` 语言包；
@@ -666,7 +666,7 @@
 
 # Änderungsprotokoll
 
-## 2.3.2
+## 2.2.0
 
 - Übersetzungsauswahl im Update-Dialog: Die Update-Prüfung listet die
   Sprachen des Releases; Kontrollkästchen (mehrere erlaubt, Systemsprache
