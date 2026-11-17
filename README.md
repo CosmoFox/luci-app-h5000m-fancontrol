@@ -1,7 +1,8 @@
 # H5000M Fan Control
 
-[![CI](https://github.com/CosmoFox/luci-app-h5000m-fancontrol/actions/workflows/ci.yml/badge.svg)](https://github.com/CosmoFox/luci-app-h5000m-fancontrol/actions/workflows/ci.yml)
-[![Build Release](https://github.com/CosmoFox/luci-app-h5000m-fancontrol/actions/workflows/release.yml/badge.svg)](https://github.com/CosmoFox/luci-app-h5000m-fancontrol/actions/workflows/release.yml)
+[![CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
+[![Build Release](../../actions/workflows/release.yml/badge.svg)](../../actions/workflows/release.yml)
+[![OpenWrt 25.12.6](https://img.shields.io/badge/OpenWrt-25.12.6-blue.svg)](https://downloads.openwrt.org/releases/25.12.6/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
 us **English** | [🇷🇺 Русский](#ru) | [🇨🇳 简体中文](#zh) | [🇩🇪 Deutsch](#de)
