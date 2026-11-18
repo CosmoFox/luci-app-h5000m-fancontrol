@@ -44,14 +44,15 @@ case "${1:-}" in
 		;;
 	download)
 		mkdir -p "${cache_dir}"
-		fetch_sums "${cache_dir}"
-		archive="$(resolve_archive "${cache_dir}/sha256sums")"
+		cd "${cache_dir}"
+		fetch_sums .
+		archive="$(resolve_archive sha256sums)"
 		test -n "${archive}"
-		if ! ( test -s "${cache_dir}/${archive}" \
-			&& grep "[ *]${archive}$" "${cache_dir}/sha256sums" | sha256sum -c - >/dev/null 2>&1 ); then
-			curl -fL --retry 5 "${base_url}/${archive}" -o "${cache_dir}/${archive}"
+		if ! ( test -s "${archive}" \
+			&& grep "[ *]${archive}$" sha256sums | sha256sum -c - >/dev/null 2>&1 ); then
+			curl -fL --retry 5 "${base_url}/${archive}" -o "${archive}"
 		fi
-		grep "[ *]${archive}$" "${cache_dir}/sha256sums" | sha256sum -c - >&2
+		grep "[ *]${archive}$" sha256sums | sha256sum -c - >&2
 		printf '%s\n' "${archive}"
 		;;
 	*)

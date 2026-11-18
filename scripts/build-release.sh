@@ -2,23 +2,17 @@
 set -euo pipefail
 
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-work_dir="${RUNNER_TEMP:-/tmp}/h5000m-fan-sdk"
+cache_dir="${SDK_CACHE_DIR:-${RUNNER_TEMP:-/tmp}/h5000m-fan-sdk}"
+build_dir="${RUNNER_TEMP:-/tmp}/h5000m-fan-sdk-build"
 output_dir="${repo_dir}/dist-release"
-sdk_version=25.12.6
-base_url="https://downloads.openwrt.org/releases/${sdk_version}/targets/mediatek/filogic"
+sdk_version="$("${repo_dir}/scripts/fetch-sdk.sh" version)"
 
-mkdir -p "${work_dir}" "${output_dir}"
+mkdir -p "${build_dir}" "${output_dir}"
 find "${output_dir}" -mindepth 1 -maxdepth 1 -delete
-cd "${work_dir}"
-curl -fsSLO "${base_url}/sha256sums"
-archive="$(awk '/openwrt-sdk-.*Linux-x86_64\.tar\.zst$/ { print $2; exit }' sha256sums | sed 's/^\*//')"
-test -n "${archive}"
-if ! ( test -s "${archive}" && grep "[ *]${archive}$" sha256sums | sha256sum -c - >/dev/null 2>&1 ); then
-	curl -fL --retry 5 "${base_url}/${archive}" -o "${archive}"
-fi
-grep "[ *]${archive}$" sha256sums | sha256sum -c -
-tar --zstd -xf "${archive}"
-sdk_dir="$(find "${work_dir}" -maxdepth 1 -type d -name 'openwrt-sdk-*' | head -n 1)"
+archive="$("${repo_dir}/scripts/fetch-sdk.sh" download)"
+find "${build_dir}" -mindepth 1 -maxdepth 1 -name 'openwrt-sdk-*' -exec rm -rf {} +
+tar --zstd -xf "${cache_dir}/${archive}" -C "${build_dir}"
+sdk_dir="$(find "${build_dir}" -maxdepth 1 -type d -name 'openwrt-sdk-*' | head -n 1)"
 test -n "${sdk_dir}"
 
 cd "${sdk_dir}"
@@ -71,14 +65,14 @@ done
 
 if find "${output_dir}" -name '*.apk' | grep -q .; then
 	cp public-key.pem "${output_dir}/openwrt-sdk-build.pem"
-	mkdir -p "${work_dir}/verification-keys"
-	cp public-key.pem "${work_dir}/verification-keys/build.pem"
+	mkdir -p "${build_dir}/verification-keys"
+	cp public-key.pem "${build_dir}/verification-keys/build.pem"
 	for package in "${output_dir}"/*.apk; do
 		# Only our freshly built package is accepted unsigned at the signing step.
 		staging_dir/host/bin/apk adbsign --allow-untrusted --sign-key private-key.pem "$package"
-		staging_dir/host/bin/apk --keys-dir "${work_dir}/verification-keys" verify "$package"
+		staging_dir/host/bin/apk --keys-dir "${build_dir}/verification-keys" verify "$package"
 	done
 fi
 printf 'SDK=%s\nSOURCE_COMMIT=%s\nTARGET=mediatek/filogic\n' "${sdk_version}" "$(git -C "$repo_dir" rev-parse HEAD)" > "${output_dir}/BUILD-INFO.txt"
-grep "[ *]${archive}$" "${work_dir}/sha256sums" >> "${output_dir}/BUILD-INFO.txt"
+grep "[ *]${archive}$" "${cache_dir}/sha256sums" >> "${output_dir}/BUILD-INFO.txt"
 (cd "${output_dir}" && find . -maxdepth 1 -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)

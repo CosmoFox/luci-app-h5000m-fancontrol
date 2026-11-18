@@ -27,6 +27,7 @@ jobs:
           sh -n root/etc/uci-defaults/92-h5000m-fancontrol-v3
           sh -n root/etc/uci-defaults/93-h5000m-fancontrol-v4
           bash -n scripts/build-release.sh
+          bash -n scripts/fetch-sdk.sh
           bash -n scripts/check-versions.sh
           bash -n scripts/check-i18n.sh
           sh -n tests/test-lib.sh
@@ -65,7 +66,7 @@ jobs:
             root/etc/uci-defaults/92-h5000m-fancontrol-v3 \
             root/etc/uci-defaults/93-h5000m-fancontrol-v4
           shellcheck -x -s sh -e SC3043,SC1007,SC1091,SC2034,SC2329 tests/*.sh
-          shellcheck -s bash -e SC2094 scripts/build-release.sh scripts/release.sh
+          shellcheck -s bash -e SC2094 scripts/build-release.sh scripts/fetch-sdk.sh scripts/release.sh
 
       - name: Check version synchronization
         run: sh scripts/check-versions.sh
@@ -90,3 +91,26 @@ jobs:
 
       - name: Check patch format
         run: git apply --numstat openwrt-patches/h5000m-userspace-fan-control.patch
+
+  sdk-cache:
+    # GitHub shares caches only within the same ref and with the default
+    # branch, so tag builds can only hit a cache written from `main`. Warm
+    # that cache here on every push to the default branch; PRs and the
+    # release workflow's workflow_call never reach this job.
+    if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve SDK cache key
+        run: |
+          echo "sdk_key=$(scripts/fetch-sdk.sh key)" >> "${GITHUB_ENV}"
+
+      - name: Cache OpenWrt SDK archive
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/h5000m-fan-sdk
+          key: openwrt-sdk-${{ env.sdk_key }}
+
+      - name: Download SDK archive
+        run: scripts/fetch-sdk.sh download

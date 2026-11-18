@@ -29,7 +29,11 @@ checks). A `v*` tag or a manual run additionally triggers the `build` job,
 which reuses the CI job via `workflow_call`, validates the tag (Makefile
 version, branch ancestry, prerelease flag), builds the packages with the
 OpenWrt SDK and publishes the artifacts to GitHub Releases. See
-`.github/workflows/ci.yml` and `.github/workflows/release.yml`.
+`.github/workflows/ci.yml` and `.github/workflows/release.yml`. A push to
+the default branch additionally runs the `sdk-cache` job, which downloads the
+OpenWrt SDK archive into the Actions cache: tag builds restore it from there
+instead of re-downloading it on every release (GitHub does not share caches
+between tags).
 
 ## Cutting a beta release
 
@@ -116,7 +120,10 @@ GitHub Actions при каждом пуше тега проверяет три �
 job `build`: он переиспользует CI через `workflow_call`, валидирует тег
 (версия Makefile, принадлежность ветке, флаг prerelease), собирает пакеты в
 OpenWrt SDK и публикует артефакты в GitHub Releases. См.
-`.github/workflows/ci.yml` и `.github/workflows/release.yml`.
+`.github/workflows/ci.yml` и `.github/workflows/release.yml`. Push в ветку
+по умолчанию дополнительно запускает job `sdk-cache`, который кладёт архив
+OpenWrt SDK в кэш Actions: сборки тегов восстанавливают его оттуда и не
+качают заново на каждый релиз (GitHub не делится кэшем между тегами).
 
 ## Выпуск беты
 
@@ -204,7 +211,9 @@ OpenWrt SDK и публикует артефакты в GitHub Releases. См.
 手动运行会额外触发 `build` 任务：它通过 `workflow_call` 复用 CI，校验标签
 （Makefile 版本、分支归属、预发布标志），用 OpenWrt SDK 构建软件包，并将
 产物发布到 GitHub Releases。见 `.github/workflows/ci.yml` 与
-`.github/workflows/release.yml`。
+`.github/workflows/release.yml`。推送到默认分支还会额外运行
+`sdk-cache` 任务，将 OpenWrt SDK 归档存入 Actions 缓存：标签构建直接
+从缓存恢复，无需每次发布都重新下载（GitHub 不会在标签之间共享缓存）。
 
 ## 发布测试版
 
@@ -293,7 +302,11 @@ Dateiformatprüfungen). Ein `v*`-Tag oder ein manueller Lauf löst zusätzlich d
 Job `build` aus, der die CI über `workflow_call` wiederverwendet, den Tag
 validiert (Makefile-Version, Branch-Abstammung, Prerelease-Flag), mit dem
 OpenWrt-SDK baut und die Artefakte zu GitHub Releases veröffentlicht. Siehe
-`.github/workflows/ci.yml` und `.github/workflows/release.yml`.
+`.github/workflows/ci.yml` und `.github/workflows/release.yml`. Ein Push in
+den Standard-Branch startet zusätzlich den Job `sdk-cache`, der das
+OpenWrt-SDK-Archiv in den Actions-Cache legt: Tag-Builds stellen es daraus
+wieder her und laden es nicht bei jedem Release erneut (GitHub teilt Caches
+nicht zwischen Tags).
 
 ## Eine Beta veröffentlichen
 
